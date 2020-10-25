@@ -73,7 +73,7 @@ class Galaxy extends BABYLON.TransformNode {
         this.depth = 4;
     }
     async initialize() {
-        this.templateTile = await Main.loadMeshes("tile-lp-test-2");
+        this.templateTile = await Main.loadMeshes("tile-lp-test");
         this.templatePole = await Main.loadMeshes("pole");
         this.templateLightning = await Main.loadMeshes("lightning");
     }
@@ -229,6 +229,7 @@ class Main {
         Main.Camera = new BABYLON.ArcRotateCamera("camera", 0, 0, 10, BABYLON.Vector3.Zero(), Main.Scene);
         Main.Camera.setPosition(new BABYLON.Vector3(-2, 6, -10));
         Main.Camera.attachControl(Main.Canvas);
+        Main.Camera.wheelPrecision *= 10;
     }
     async initialize() {
         await this.initializeScene();
@@ -238,7 +239,13 @@ class Main {
             BABYLON.SceneLoader.ImportMesh("", "./assets/models/" + modelName + ".glb", "", Main.Scene, (meshes) => {
                 console.log("Load model : " + modelName);
                 meshes.forEach((mesh) => {
-                    console.log(mesh.name);
+                    let material = mesh.material;
+                    if (material instanceof BABYLON.PBRMaterial) {
+                        console.log("PBRMaterial " + material.name + " loaded.");
+                        if (material.name === "grid") {
+                            material.alphaCutOff = 1.5;
+                        }
+                    }
                 });
                 resolve(meshes[0]);
             });

@@ -66,6 +66,7 @@ class Main {
 		Main.Camera = new BABYLON.ArcRotateCamera("camera", 0, 0, 10, BABYLON.Vector3.Zero(), Main.Scene);
 		Main.Camera.setPosition(new BABYLON.Vector3(-2, 6, - 10));
 		Main.Camera.attachControl(Main.Canvas);
+		Main.Camera.wheelPrecision *= 10;
 	}
 	
 	public async initialize(): Promise<void> {
@@ -84,7 +85,13 @@ class Main {
 						console.log("Load model : " + modelName);
 						meshes.forEach(
 							(mesh) => {
-								console.log(mesh.name);
+								let material = mesh.material;
+								if (material instanceof BABYLON.PBRMaterial) {
+									console.log("PBRMaterial " + material.name + " loaded.");
+									if (material.name === "grid") {
+										material.alphaCutOff = 1.5;
+									}
+								}
 							}
 						)
 						resolve(meshes[0]);
