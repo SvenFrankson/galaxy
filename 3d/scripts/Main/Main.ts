@@ -89,7 +89,8 @@ class Main {
 								if (material instanceof BABYLON.PBRMaterial) {
 									console.log("PBRMaterial " + material.name + " loaded.");
 									if (material.name === "grid") {
-										material.alphaCutOff = 1.5;
+										material.transparencyMode = undefined;
+										material.albedoTexture.hasAlpha = true;
 									}
 								}
 							}

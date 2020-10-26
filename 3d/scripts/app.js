@@ -73,7 +73,7 @@ class Galaxy extends BABYLON.TransformNode {
         this.depth = 4;
     }
     async initialize() {
-        this.templateTile = await Main.loadMeshes("tile-lp-test");
+        this.templateTile = await Main.loadMeshes("tile-lp");
         this.templatePole = await Main.loadMeshes("pole");
         this.templateLightning = await Main.loadMeshes("lightning");
     }
@@ -243,7 +243,8 @@ class Main {
                     if (material instanceof BABYLON.PBRMaterial) {
                         console.log("PBRMaterial " + material.name + " loaded.");
                         if (material.name === "grid") {
-                            material.alphaCutOff = 1.5;
+                            material.transparencyMode = undefined;
+                            material.albedoTexture.hasAlpha = true;
                         }
                     }
                 });
