@@ -7,15 +7,144 @@ class GalaxyTile extends BABYLON.TransformNode {
     }
 }
 
+abstract class GalaxyItem extends BABYLON.Mesh {
+
+    public static Create(i: number, j: number, k: number, galaxy: Galaxy): GalaxyItem {
+        let W = galaxy.width;
+        let H = galaxy.height;
+        let D = galaxy.depth;
+        if (i === 0 || i === W || j === 0 || j === H || k === 0 || k === D) {
+            let odds = 0;
+            if (i % 2 === 1) {
+                odds++;
+            }
+            if (j % 2 === 1) {
+                odds++;
+            }
+            if (k % 2 === 1) {
+                odds++;
+            }
+            if (odds === 0) {
+                return new Plot(i, j, k, galaxy);
+            }
+            else if (odds === 1) {
+                //return new Border(i, j, k, galaxy);
+            }
+            else if (odds === 2) {
+                return new Tile(i, j, k, galaxy);
+            }
+        }
+        return undefined;
+    }
+
+    constructor(
+        public i: number,
+        public j: number,
+        public k: number,
+        public galaxy: Galaxy
+    ) {
+        super("galaxy-item");
+        this.position.copyFromFloats(i, j, k);
+        this.updateRotation();
+    }
+
+    public abstract instantiate();
+
+    public updateRotation(): void {
+        let up = BABYLON.Vector3.Zero();
+        if (this.i === 0) {
+            up.x = - 1;
+        }
+        else if (this.i === this.galaxy.width) {
+            up.x = 1;
+        }
+        if (this.j === 0) {
+            up.y = - 1;
+        }
+        else if (this.j === this.galaxy.height) {
+            up.y = 1;
+        }
+        if (this.k === 0) {
+            up.z = - 1;
+        }
+        else if (this.k === this.galaxy.depth) {
+            up.z = 1;
+        }
+        up.normalize();
+        if (up.y === 1) {
+            this.rotationQuaternion = BABYLON.Quaternion.Identity();
+        }
+        else if (up.y === -1) {
+            this.rotationQuaternion = BABYLON.Quaternion.RotationAxis(BABYLON.Axis.Z, Math.PI);
+        }
+        else {
+            let forward = BABYLON.Vector3.Cross(up, BABYLON.Axis.Y).normalize();
+            let right = BABYLON.Vector3.Cross(up, forward).normalize();
+            this.rotationQuaternion = BABYLON.Quaternion.RotationQuaternionFromAxis(right, up, forward);
+        }
+    }
+}
+
+class Tile extends GalaxyItem {
+
+    constructor(
+        i: number,
+        j: number,
+        k: number,
+        galaxy: Galaxy
+    ) {
+        super(i, j, k, galaxy);
+        this.name = "tile-" + i + "-" + j + "-" + k;
+    }
+
+    public instantiate(): void {
+        this.galaxy.templateTile.clone("clone", this);
+    }
+}
+
+class Border extends GalaxyItem {
+
+    constructor(
+        i: number,
+        j: number,
+        k: number,
+        galaxy: Galaxy
+    ) {
+        super(i, j, k, galaxy);
+        this.name = "border-" + i + "-" + j + "-" + k;
+    }
+
+    public instantiate(): void {
+        this.galaxy.templateLightning.clone("clone", this);
+    }
+}
+
+class Plot extends GalaxyItem {
+
+    constructor(
+        i: number,
+        j: number,
+        k: number,
+        galaxy: Galaxy
+    ) {
+        super(i, j, k, galaxy);
+        this.name = "plot-" + i + "-" + j + "-" + k;
+    }
+
+    public instantiate(): void {
+        this.galaxy.templatePole.clone("clone", this);
+    }
+}
+
 class Galaxy extends BABYLON.TransformNode {
 
 	public templateTile: BABYLON.AbstractMesh;
 	public templatePole: BABYLON.AbstractMesh;
 	public templateLightning: BABYLON.AbstractMesh;
 
-    public width: number = 5;
-    public height: number = 3;
-    public depth: number = 4;
+    public width: number = 10;
+    public height: number = 6;
+    public depth: number = 8;
 
     constructor() {
         super("galaxy");
@@ -28,178 +157,19 @@ class Galaxy extends BABYLON.TransformNode {
     }
 
     public instantiate() {
-        let x0 = - (this.width - 1) * 0.5 * 2;
-        let y0 = - (this.height - 1) * 0.5 * 2;
-        let z0 = - (this.depth - 1) * 0.5 * 2;
-        let x1 = (this.width - 1) * 0.5 * 2;
-        let y1 = (this.height - 1) * 0.5 * 2;
-        let z1 = (this.depth - 1) * 0.5 * 2;
-
-        for (let i = 0; i < this.width - 1; i++) {
-            for (let j = 0; j < 4; j++) {
-                let p0 = this.templatePole.clone("clone", undefined);
-                p0.position.copyFromFloats(
-                    x0 + i * 2 + 1,
-                    j === 0 || j === 3 ? y1 + 1 : y0 - 1,
-                    j < 2 ? z0 - 1 : z1 + 1
-                );
-                p0.rotationQuaternion = undefined;
-                p0.rotation.x = - Math.PI / 4 - Math.PI / 2 * j;
-            }
-        }
-
-        for (let i = 0; i < this.height - 1; i++) {
-            for (let j = 0; j < 4; j++) {
-                let p0 = this.templatePole.clone("clone", undefined);
-                p0.position.copyFromFloats(
-                    j < 2 ? x1 + 1 : x0 - 1,
-                    y0 + i * 2 + 1,
-                    j === 0 || j === 3 ? z0 - 1 : z1 + 1
-                );
-                p0.rotationQuaternion = undefined;
-                p0.rotation.x = - Math.PI / 2;
-                p0.rotation.y = - Math.PI / 4 - Math.PI / 2 * j;
-            }
-        }
-
-        for (let i = 0; i < this.depth - 1; i++) {
-            for (let j = 0; j < 4; j++) {
-                let p0 = this.templatePole.clone("clone", undefined);
-                p0.position.copyFromFloats(
-                    j === 0 || j === 3 ? x0 - 1 : x1 + 1,
-                    j > 1 ? y0 - 1 : y1 + 1,
-                    z0 + i * 2 + 1
-                );
-                p0.rotationQuaternion = undefined;
-                p0.rotation.z = Math.PI / 4 - Math.PI / 2 * j;
-            }
-        }
-
-        for (let i = 0; i < this.width; i++) {
-            for (let j = 0; j < this.height; j++) {
-                let t0 = new GalaxyTile(this);
-                t0.position.copyFromFloats(
-                    x0 + i * 2,
-                    y0 + j * 2,
-                    z0 - 1
-                );
-                t0.rotationQuaternion = undefined;
-                t0.rotation.x = - Math.PI * 0.5;
-                this.templateTile.clone("clone", t0);
-                
-                let t1 = new GalaxyTile(this);
-                t1.position.copyFromFloats(
-                    x0 + i * 2,
-                    y0 + j * 2,
-                    z1 + 1
-                );
-                t1.rotation.x = Math.PI * 0.5;
-                this.templateTile.clone("clone", t1);
-
-                if (i < this.width - 1 && j < this.height - 1) {
-                    let p0 = this.templatePole.clone("clone", undefined);
-                    p0.position.copyFromFloats(
-                        x0 + i * 2 + 1,
-                        y0 + j * 2 + 1,
-                        z0 - 1
-                    );
-                    p0.rotationQuaternion = undefined;
-                    p0.rotation.x = - Math.PI * 0.5;
-                    
-                    let p1 = this.templatePole.clone("clone", undefined);
-                    p1.position.copyFromFloats(
-                        x0 + i * 2 + 1,
-                        y0 + j * 2 + 1,
-                        z1 + 1
-                    );
-                    p1.rotationQuaternion = undefined;
-                    p1.rotation.x = Math.PI * 0.5;
-                } 
-            }
-        }
-        
-        for (let i = 0; i < this.width; i++) {
-            for (let j = 0; j < this.depth; j++) {
-                let t0 = new GalaxyTile(this);
-                t0.position.copyFromFloats(
-                    x0 + i * 2,
-                    y0 - 1,
-                    z0 + j * 2
-                );
-                t0.rotation.x = - Math.PI;
-                this.templateTile.clone("clone", t0);
-                
-                let t1 = new GalaxyTile(this);
-                t1.position.copyFromFloats(
-                    x0 + i * 2,
-                    y1 + 1,
-                    z0 + j * 2
-                );
-                this.templateTile.clone("clone", t1);
-
-                if (i < this.width - 1 && j < this.depth - 1) {
-                    let p0 = this.templatePole.clone("clone", undefined);
-                    p0.position.copyFromFloats(
-                        x0 + i * 2 + 1,
-                        y0 - 1,
-                        z0 + j * 2 + 1
-                    );
-                    p0.rotationQuaternion = undefined;
-                    p0.rotation.x = Math.PI;
-                    
-                    let p1 = this.templatePole.clone("clone", undefined);
-                    p1.position.copyFromFloats(
-                        x0 + i * 2 + 1,
-                        y1 + 1,
-                        z0 + j * 2 + 1
-                    );
-                    p1.rotationQuaternion = undefined;
-                }
-            }
-        }
-        
-        for (let i = 0; i < this.depth; i++) {
-            for (let j = 0; j < this.height; j++) {
-                let t0 = new GalaxyTile(this);
-                t0.position.copyFromFloats(
-                    x0 - 1,
-                    y0 + j * 2,
-                    z0 + i * 2
-                );
-                t0.rotation.x = - Math.PI * 0.5;
-                t0.rotation.y = Math.PI * 0.5;
-                this.templateTile.clone("clone", t0);
-                
-                let t1 = new GalaxyTile(this);
-                t1.position.copyFromFloats(
-                    x1 + 1,
-                    y0 + j * 2,
-                    z0 + i * 2
-                );
-                t1.rotation.x = - Math.PI * 0.5;
-                t1.rotation.y = - Math.PI * 0.5;
-                this.templateTile.clone("clone", t1);
-
-                if (i < this.depth - 1 && j < this.height - 1) {
-                    let p0 = this.templatePole.clone("clone", undefined);
-                    p0.position.copyFromFloats(
-                        x0 - 1,
-                        y0 + j * 2 + 1,
-                        z0 + i * 2 + 1
-                    );
-                    p0.rotationQuaternion = undefined;
-                    p0.rotation.x = - Math.PI * 0.5;
-                    p0.rotation.y = Math.PI * 0.5;
-                    
-                    let p1 = this.templatePole.clone("clone", undefined);
-                    p1.position.copyFromFloats(
-                        x1 + 1,
-                        y0 + j * 2 + 1,
-                        z0 + i * 2 + 1
-                    );
-                    p1.rotationQuaternion = undefined;
-                    p1.rotation.x = - Math.PI * 0.5;
-                    p1.rotation.y = - Math.PI * 0.5;
+        this.position.copyFromFloats(
+            - this.width * 0.5,
+            - this.height * 0.5,
+            - this.depth * 0.5
+        )
+        for (let i = 0; i <= this.width; i++) {
+            for (let j = 0; j <= this.height; j++) {
+                for (let k = 0; k <= this.depth; k++) {
+                    let item = GalaxyItem.Create(i, j, k, this);
+                    if (item) {
+                        item.parent = this;
+                        item.instantiate();
+                    }
                 }
             }
         }
