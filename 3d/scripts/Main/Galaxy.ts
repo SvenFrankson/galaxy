@@ -132,7 +132,26 @@ class Plot extends GalaxyItem {
     }
 
     public instantiate(): void {
-        this.galaxy.templatePole.clone("clone", this);
+        let edges = 0;
+        if (this.i === 0 || this.i === this.galaxy.width) {
+            edges++;
+        }
+        if (this.j === 0 || this.j === this.galaxy.height) {
+            edges++;
+        }
+        if (this.k === 0 || this.k === this.galaxy.depth) {
+            edges++;
+        }
+
+        if (edges === 1) {
+            this.galaxy.templatePole.clone("clone", this);
+        }
+        if (edges === 2) {
+            this.galaxy.templatePoleEdge.clone("clone", this);
+        }
+        if (edges === 3) {
+            this.galaxy.templatePoleCorner.clone("clone", this);
+        }
     }
 }
 
@@ -140,6 +159,8 @@ class Galaxy extends BABYLON.TransformNode {
 
 	public templateTile: BABYLON.AbstractMesh;
 	public templatePole: BABYLON.AbstractMesh;
+	public templatePoleEdge: BABYLON.AbstractMesh;
+	public templatePoleCorner: BABYLON.AbstractMesh;
 	public templateLightning: BABYLON.AbstractMesh;
 
     public width: number = 10;
@@ -153,6 +174,8 @@ class Galaxy extends BABYLON.TransformNode {
     public async initialize(): Promise<void> {
 		this.templateTile = await Main.loadMeshes("tile-lp");
 		this.templatePole = await Main.loadMeshes("pole");
+		this.templatePoleEdge = await Main.loadMeshes("pole");
+		this.templatePoleCorner = await Main.loadMeshes("pole");
 		this.templateLightning = await Main.loadMeshes("lightning");
     }
 
@@ -161,7 +184,7 @@ class Galaxy extends BABYLON.TransformNode {
             - this.width * 0.5,
             - this.height * 0.5,
             - this.depth * 0.5
-        )
+        );
         for (let i = 0; i <= this.width; i++) {
             for (let j = 0; j <= this.height; j++) {
                 for (let k = 0; k <= this.depth; k++) {
