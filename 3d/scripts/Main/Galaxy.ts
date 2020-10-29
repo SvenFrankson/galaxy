@@ -1,3 +1,9 @@
+interface IJK {
+    i: number,
+    j: number,
+    k: number
+}
+
 class GalaxyTile extends BABYLON.TransformNode {
 
     constructor(
@@ -44,6 +50,7 @@ abstract class GalaxyItem extends BABYLON.Mesh {
         public galaxy: Galaxy
     ) {
         super("galaxy-item");
+        this.parent = galaxy;
         this.position.copyFromFloats(i, j, k);
         this.updateRotation();
     }
@@ -112,10 +119,28 @@ class Border extends GalaxyItem {
     ) {
         super(i, j, k, galaxy);
         this.name = "border-" + i + "-" + j + "-" + k;
+        let up = this.getDirection(BABYLON.Axis.Y);
+        this.position.addInPlace(up.scale(0.25));
     }
 
     public instantiate(): void {
         this.galaxy.templateLightning.clone("clone", this);
+    }
+
+    public updateRotation(): void {
+        super.updateRotation();
+        if (this.i === 0 || this.i === this.galaxy.width || this.k === 0 || this.k === this.galaxy.depth) {
+            if (this.j % 2 === 1) {
+                let q = BABYLON.Quaternion.RotationAxis(BABYLON.Axis.Y, Math.PI * 0.5);
+                this.rotationQuaternion.multiplyInPlace(q);
+            }
+        }
+        else {
+            if (this.i % 2 === 1) {
+                let q = BABYLON.Quaternion.RotationAxis(BABYLON.Axis.Y, Math.PI * 0.5);
+                this.rotationQuaternion.multiplyInPlace(q);
+            }
+        }
     }
 }
 
@@ -167,6 +192,8 @@ class Galaxy extends BABYLON.TransformNode {
     public height: number = 6;
     public depth: number = 8;
 
+    public items: GalaxyItem[][][];
+
     constructor() {
         super("galaxy");
     }
@@ -185,14 +212,73 @@ class Galaxy extends BABYLON.TransformNode {
             - this.height * 0.5,
             - this.depth * 0.5
         );
+        this.items = [];
         for (let i = 0; i <= this.width; i++) {
+            this.items[i] = [];
             for (let j = 0; j <= this.height; j++) {
+                this.items[i][j] = [];
                 for (let k = 0; k <= this.depth; k++) {
                     let item = GalaxyItem.Create(i, j, k, this);
                     if (item) {
-                        item.parent = this;
+                        this.items[i][j][k] = item;
                         item.instantiate();
                     }
+                }
+            }
+        }
+
+        Main.Scene.onPointerObservable.add((eventData: BABYLON.PointerInfo) => {
+            if (eventData.type === BABYLON.PointerEventTypes.POINTERDOWN) {
+                this.onPointerDown();
+            }
+        });
+    }
+
+    public getItem(ijk: IJK): GalaxyItem {
+        return this.items[ijk.i][ijk.j][ijk.k];
+    }
+
+    public setItem(ijk: IJK, item: GalaxyItem): void {
+        this.items[ijk.i][ijk.j][ijk.k] = item;
+    }
+
+    public worldPositionToIJK(worldPosition: BABYLON.Vector3): IJK {
+        let i = Math.round(worldPosition.x + this.width * 0.5);
+        let j = Math.round(worldPosition.y + this.height * 0.5);
+        let k = Math.round(worldPosition.z + this.depth * 0.5);
+        
+        return { i: i, j: j, k: k};
+    }
+
+    public onPointerDown() {
+        let pick = Main.Scene.pick(
+            Main.Scene.pointerX,
+            Main.Scene.pointerY
+        );
+        if (pick && pick.hit) {
+            let ijk = this.worldPositionToIJK(pick.pickedPoint);
+            
+            let odds = 0;
+            if (ijk.i % 2 === 1) {
+                odds++;
+            }
+            if (ijk.j % 2 === 1) {
+                odds++;
+            }
+            if (ijk.k % 2 === 1) {
+                odds++;
+            }
+
+            if (odds === 1) {
+                let item = this.getItem(ijk);
+                if (item) {
+                    item.dispose();
+                    this.setItem(ijk, undefined);
+                }
+                else {
+                    let border = new Border(ijk.i, ijk.j, ijk.k, this);
+                    border.instantiate();
+                    this.setItem(ijk, border);
                 }
             }
         }

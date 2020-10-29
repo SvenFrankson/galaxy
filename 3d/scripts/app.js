@@ -72,6 +72,7 @@ class GalaxyItem extends BABYLON.Mesh {
         this.j = j;
         this.k = k;
         this.galaxy = galaxy;
+        this.parent = galaxy;
         this.position.copyFromFloats(i, j, k);
         this.updateRotation();
     }
@@ -149,9 +150,26 @@ class Border extends GalaxyItem {
     constructor(i, j, k, galaxy) {
         super(i, j, k, galaxy);
         this.name = "border-" + i + "-" + j + "-" + k;
+        let up = this.getDirection(BABYLON.Axis.Y);
+        this.position.addInPlace(up.scale(0.25));
     }
     instantiate() {
         this.galaxy.templateLightning.clone("clone", this);
+    }
+    updateRotation() {
+        super.updateRotation();
+        if (this.i === 0 || this.i === this.galaxy.width || this.k === 0 || this.k === this.galaxy.depth) {
+            if (this.j % 2 === 1) {
+                let q = BABYLON.Quaternion.RotationAxis(BABYLON.Axis.Y, Math.PI * 0.5);
+                this.rotationQuaternion.multiplyInPlace(q);
+            }
+        }
+        else {
+            if (this.i % 2 === 1) {
+                let q = BABYLON.Quaternion.RotationAxis(BABYLON.Axis.Y, Math.PI * 0.5);
+                this.rotationQuaternion.multiplyInPlace(q);
+            }
+        }
     }
 }
 class Plot extends GalaxyItem {
@@ -197,14 +215,62 @@ class Galaxy extends BABYLON.TransformNode {
     }
     instantiate() {
         this.position.copyFromFloats(-this.width * 0.5, -this.height * 0.5, -this.depth * 0.5);
+        this.items = [];
         for (let i = 0; i <= this.width; i++) {
+            this.items[i] = [];
             for (let j = 0; j <= this.height; j++) {
+                this.items[i][j] = [];
                 for (let k = 0; k <= this.depth; k++) {
                     let item = GalaxyItem.Create(i, j, k, this);
                     if (item) {
-                        item.parent = this;
+                        this.items[i][j][k] = item;
                         item.instantiate();
                     }
+                }
+            }
+        }
+        Main.Scene.onPointerObservable.add((eventData) => {
+            if (eventData.type === BABYLON.PointerEventTypes.POINTERDOWN) {
+                this.onPointerDown();
+            }
+        });
+    }
+    getItem(ijk) {
+        return this.items[ijk.i][ijk.j][ijk.k];
+    }
+    setItem(ijk, item) {
+        this.items[ijk.i][ijk.j][ijk.k] = item;
+    }
+    worldPositionToIJK(worldPosition) {
+        let i = Math.round(worldPosition.x + this.width * 0.5);
+        let j = Math.round(worldPosition.y + this.height * 0.5);
+        let k = Math.round(worldPosition.z + this.depth * 0.5);
+        return { i: i, j: j, k: k };
+    }
+    onPointerDown() {
+        let pick = Main.Scene.pick(Main.Scene.pointerX, Main.Scene.pointerY);
+        if (pick && pick.hit) {
+            let ijk = this.worldPositionToIJK(pick.pickedPoint);
+            let odds = 0;
+            if (ijk.i % 2 === 1) {
+                odds++;
+            }
+            if (ijk.j % 2 === 1) {
+                odds++;
+            }
+            if (ijk.k % 2 === 1) {
+                odds++;
+            }
+            if (odds === 1) {
+                let item = this.getItem(ijk);
+                if (item) {
+                    item.dispose();
+                    this.setItem(ijk, undefined);
+                }
+                else {
+                    let border = new Border(ijk.i, ijk.j, ijk.k, this);
+                    border.instantiate();
+                    this.setItem(ijk, border);
                 }
             }
         }
