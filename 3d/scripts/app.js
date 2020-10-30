@@ -59,43 +59,6 @@ class VMath {
         }
     }
 }
-class IJK {
-    constructor(i, j, k) {
-        this.i = i;
-        this.j = j;
-        this.k = k;
-    }
-    isEqual(other) {
-        return this.i === other.i && this.j === other.j && this.k === other.k;
-    }
-    isTile() {
-        let odds = 0;
-        if (this.i % 2 === 1) {
-            odds++;
-        }
-        if (this.j % 2 === 1) {
-            odds++;
-        }
-        if (this.k % 2 === 1) {
-            odds++;
-        }
-        return odds === 2;
-    }
-    forEachAround(callback) {
-        callback(new IJK(this.i - 1, this.j, this.k));
-        callback(new IJK(this.i, this.j - 1, this.k));
-        callback(new IJK(this.i, this.j, this.k - 1));
-        callback(new IJK(this.i + 1, this.j, this.k));
-        callback(new IJK(this.i, this.j + 1, this.k));
-        callback(new IJK(this.i, this.j, this.k + 1));
-    }
-}
-class GalaxyTile extends BABYLON.TransformNode {
-    constructor(galaxy) {
-        super("galaxy-tile");
-        this.galaxy = galaxy;
-    }
-}
 class GalaxyItem extends BABYLON.Mesh {
     constructor(i, j, k, galaxy) {
         super("galaxy-item");
@@ -172,78 +135,7 @@ class GalaxyItem extends BABYLON.Mesh {
         }
     }
 }
-class Tile extends GalaxyItem {
-    constructor(i, j, k, galaxy) {
-        super(i, j, k, galaxy);
-        this.edges = [];
-        this.neighbours = [];
-        this._isValid = false;
-        this.name = "tile-" + i + "-" + j + "-" + k;
-        let ei0 = new IJK(this.i - 1, this.j, this.k);
-        if (this.galaxy.isIJKValid(ei0)) {
-            this.edges.push(ei0);
-        }
-        let ei1 = new IJK(this.i + 1, this.j, this.k);
-        if (this.galaxy.isIJKValid(ei1)) {
-            this.edges.push(ei1);
-        }
-        let ej0 = new IJK(this.i, this.j - 1, this.k);
-        if (this.galaxy.isIJKValid(ej0)) {
-            this.edges.push(ej0);
-        }
-        let ej1 = new IJK(this.i, this.j + 1, this.k);
-        if (this.galaxy.isIJKValid(ej1)) {
-            this.edges.push(ej1);
-        }
-        let ek0 = new IJK(this.i, this.j, this.k - 1);
-        if (this.galaxy.isIJKValid(ek0)) {
-            this.edges.push(ek0);
-        }
-        let ek1 = new IJK(this.i, this.j, this.k + 1);
-        if (this.galaxy.isIJKValid(ek1)) {
-            this.edges.push(ek1);
-        }
-    }
-    get isValid() {
-        return this._isValid;
-    }
-    updateNeighbours() {
-        this.neighbours = [];
-        for (let i = 0; i < this.edges.length; i++) {
-            let e = this.edges[i];
-            e.forEachAround(ijk => {
-                if (this.galaxy.isIJKValid(ijk)) {
-                    if (ijk.isTile()) {
-                        if (!ijk.isEqual(this.ijk)) {
-                            this.neighbours.push(this.galaxy.getItem(ijk));
-                        }
-                    }
-                }
-            });
-        }
-    }
-    instantiate() {
-        this.galaxy.templateTile.clone("clone", this);
-    }
-    setIsValid(v) {
-        if (v != this.isValid) {
-            if (this.isValid) {
-                if (this.isValidMesh) {
-                    this.isValidMesh.dispose();
-                    this.isValidMesh = undefined;
-                }
-            }
-            else {
-                this.isValidMesh = BABYLON.MeshBuilder.CreatePlane("", { size: 1.8 }, Main.Scene);
-                this.isValidMesh.parent = this;
-                this.isValidMesh.position.y = 0.05;
-                this.isValidMesh.rotation.x = Math.PI * 0.5;
-                this.isValidMesh.material = Main.greenMaterial;
-            }
-            this._isValid = v;
-        }
-    }
-}
+/// <reference path="GalaxyItem.ts"/>
 class Border extends GalaxyItem {
     constructor(i, j, k, galaxy) {
         super(i, j, k, galaxy);
@@ -270,31 +162,35 @@ class Border extends GalaxyItem {
         }
     }
 }
-class Plot extends GalaxyItem {
-    constructor(i, j, k, galaxy) {
-        super(i, j, k, galaxy);
-        this.name = "plot-" + i + "-" + j + "-" + k;
+class IJK {
+    constructor(i, j, k) {
+        this.i = i;
+        this.j = j;
+        this.k = k;
     }
-    instantiate() {
-        let edges = 0;
-        if (this.i === 0 || this.i === this.galaxy.width) {
-            edges++;
+    isEqual(other) {
+        return this.i === other.i && this.j === other.j && this.k === other.k;
+    }
+    isTile() {
+        let odds = 0;
+        if (this.i % 2 === 1) {
+            odds++;
         }
-        if (this.j === 0 || this.j === this.galaxy.height) {
-            edges++;
+        if (this.j % 2 === 1) {
+            odds++;
         }
-        if (this.k === 0 || this.k === this.galaxy.depth) {
-            edges++;
+        if (this.k % 2 === 1) {
+            odds++;
         }
-        if (edges === 1) {
-            this.galaxy.templatePole.clone("clone", this);
-        }
-        if (edges === 2) {
-            this.galaxy.templatePoleEdge.clone("clone", this);
-        }
-        if (edges === 3) {
-            this.galaxy.templatePoleCorner.clone("clone", this);
-        }
+        return odds === 2;
+    }
+    forEachAround(callback) {
+        callback(new IJK(this.i - 1, this.j, this.k));
+        callback(new IJK(this.i, this.j - 1, this.k));
+        callback(new IJK(this.i, this.j, this.k - 1));
+        callback(new IJK(this.i + 1, this.j, this.k));
+        callback(new IJK(this.i, this.j + 1, this.k));
+        callback(new IJK(this.i, this.j, this.k + 1));
     }
 }
 class Galaxy extends BABYLON.TransformNode {
@@ -510,3 +406,103 @@ window.addEventListener("load", async () => {
     await main.initialize();
     main.animate();
 });
+class Plot extends GalaxyItem {
+    constructor(i, j, k, galaxy) {
+        super(i, j, k, galaxy);
+        this.name = "plot-" + i + "-" + j + "-" + k;
+    }
+    instantiate() {
+        let edges = 0;
+        if (this.i === 0 || this.i === this.galaxy.width) {
+            edges++;
+        }
+        if (this.j === 0 || this.j === this.galaxy.height) {
+            edges++;
+        }
+        if (this.k === 0 || this.k === this.galaxy.depth) {
+            edges++;
+        }
+        if (edges === 1) {
+            this.galaxy.templatePole.clone("clone", this);
+        }
+        if (edges === 2) {
+            this.galaxy.templatePoleEdge.clone("clone", this);
+        }
+        if (edges === 3) {
+            this.galaxy.templatePoleCorner.clone("clone", this);
+        }
+    }
+}
+/// <reference path="GalaxyItem.ts"/>
+class Tile extends GalaxyItem {
+    constructor(i, j, k, galaxy) {
+        super(i, j, k, galaxy);
+        this.edges = [];
+        this.neighbours = [];
+        this._isValid = false;
+        this.name = "tile-" + i + "-" + j + "-" + k;
+        let ei0 = new IJK(this.i - 1, this.j, this.k);
+        if (this.galaxy.isIJKValid(ei0)) {
+            this.edges.push(ei0);
+        }
+        let ei1 = new IJK(this.i + 1, this.j, this.k);
+        if (this.galaxy.isIJKValid(ei1)) {
+            this.edges.push(ei1);
+        }
+        let ej0 = new IJK(this.i, this.j - 1, this.k);
+        if (this.galaxy.isIJKValid(ej0)) {
+            this.edges.push(ej0);
+        }
+        let ej1 = new IJK(this.i, this.j + 1, this.k);
+        if (this.galaxy.isIJKValid(ej1)) {
+            this.edges.push(ej1);
+        }
+        let ek0 = new IJK(this.i, this.j, this.k - 1);
+        if (this.galaxy.isIJKValid(ek0)) {
+            this.edges.push(ek0);
+        }
+        let ek1 = new IJK(this.i, this.j, this.k + 1);
+        if (this.galaxy.isIJKValid(ek1)) {
+            this.edges.push(ek1);
+        }
+    }
+    get isValid() {
+        return this._isValid;
+    }
+    updateNeighbours() {
+        this.neighbours = [];
+        for (let i = 0; i < this.edges.length; i++) {
+            let e = this.edges[i];
+            e.forEachAround(ijk => {
+                if (this.galaxy.isIJKValid(ijk)) {
+                    if (ijk.isTile()) {
+                        if (!ijk.isEqual(this.ijk)) {
+                            this.neighbours.push(this.galaxy.getItem(ijk));
+                        }
+                    }
+                }
+            });
+        }
+    }
+    instantiate() {
+        this.galaxy.templateTile.clone("clone", this);
+    }
+    setIsValid(v) {
+        if (v != this.isValid) {
+            if (this.isValid) {
+                if (this.isValidMesh) {
+                    this.isValidMesh.dispose();
+                    this.isValidMesh = undefined;
+                }
+            }
+            else {
+                this.isValidMesh = BABYLON.MeshBuilder.CreatePlane("", { size: 1.8 }, Main.Scene);
+                this.isValidMesh.parent = this;
+                this.isValidMesh.position.y = 0.05;
+                this.isValidMesh.rotation.x = Math.PI * 0.5;
+                this.isValidMesh.material = Main.greenMaterial;
+            }
+            this._isValid = v;
+        }
+    }
+}
