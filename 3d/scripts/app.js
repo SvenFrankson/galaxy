@@ -59,6 +59,37 @@ class VMath {
         }
     }
 }
+class IJK {
+    constructor(i, j, k) {
+        this.i = i;
+        this.j = j;
+        this.k = k;
+    }
+    isEqual(other) {
+        return this.i === other.i && this.j === other.j && this.k === other.k;
+    }
+    isTile() {
+        let odds = 0;
+        if (this.i % 2 === 1) {
+            odds++;
+        }
+        if (this.j % 2 === 1) {
+            odds++;
+        }
+        if (this.k % 2 === 1) {
+            odds++;
+        }
+        return odds === 2;
+    }
+    forEachAround(callback) {
+        callback(new IJK(this.i - 1, this.j, this.k));
+        callback(new IJK(this.i, this.j - 1, this.k));
+        callback(new IJK(this.i, this.j, this.k - 1));
+        callback(new IJK(this.i + 1, this.j, this.k));
+        callback(new IJK(this.i, this.j + 1, this.k));
+        callback(new IJK(this.i, this.j, this.k + 1));
+    }
+}
 class GalaxyTile extends BABYLON.TransformNode {
     constructor(galaxy) {
         super("galaxy-tile");
@@ -72,9 +103,13 @@ class GalaxyItem extends BABYLON.Mesh {
         this.j = j;
         this.k = k;
         this.galaxy = galaxy;
+        this._ijk = new IJK(i, j, k);
         this.parent = galaxy;
         this.position.copyFromFloats(i, j, k);
         this.updateRotation();
+    }
+    get ijk() {
+        return this._ijk;
     }
     static Create(i, j, k, galaxy) {
         let W = galaxy.width;
@@ -140,10 +175,73 @@ class GalaxyItem extends BABYLON.Mesh {
 class Tile extends GalaxyItem {
     constructor(i, j, k, galaxy) {
         super(i, j, k, galaxy);
+        this.edges = [];
+        this.neighbours = [];
+        this._isValid = false;
         this.name = "tile-" + i + "-" + j + "-" + k;
+        let ei0 = new IJK(this.i - 1, this.j, this.k);
+        if (this.galaxy.isIJKValid(ei0)) {
+            this.edges.push(ei0);
+        }
+        let ei1 = new IJK(this.i + 1, this.j, this.k);
+        if (this.galaxy.isIJKValid(ei1)) {
+            this.edges.push(ei1);
+        }
+        let ej0 = new IJK(this.i, this.j - 1, this.k);
+        if (this.galaxy.isIJKValid(ej0)) {
+            this.edges.push(ej0);
+        }
+        let ej1 = new IJK(this.i, this.j + 1, this.k);
+        if (this.galaxy.isIJKValid(ej1)) {
+            this.edges.push(ej1);
+        }
+        let ek0 = new IJK(this.i, this.j, this.k - 1);
+        if (this.galaxy.isIJKValid(ek0)) {
+            this.edges.push(ek0);
+        }
+        let ek1 = new IJK(this.i, this.j, this.k + 1);
+        if (this.galaxy.isIJKValid(ek1)) {
+            this.edges.push(ek1);
+        }
+    }
+    get isValid() {
+        return this._isValid;
+    }
+    updateNeighbours() {
+        this.neighbours = [];
+        for (let i = 0; i < this.edges.length; i++) {
+            let e = this.edges[i];
+            e.forEachAround(ijk => {
+                if (this.galaxy.isIJKValid(ijk)) {
+                    if (ijk.isTile()) {
+                        if (!ijk.isEqual(this.ijk)) {
+                            this.neighbours.push(this.galaxy.getItem(ijk));
+                        }
+                    }
+                }
+            });
+        }
     }
     instantiate() {
         this.galaxy.templateTile.clone("clone", this);
+    }
+    setIsValid(v) {
+        if (v != this.isValid) {
+            if (this.isValid) {
+                if (this.isValidMesh) {
+                    this.isValidMesh.dispose();
+                    this.isValidMesh = undefined;
+                }
+            }
+            else {
+                this.isValidMesh = BABYLON.MeshBuilder.CreatePlane("", { size: 1.8 }, Main.Scene);
+                this.isValidMesh.parent = this;
+                this.isValidMesh.position.y = 0.05;
+                this.isValidMesh.rotation.x = Math.PI * 0.5;
+                this.isValidMesh.material = Main.greenMaterial;
+            }
+            this._isValid = v;
+        }
     }
 }
 class Border extends GalaxyItem {
@@ -206,6 +304,14 @@ class Galaxy extends BABYLON.TransformNode {
         this.height = 6;
         this.depth = 8;
     }
+    isIJKValid(ijk) {
+        if (ijk.i === 0 || ijk.i === this.width || ijk.j === 0 || ijk.j === this.height || ijk.k === 0 || ijk.k === this.depth) {
+            if (ijk.i >= 0 && ijk.i <= this.width && ijk.j >= 0 && ijk.j <= this.height && ijk.k >= 0 && ijk.k <= this.depth) {
+                return true;
+            }
+        }
+        return false;
+    }
     async initialize() {
         this.templateTile = await Main.loadMeshes("tile-lp");
         this.templatePole = await Main.loadMeshes("pole");
@@ -229,14 +335,41 @@ class Galaxy extends BABYLON.TransformNode {
                 }
             }
         }
+        for (let i = 0; i <= this.width; i++) {
+            for (let j = 0; j <= this.height; j++) {
+                for (let k = 0; k <= this.depth; k++) {
+                    let item = this.getItem(i, j, k);
+                    if (item && item instanceof Tile) {
+                        item.updateNeighbours();
+                        if (item.neighbours.length != 4) {
+                            console.log("Potentiel error with neighbour detection. " + item.neighbours.length + " detected. Expected 4.");
+                            console.log("Check " + i + " " + j + " " + k);
+                        }
+                    }
+                }
+            }
+        }
         Main.Scene.onPointerObservable.add((eventData) => {
             if (eventData.type === BABYLON.PointerEventTypes.POINTERDOWN) {
                 this.onPointerDown();
             }
         });
     }
-    getItem(ijk) {
-        return this.items[ijk.i][ijk.j][ijk.k];
+    getItem(a, j, k) {
+        let i;
+        if (a instanceof IJK) {
+            i = a.i;
+            j = a.j;
+            k = a.k;
+        }
+        else {
+            i = a;
+        }
+        if (this.items[i]) {
+            if (this.items[i][j]) {
+                return this.items[i][j][k];
+            }
+        }
     }
     setItem(ijk, item) {
         this.items[ijk.i][ijk.j][ijk.k] = item;
@@ -245,7 +378,7 @@ class Galaxy extends BABYLON.TransformNode {
         let i = Math.round(worldPosition.x + this.width * 0.5);
         let j = Math.round(worldPosition.y + this.height * 0.5);
         let k = Math.round(worldPosition.z + this.depth * 0.5);
-        return { i: i, j: j, k: k };
+        return new IJK(i, j, k);
     }
     onPointerDown() {
         let pick = Main.Scene.pick(Main.Scene.pointerX, Main.Scene.pointerY);
@@ -272,6 +405,13 @@ class Galaxy extends BABYLON.TransformNode {
                     border.instantiate();
                     this.setItem(ijk, border);
                 }
+            }
+            else if (odds === 2) {
+                let item = this.getItem(ijk);
+                item.setIsValid(!item.isValid);
+                item.neighbours.forEach(t => {
+                    t.setIsValid(!t.isValid);
+                });
             }
         }
     }
