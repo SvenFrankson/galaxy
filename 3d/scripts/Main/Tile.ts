@@ -24,25 +24,34 @@ class Tile extends GalaxyItem {
         if (this.galaxy.isIJKValid(ei0)) {
             this.edges.push(ei0);
         }
-        let ei1 = new IJK(this.i + 1, this.j, this.k);
-        if (this.galaxy.isIJKValid(ei1)) {
-            this.edges.push(ei1);
+        let ek0 = new IJK(this.i, this.j, this.k - 1);
+        if (this.galaxy.isIJKValid(ek0)) {
+            this.edges.push(ek0);
         }
         let ej0 = new IJK(this.i, this.j - 1, this.k);
         if (this.galaxy.isIJKValid(ej0)) {
             this.edges.push(ej0);
         }
-        let ej1 = new IJK(this.i, this.j + 1, this.k);
-        if (this.galaxy.isIJKValid(ej1)) {
-            this.edges.push(ej1);
-        }
-        let ek0 = new IJK(this.i, this.j, this.k - 1);
-        if (this.galaxy.isIJKValid(ek0)) {
-            this.edges.push(ek0);
+        let ei1 = new IJK(this.i + 1, this.j, this.k);
+        if (this.galaxy.isIJKValid(ei1)) {
+            this.edges.push(ei1);
         }
         let ek1 = new IJK(this.i, this.j, this.k + 1);
         if (this.galaxy.isIJKValid(ek1)) {
             this.edges.push(ek1);
+        }
+        let ej1 = new IJK(this.i, this.j + 1, this.k);
+        if (this.galaxy.isIJKValid(ej1)) {
+            this.edges.push(ej1);
+        }
+
+        if (this.i === this.galaxy.width || this.j === this.galaxy.height || this.k === 0) {
+            this.edges = [
+                this.edges[3],
+                this.edges[2],
+                this.edges[1],
+                this.edges[0]
+            ]
         }
     }
 

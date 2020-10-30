@@ -137,6 +137,19 @@ class Galaxy extends BABYLON.TransformNode {
         this.items[ijk.i][ijk.j][ijk.k] = item;
     }
 
+    public toggleBorder(ijk: IJK): void {
+        let item = this.getItem(ijk);
+        if (item) {
+            item.dispose();
+            this.setItem(ijk, undefined);
+        }
+        else {
+            let border = new Border(ijk.i, ijk.j, ijk.k, this);
+            border.instantiate();
+            this.setItem(ijk, border);
+        }
+    }
+
     public worldPositionToIJK(worldPosition: BABYLON.Vector3): IJK {
         let i = Math.round(worldPosition.x + this.width * 0.5);
         let j = Math.round(worldPosition.y + this.height * 0.5);
@@ -165,16 +178,7 @@ class Galaxy extends BABYLON.TransformNode {
             }
 
             if (odds === 1) {
-                let item = this.getItem(ijk);
-                if (item) {
-                    item.dispose();
-                    this.setItem(ijk, undefined);
-                }
-                else {
-                    let border = new Border(ijk.i, ijk.j, ijk.k, this);
-                    border.instantiate();
-                    this.setItem(ijk, border);
-                }
+                this.toggleBorder(ijk);
             }
             else if (odds === 2) {
                 let item = this.getItem(ijk) as Tile;
@@ -182,6 +186,15 @@ class Galaxy extends BABYLON.TransformNode {
                 item.neighbours.forEach(t => {
                     t.setIsValid(!t.isValid);
                 })
+                for (let i = 0; i < 4; i++) {
+                    let e = item.edges[i];
+                    setTimeout(
+                        () => {
+                            this.toggleBorder(e);
+                        },
+                        1000 * i
+                    );
+                }
             }
         }
     }

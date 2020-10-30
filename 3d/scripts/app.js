@@ -270,6 +270,18 @@ class Galaxy extends BABYLON.TransformNode {
     setItem(ijk, item) {
         this.items[ijk.i][ijk.j][ijk.k] = item;
     }
+    toggleBorder(ijk) {
+        let item = this.getItem(ijk);
+        if (item) {
+            item.dispose();
+            this.setItem(ijk, undefined);
+        }
+        else {
+            let border = new Border(ijk.i, ijk.j, ijk.k, this);
+            border.instantiate();
+            this.setItem(ijk, border);
+        }
+    }
     worldPositionToIJK(worldPosition) {
         let i = Math.round(worldPosition.x + this.width * 0.5);
         let j = Math.round(worldPosition.y + this.height * 0.5);
@@ -291,16 +303,7 @@ class Galaxy extends BABYLON.TransformNode {
                 odds++;
             }
             if (odds === 1) {
-                let item = this.getItem(ijk);
-                if (item) {
-                    item.dispose();
-                    this.setItem(ijk, undefined);
-                }
-                else {
-                    let border = new Border(ijk.i, ijk.j, ijk.k, this);
-                    border.instantiate();
-                    this.setItem(ijk, border);
-                }
+                this.toggleBorder(ijk);
             }
             else if (odds === 2) {
                 let item = this.getItem(ijk);
@@ -308,6 +311,12 @@ class Galaxy extends BABYLON.TransformNode {
                 item.neighbours.forEach(t => {
                     t.setIsValid(!t.isValid);
                 });
+                for (let i = 0; i < 4; i++) {
+                    let e = item.edges[i];
+                    setTimeout(() => {
+                        this.toggleBorder(e);
+                    }, 1000 * i);
+                }
             }
         }
     }
@@ -445,25 +454,33 @@ class Tile extends GalaxyItem {
         if (this.galaxy.isIJKValid(ei0)) {
             this.edges.push(ei0);
         }
-        let ei1 = new IJK(this.i + 1, this.j, this.k);
-        if (this.galaxy.isIJKValid(ei1)) {
-            this.edges.push(ei1);
+        let ek0 = new IJK(this.i, this.j, this.k - 1);
+        if (this.galaxy.isIJKValid(ek0)) {
+            this.edges.push(ek0);
         }
         let ej0 = new IJK(this.i, this.j - 1, this.k);
         if (this.galaxy.isIJKValid(ej0)) {
             this.edges.push(ej0);
         }
-        let ej1 = new IJK(this.i, this.j + 1, this.k);
-        if (this.galaxy.isIJKValid(ej1)) {
-            this.edges.push(ej1);
-        }
-        let ek0 = new IJK(this.i, this.j, this.k - 1);
-        if (this.galaxy.isIJKValid(ek0)) {
-            this.edges.push(ek0);
+        let ei1 = new IJK(this.i + 1, this.j, this.k);
+        if (this.galaxy.isIJKValid(ei1)) {
+            this.edges.push(ei1);
         }
         let ek1 = new IJK(this.i, this.j, this.k + 1);
         if (this.galaxy.isIJKValid(ek1)) {
             this.edges.push(ek1);
+        }
+        let ej1 = new IJK(this.i, this.j + 1, this.k);
+        if (this.galaxy.isIJKValid(ej1)) {
+            this.edges.push(ej1);
+        }
+        if (this.i === this.galaxy.width || this.j === this.galaxy.height || this.k === 0) {
+            this.edges = [
+                this.edges[3],
+                this.edges[2],
+                this.edges[1],
+                this.edges[0]
+            ];
         }
     }
     get isValid() {
