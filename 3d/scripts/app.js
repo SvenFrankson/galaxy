@@ -311,6 +311,7 @@ class Galaxy extends BABYLON.TransformNode {
                 item.neighbours.forEach(t => {
                     t.setIsValid(!t.isValid);
                 });
+                alert(item.getFootPrint(item.edges[0]));
                 for (let i = 0; i < 4; i++) {
                     let e = item.edges[i];
                     setTimeout(() => {
@@ -521,5 +522,13 @@ class Tile extends GalaxyItem {
             }
             this._isValid = v;
         }
+    }
+    getFootPrint(ijk) {
+        let i0 = this.edges.findIndex(e => { return e.isEqual(ijk); });
+        let footprint = "";
+        for (let i = 1; i <= 3; i++) {
+            footprint += this.galaxy.getItem(this.edges[(i0 + i) % 4]) ? "0" : "1";
+        }
+        return footprint;
     }
 }

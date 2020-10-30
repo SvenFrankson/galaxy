@@ -93,4 +93,13 @@ class Tile extends GalaxyItem {
             this._isValid = v;
         }
     }
+
+    public getFootPrint(ijk: IJK): string {
+        let i0 = this.edges.findIndex(e => { return e.isEqual(ijk); });
+        let footprint = "";
+        for (let i = 1; i <= 3; i++) {
+            footprint += this.galaxy.getItem(this.edges[(i0 + i) % 4]) ? "0" : "1";
+        }
+        return footprint;
+    }
 }

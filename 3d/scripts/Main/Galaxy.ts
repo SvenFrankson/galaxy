@@ -185,7 +185,8 @@ class Galaxy extends BABYLON.TransformNode {
                 item.setIsValid(!item.isValid);
                 item.neighbours.forEach(t => {
                     t.setIsValid(!t.isValid);
-                })
+                });
+                alert(item.getFootPrint(item.edges[0]));
                 for (let i = 0; i < 4; i++) {
                     let e = item.edges[i];
                     setTimeout(
