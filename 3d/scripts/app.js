@@ -218,6 +218,7 @@ class Galaxy extends BABYLON.TransformNode {
     instantiate() {
         this.position.copyFromFloats(-this.width * 0.5, -this.height * 0.5, -this.depth * 0.5);
         this.items = [];
+        this.tiles = [];
         for (let i = 0; i <= this.width; i++) {
             this.items[i] = [];
             for (let j = 0; j <= this.height; j++) {
@@ -226,6 +227,10 @@ class Galaxy extends BABYLON.TransformNode {
                     let item = GalaxyItem.Create(i, j, k, this);
                     if (item) {
                         this.items[i][j][k] = item;
+                        if (item instanceof Tile) {
+                            this.tiles.push(item);
+                            item.hasOrb = Math.random() < 0.05;
+                        }
                         item.instantiate();
                     }
                 }
@@ -250,6 +255,62 @@ class Galaxy extends BABYLON.TransformNode {
                 this.onPointerDown();
             }
         });
+    }
+    updateZones() {
+        this.zones = [];
+        let tiles = [...this.tiles];
+        while (tiles.length > 0) {
+            let tile = tiles.pop();
+            let zone = [];
+            this.addToZone(zone, tile, tiles);
+            this.zones.push(zone);
+        }
+        for (let i = 0; i < this.zones.length; i++) {
+            let zone = this.zones[i];
+            if (this.isZoneValid(zone)) {
+                zone.forEach(t => {
+                    t.setIsValid(true);
+                });
+            }
+            else {
+                zone.forEach(t => {
+                    t.setIsValid(false);
+                });
+            }
+        }
+    }
+    isZoneValid(zone) {
+        let orbTile;
+        for (let i = 0; i < zone.length; i++) {
+            let tile = zone[i];
+            if (tile.hasOrb) {
+                if (!orbTile) {
+                    orbTile = tile;
+                }
+                else {
+                    return false;
+                }
+            }
+        }
+        if (orbTile) {
+            return true;
+        }
+    }
+    addToZone(zone, tile, tiles) {
+        if (zone.indexOf(tile) === -1) {
+            zone.push(tile);
+        }
+        for (let i = 0; i < tile.neighbours.length; i++) {
+            let edge = tile.edges[i];
+            if (!this.getItem(edge)) {
+                let other = tile.neighbours[i];
+                let index = tiles.indexOf(other);
+                if (index != -1) {
+                    tiles.splice(index, 1);
+                    this.addToZone(zone, other, tiles);
+                }
+            }
+        }
     }
     getItem(a, j, k) {
         let i;
@@ -304,20 +365,15 @@ class Galaxy extends BABYLON.TransformNode {
             }
             if (odds === 1) {
                 this.toggleBorder(ijk);
+                this.updateZones();
             }
             else if (odds === 2) {
                 let item = this.getItem(ijk);
-                item.setIsValid(!item.isValid);
-                item.neighbours.forEach(t => {
-                    t.setIsValid(!t.isValid);
-                });
-                alert(item.getFootPrint(item.edges[0]));
                 for (let i = 0; i < 4; i++) {
                     let e = item.edges[i];
-                    setTimeout(() => {
-                        this.toggleBorder(e);
-                    }, 1000 * i);
+                    this.toggleBorder(e);
                 }
+                this.updateZones();
             }
         }
     }
@@ -450,6 +506,7 @@ class Tile extends GalaxyItem {
         this.edges = [];
         this.neighbours = [];
         this._isValid = false;
+        this.hasOrb = false;
         this.name = "tile-" + i + "-" + j + "-" + k;
         let ei0 = new IJK(this.i - 1, this.j, this.k);
         if (this.galaxy.isIJKValid(ei0)) {
@@ -504,6 +561,12 @@ class Tile extends GalaxyItem {
     }
     instantiate() {
         this.galaxy.templateTile.clone("clone", this);
+        if (this.hasOrb) {
+            this.orbMesh = BABYLON.MeshBuilder.CreateSphere("orb", { segments: 8, diameter: 0.5 }, Main.Scene);
+            this.orbMesh.parent = this;
+            this.orbMesh.position.y = 0.5;
+            this.orbMesh.material = Main.blueMaterial;
+        }
     }
     setIsValid(v) {
         if (v != this.isValid) {

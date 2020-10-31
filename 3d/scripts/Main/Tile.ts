@@ -10,6 +10,9 @@ class Tile extends GalaxyItem {
     public get isValid(): boolean {
         return this._isValid;
     }
+    
+    public hasOrb: boolean = false;
+    public orbMesh: BABYLON.Mesh;
 
     constructor(
         i: number,
@@ -73,6 +76,12 @@ class Tile extends GalaxyItem {
 
     public instantiate(): void {
         this.galaxy.templateTile.clone("clone", this);
+        if (this.hasOrb) {
+            this.orbMesh = BABYLON.MeshBuilder.CreateSphere("orb", { segments: 8, diameter: 0.5 }, Main.Scene);
+            this.orbMesh.parent = this;
+            this.orbMesh.position.y = 0.5;
+            this.orbMesh.material = Main.blueMaterial;
+        }
     }
 
     public setIsValid(v: boolean): void {
