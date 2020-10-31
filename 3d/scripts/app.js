@@ -162,6 +162,12 @@ class Border extends GalaxyItem {
         }
     }
 }
+var ZoneStatus;
+(function (ZoneStatus) {
+    ZoneStatus[ZoneStatus["None"] = 0] = "None";
+    ZoneStatus[ZoneStatus["Valid"] = 1] = "Valid";
+    ZoneStatus[ZoneStatus["Invalid"] = 2] = "Invalid";
+})(ZoneStatus || (ZoneStatus = {}));
 class IJK {
     constructor(i, j, k) {
         this.i = i;
@@ -267,17 +273,12 @@ class Galaxy extends BABYLON.TransformNode {
         }
         for (let i = 0; i < this.zones.length; i++) {
             let zone = this.zones[i];
-            if (this.isZoneValid(zone)) {
-                zone.forEach(t => {
-                    t.setIsValid(true);
-                });
-            }
-            else {
-                zone.forEach(t => {
-                    t.setIsValid(false);
-                });
-            }
+            let zoneStatus = this.isZoneValid(zone);
+            zone.forEach(t => {
+                t.setIsValid(zoneStatus);
+            });
         }
+        console.log(this.zones.length + " zones detected.");
     }
     areSymetrical(tileA, edgeA, tileB, edgeB, tilesToConsider) {
         let footPrintA = tileA.getFootPrint(edgeA);
@@ -288,7 +289,7 @@ class Galaxy extends BABYLON.TransformNode {
         let footPrint = footPrintA;
         let output = true;
         for (let i = 0; i < 3; i++) {
-            if (footPrint[i] === "0") {
+            if (footPrint[i] === "1") {
                 let tileANext = tileA.getNeighbour(edgeA, i + 1);
                 let tileBNext = tileB.getNeighbour(edgeB, i + 1);
                 if (!tileANext || !tileBNext) {
@@ -314,7 +315,7 @@ class Galaxy extends BABYLON.TransformNode {
                     orbTile = tile;
                 }
                 else {
-                    return false;
+                    return ZoneStatus.None;
                 }
             }
         }
@@ -349,13 +350,19 @@ class Galaxy extends BABYLON.TransformNode {
                         let tileD = orbTile.neighbours[3];
                         let tileDIndex = tilesToConsider.indexOf(tileD);
                         tilesToConsider.splice(tileDIndex, 1);
-                        output = output && this.areSymetrical(tileC, e1, tileD, e3, tilesToConsider);
+                        output = this.areSymetrical(tileC, e1, tileD, e3, tilesToConsider);
                     }
-                    return output;
+                    if (output) {
+                        return ZoneStatus.Valid;
+                    }
+                    else {
+                        return ZoneStatus.Invalid;
+                    }
                 }
             }
+            return ZoneStatus.Invalid;
         }
-        return false;
+        return ZoneStatus.None;
     }
     addToZone(zone, tile, tiles) {
         if (zone.indexOf(tile) === -1) {
@@ -448,6 +455,7 @@ class Main {
         if (!Main._redMaterial) {
             Main._redMaterial = new BABYLON.StandardMaterial("red-material", Main.Scene);
             Main._redMaterial.diffuseColor.copyFromFloats(0.9, 0.1, 0.1);
+            Main._redMaterial.emissiveColor.copyFromFloats(0.45, 0.05, 0.05);
         }
         return Main._redMaterial;
     }
@@ -455,6 +463,7 @@ class Main {
         if (!Main._greenMaterial) {
             Main._greenMaterial = new BABYLON.StandardMaterial("green-material", Main.Scene);
             Main._greenMaterial.diffuseColor.copyFromFloats(0.1, 0.9, 0.1);
+            Main._greenMaterial.emissiveColor.copyFromFloats(0.05, 0.45, 0.05);
         }
         return Main._greenMaterial;
     }
@@ -462,6 +471,7 @@ class Main {
         if (!Main._blueMaterial) {
             Main._blueMaterial = new BABYLON.StandardMaterial("blue-material", Main.Scene);
             Main._blueMaterial.diffuseColor.copyFromFloats(0.1, 0.1, 0.9);
+            Main._blueMaterial.emissiveColor.copyFromFloats(0.05, 0.05, 0.45);
         }
         return Main._blueMaterial;
     }
@@ -469,6 +479,7 @@ class Main {
         if (!Main._whiteMaterial) {
             Main._whiteMaterial = new BABYLON.StandardMaterial("white-material", Main.Scene);
             Main._whiteMaterial.diffuseColor.copyFromFloats(0.9, 0.9, 0.9);
+            Main._whiteMaterial.emissiveColor.copyFromFloats(0.45, 0.45, 0.45);
         }
         return Main._whiteMaterial;
     }
@@ -558,7 +569,7 @@ class Tile extends GalaxyItem {
         super(i, j, k, galaxy);
         this.edges = [];
         this.neighbours = [];
-        this._isValid = false;
+        this._isValid = ZoneStatus.None;
         this.hasOrb = false;
         this.name = "tile-" + i + "-" + j + "-" + k;
         let ei0 = new IJK(this.i - 1, this.j, this.k);
@@ -623,20 +634,23 @@ class Tile extends GalaxyItem {
     }
     setIsValid(v) {
         if (v != this.isValid) {
-            if (this.isValid) {
-                if (this.isValidMesh) {
-                    this.isValidMesh.dispose();
-                    this.isValidMesh = undefined;
-                }
+            if (this.isValidMesh) {
+                this.isValidMesh.dispose();
+                this.isValidMesh = undefined;
             }
-            else {
+            this._isValid = v;
+            if (this.isValid != ZoneStatus.None) {
                 this.isValidMesh = BABYLON.MeshBuilder.CreatePlane("", { size: 1.8 }, Main.Scene);
                 this.isValidMesh.parent = this;
                 this.isValidMesh.position.y = 0.05;
                 this.isValidMesh.rotation.x = Math.PI * 0.5;
-                this.isValidMesh.material = Main.greenMaterial;
+                if (this.isValid === ZoneStatus.Valid) {
+                    this.isValidMesh.material = Main.greenMaterial;
+                }
+                else if (this.isValid === ZoneStatus.Invalid) {
+                    this.isValidMesh.material = Main.redMaterial;
+                }
             }
-            this._isValid = v;
         }
     }
     getFootPrint(ijk) {

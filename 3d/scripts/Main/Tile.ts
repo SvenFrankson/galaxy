@@ -5,9 +5,9 @@ class Tile extends GalaxyItem {
     public edges: IJK[] = [];
     public neighbours: Tile[] = [];
 
-    private _isValid: boolean = false;
+    private _isValid: ZoneStatus = ZoneStatus.None;
     public isValidMesh: BABYLON.Mesh;
-    public get isValid(): boolean {
+    public get isValid(): ZoneStatus {
         return this._isValid;
     }
     
@@ -84,22 +84,25 @@ class Tile extends GalaxyItem {
         }
     }
 
-    public setIsValid(v: boolean): void {
+    public setIsValid(v: ZoneStatus): void {
         if (v != this.isValid) {
-            if (this.isValid) {
-                if (this.isValidMesh) {
-                    this.isValidMesh.dispose();
-                    this.isValidMesh = undefined;
-                }
+            if (this.isValidMesh) {
+                this.isValidMesh.dispose();
+                this.isValidMesh = undefined;
             }
-            else {
+            this._isValid = v;
+            if (this.isValid != ZoneStatus.None) {
                 this.isValidMesh = BABYLON.MeshBuilder.CreatePlane("", { size: 1.8 }, Main.Scene);
                 this.isValidMesh.parent = this;
                 this.isValidMesh.position.y = 0.05;
                 this.isValidMesh.rotation.x = Math.PI * 0.5;
-                this.isValidMesh.material = Main.greenMaterial;
+                if (this.isValid === ZoneStatus.Valid) {
+                    this.isValidMesh.material = Main.greenMaterial;
+                }
+                else if (this.isValid === ZoneStatus.Invalid) {
+                    this.isValidMesh.material = Main.redMaterial;
+                }
             }
-            this._isValid = v;
         }
     }
 

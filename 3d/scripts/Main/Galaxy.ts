@@ -1,3 +1,9 @@
+enum ZoneStatus {
+    None,
+    Valid,
+    Invalid
+}
+
 class IJK {
     
     constructor(
@@ -133,17 +139,13 @@ class Galaxy extends BABYLON.TransformNode {
 
         for (let i = 0; i < this.zones.length; i++) {
             let zone = this.zones[i];
-            if (this.isZoneValid(zone)) {
-                zone.forEach(t => {
-                    t.setIsValid(true);
-                })
-            }
-            else {
-                zone.forEach(t => {
-                    t.setIsValid(false);
-                })
-            }
+            let zoneStatus = this.isZoneValid(zone);
+            zone.forEach(t => {
+                t.setIsValid(zoneStatus);
+            })
         }
+
+        console.log(this.zones.length + " zones detected.");
     }
 
     public areSymetrical(tileA: Tile, edgeA: IJK, tileB: Tile, edgeB: IJK, tilesToConsider: Tile[]): boolean {
@@ -155,7 +157,7 @@ class Galaxy extends BABYLON.TransformNode {
         let footPrint = footPrintA;
         let output = true;
         for (let i = 0; i < 3; i++) {
-            if (footPrint[i] === "0") {
+            if (footPrint[i] === "1") {
                 let tileANext = tileA.getNeighbour(edgeA, i + 1);
                 let tileBNext = tileB.getNeighbour(edgeB, i + 1);
                 if (!tileANext || !tileBNext) {
@@ -173,7 +175,7 @@ class Galaxy extends BABYLON.TransformNode {
         return output;
     }
 
-    public isZoneValid(zone: Tile[]): boolean {
+    public isZoneValid(zone: Tile[]): ZoneStatus {
         let orbTile: Tile;
         for (let i = 0; i < zone.length; i++) {
             let tile = zone[i];
@@ -182,7 +184,7 @@ class Galaxy extends BABYLON.TransformNode {
                     orbTile = tile;
                 }
                 else {
-                    return false;
+                    return ZoneStatus.None;
                 }
             }
         }
@@ -219,13 +221,19 @@ class Galaxy extends BABYLON.TransformNode {
                         let tileD = orbTile.neighbours[3];
                         let tileDIndex = tilesToConsider.indexOf(tileD);
                         tilesToConsider.splice(tileDIndex, 1);
-                        output = output && this.areSymetrical(tileC, e1, tileD, e3, tilesToConsider);
+                        output = this.areSymetrical(tileC, e1, tileD, e3, tilesToConsider);
                     }
-                    return output;
+                    if (output) {
+                        return ZoneStatus.Valid;
+                    }
+                    else {
+                        return ZoneStatus.Invalid;
+                    }
                 }
             }
+            return ZoneStatus.Invalid;
         }
-        return false;
+        return ZoneStatus.None;
     }
 
     private addToZone(zone: Tile[], tile: Tile, tiles: Tile[]): void {
