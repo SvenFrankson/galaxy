@@ -160,8 +160,22 @@ class Galaxy extends BABYLON.TransformNode {
             }
         }
         if (orbTile) {
-            return true;
+            let e0 = orbTile.edges[0];
+            let border0 = this.getItem(e0);
+            let e2 = orbTile.edges[2];
+            let border2 = this.getItem(e2);
+            let e1 = orbTile.edges[1];
+            let border1 = this.getItem(e1);
+            let e3 = orbTile.edges[3];
+            let border3 = this.getItem(e3);
+
+            if (border0 && border2 || !border0 && !border2) {
+                if (border1 && border3 || !border1 && !border3) {
+                    return true;
+                }
+            }
         }
+        return false;
     }
 
     private addToZone(zone: Tile[], tile: Tile, tiles: Tile[]): void {

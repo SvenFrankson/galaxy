@@ -293,8 +293,21 @@ class Galaxy extends BABYLON.TransformNode {
             }
         }
         if (orbTile) {
-            return true;
+            let e0 = orbTile.edges[0];
+            let border0 = this.getItem(e0);
+            let e2 = orbTile.edges[2];
+            let border2 = this.getItem(e2);
+            let e1 = orbTile.edges[1];
+            let border1 = this.getItem(e1);
+            let e3 = orbTile.edges[3];
+            let border3 = this.getItem(e3);
+            if (border0 && border2 || !border0 && !border2) {
+                if (border1 && border3 || !border1 && !border3) {
+                    return true;
+                }
+            }
         }
+        return false;
     }
     addToZone(zone, tile, tiles) {
         if (zone.indexOf(tile) === -1) {
@@ -365,14 +378,6 @@ class Galaxy extends BABYLON.TransformNode {
             }
             if (odds === 1) {
                 this.toggleBorder(ijk);
-                this.updateZones();
-            }
-            else if (odds === 2) {
-                let item = this.getItem(ijk);
-                for (let i = 0; i < 4; i++) {
-                    let e = item.edges[i];
-                    this.toggleBorder(e);
-                }
                 this.updateZones();
             }
         }
