@@ -146,6 +146,33 @@ class Galaxy extends BABYLON.TransformNode {
         }
     }
 
+    public areSymetrical(tileA: Tile, edgeA: IJK, tileB: Tile, edgeB: IJK, tilesToConsider: Tile[]): boolean {
+        let footPrintA = tileA.getFootPrint(edgeA);
+        let footPrintB = tileB.getFootPrint(edgeB);
+        if (footPrintA != footPrintB) {
+            return false;
+        }
+        let footPrint = footPrintA;
+        let output = true;
+        for (let i = 0; i < 3; i++) {
+            if (footPrint[i] === "0") {
+                let tileANext = tileA.getNeighbour(edgeA, i + 1);
+                let tileBNext = tileB.getNeighbour(edgeB, i + 1);
+                if (!tileANext || !tileBNext) {
+                    debugger;
+                }
+                let tileANextIndex = tilesToConsider.indexOf(tileANext);
+                let tileBNextIndex = tilesToConsider.indexOf(tileBNext);
+                if (tileANextIndex != -1 && tileBNextIndex != -1) {
+                    tilesToConsider.splice(tileANextIndex, 1);
+                    tilesToConsider.splice(tileBNextIndex, 1);
+                    output = output && this.areSymetrical(tileANext, tileA.getNextEdge(edgeA, i + 1), tileBNext, tileB.getNextEdge(edgeB, i + 1), tilesToConsider);
+                }
+            }
+        }
+        return output;
+    }
+
     public isZoneValid(zone: Tile[]): boolean {
         let orbTile: Tile;
         for (let i = 0; i < zone.length; i++) {
@@ -169,9 +196,32 @@ class Galaxy extends BABYLON.TransformNode {
             let e3 = orbTile.edges[3];
             let border3 = this.getItem(e3);
 
+            let tilesToConsider = [...zone];
+            let orbTileIndex = tilesToConsider.indexOf(orbTile);
+            tilesToConsider.splice(orbTileIndex, 1);
+
             if (border0 && border2 || !border0 && !border2) {
                 if (border1 && border3 || !border1 && !border3) {
-                    return true;
+                    let output = true;
+                    if (!border0) {
+                        let tileA = orbTile.neighbours[0];
+                        let tileAIndex = tilesToConsider.indexOf(tileA);
+                        tilesToConsider.splice(tileAIndex, 1);
+                        let tileB = orbTile.neighbours[2];
+                        let tileBIndex = tilesToConsider.indexOf(tileB);
+                        tilesToConsider.splice(tileBIndex, 1);
+                        output = output && this.areSymetrical(tileA, e0, tileB, e2, tilesToConsider);
+                    }
+                    if (output && !border1 && tilesToConsider.length > 0) {
+                        let tileC = orbTile.neighbours[1];
+                        let tileCIndex = tilesToConsider.indexOf(tileC);
+                        tilesToConsider.splice(tileCIndex, 1);
+                        let tileD = orbTile.neighbours[3];
+                        let tileDIndex = tilesToConsider.indexOf(tileD);
+                        tilesToConsider.splice(tileDIndex, 1);
+                        output = output && this.areSymetrical(tileC, e1, tileD, e3, tilesToConsider);
+                    }
+                    return output;
                 }
             }
         }

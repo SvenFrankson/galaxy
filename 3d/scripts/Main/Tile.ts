@@ -111,4 +111,31 @@ class Tile extends GalaxyItem {
         }
         return footprint;
     }
+
+    public getEdgeIndex(ijk: IJK): number {
+        for (let i = 0; i < this.edges.length; i++) {
+            if (this.edges[i].isEqual(ijk)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    public getNextEdge(ijk: IJK, offset: number = 1): IJK {
+        let index = this.getEdgeIndex(ijk);
+        if (index != -1) {
+            index = (index + offset) % 4;
+            return this.edges[index];
+        }
+        return undefined;
+    }
+
+    public getNeighbour(ijk: IJK, offset: number): Tile {
+        let index = this.getEdgeIndex(ijk);
+        if (index != -1) {
+            index = (index + offset) % 4;
+            return this.neighbours[index];
+        }
+        return undefined;
+    }
 }
