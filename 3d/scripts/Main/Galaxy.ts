@@ -120,9 +120,18 @@ class Galaxy extends BABYLON.TransformNode {
             }
         }
 
+        let pointerDownX: number = NaN;
+        let pointerDownY: number = NaN;
         Main.Scene.onPointerObservable.add((eventData: BABYLON.PointerInfo) => {
             if (eventData.type === BABYLON.PointerEventTypes.POINTERDOWN) {
-                this.onPointerDown();
+                pointerDownX = eventData.event.clientX;
+                pointerDownY = eventData.event.clientY;
+            }
+            if (eventData.type === BABYLON.PointerEventTypes.POINTERUP) {
+                let delta = Math.abs(pointerDownX - eventData.event.clientX) + Math.abs(pointerDownY - eventData.event.clientY);
+                if (delta < 10) {
+                    this.onPointerUp();
+                }
             }
         });
     }
@@ -297,7 +306,7 @@ class Galaxy extends BABYLON.TransformNode {
         return new IJK(i, j, k);
     }
 
-    public onPointerDown() {
+    public onPointerUp() {
         let pick = Main.Scene.pick(
             Main.Scene.pointerX,
             Main.Scene.pointerY

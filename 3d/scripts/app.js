@@ -256,9 +256,18 @@ class Galaxy extends BABYLON.TransformNode {
                 }
             }
         }
+        let pointerDownX = NaN;
+        let pointerDownY = NaN;
         Main.Scene.onPointerObservable.add((eventData) => {
             if (eventData.type === BABYLON.PointerEventTypes.POINTERDOWN) {
-                this.onPointerDown();
+                pointerDownX = eventData.event.clientX;
+                pointerDownY = eventData.event.clientY;
+            }
+            if (eventData.type === BABYLON.PointerEventTypes.POINTERUP) {
+                let delta = Math.abs(pointerDownX - eventData.event.clientX) + Math.abs(pointerDownY - eventData.event.clientY);
+                if (delta < 10) {
+                    this.onPointerUp();
+                }
             }
         });
     }
@@ -417,7 +426,7 @@ class Galaxy extends BABYLON.TransformNode {
         let k = Math.round(worldPosition.z + this.depth * 0.5);
         return new IJK(i, j, k);
     }
-    onPointerDown() {
+    onPointerUp() {
         let pick = Main.Scene.pick(Main.Scene.pointerX, Main.Scene.pointerY);
         if (pick && pick.hit) {
             let ijk = this.worldPositionToIJK(pick.pickedPoint);
