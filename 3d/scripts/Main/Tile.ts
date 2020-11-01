@@ -84,6 +84,19 @@ class Tile extends GalaxyItem {
         }
     }
 
+    public refresh(): void {
+        if (this.orbMesh) {
+            this.orbMesh.dispose();
+            this.orbMesh = undefined;
+        }
+        if (this.hasOrb) {
+            this.orbMesh = BABYLON.MeshBuilder.CreateSphere("orb", { segments: 8, diameter: 0.5 }, Main.Scene);
+            this.orbMesh.parent = this;
+            this.orbMesh.position.y = 0.5;
+            this.orbMesh.material = Main.blueMaterial;
+        }
+    }
+
     public setIsValid(v: ZoneStatus): void {
         if (v != this.isValid) {
             if (this.isValidMesh) {

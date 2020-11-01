@@ -58,6 +58,8 @@ class Galaxy extends BABYLON.TransformNode {
     public tiles: Tile[];
     public zones: Tile[][];
 
+    public editionMode: boolean = false;
+
     constructor() {
         super("galaxy");
     }
@@ -79,6 +81,30 @@ class Galaxy extends BABYLON.TransformNode {
 		this.templateLightning = await Main.loadMeshes("lightning");
     }
 
+    public async loadLevel(fileName: string): Promise<void> {
+        return new Promise<void>(resolve => {
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', "assets/levels/" + fileName);
+            xhr.onload = () => {
+                let data = JSON.parse(xhr.responseText);
+                this.width = data.width;
+                this.height = data.height;
+                this.depth = data.depth;
+                this.instantiate();
+                for (let i = 0; i < data.orbTiles.length; i++) {
+                    let orbTile = data.orbTiles[i];
+                    let tile = this.getItem(orbTile.i, orbTile.j, orbTile.k);
+                    if (tile && tile instanceof Tile) {
+                        tile.hasOrb = true;
+                        tile.refresh();
+                    }
+                }
+                resolve();
+            }
+            xhr.send();
+        });
+    }
+
     public instantiate() {
         this.position.copyFromFloats(
             - this.width * 0.5,
@@ -97,7 +123,6 @@ class Galaxy extends BABYLON.TransformNode {
                         this.items[i][j][k] = item;
                         if (item instanceof Tile) {
                             this.tiles.push(item);
-                            item.hasOrb = Math.random() < 0.05;
                         }
                         item.instantiate();
                     }
@@ -329,6 +354,34 @@ class Galaxy extends BABYLON.TransformNode {
                 this.toggleBorder(ijk);
                 this.updateZones();
             }
+            if (odds === 2 && this.editionMode) {
+                let item = this.getItem(ijk);
+                if (item instanceof Tile) {
+                    item.hasOrb = !item.hasOrb;
+                    item.refresh();
+                    this.updateZones();
+                }
+            }
         }
+    }
+
+    public serialize(): any {
+        let data: any = {};
+        data.width = this.width;
+        data.height = this.height;
+        data.depth = this.depth;
+        data.orbTiles = [];
+        this.tiles.forEach(t => {
+            if (t.hasOrb) {
+                data.orbTiles.push(
+                    {
+                        i: t.i,
+                        j: t.j,
+                        k: t.k
+                    }
+                )
+            }
+        });
+        return data;
     }
 }

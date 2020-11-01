@@ -115,7 +115,7 @@ class Main {
 
 		let galaxy = new Galaxy();
 		await galaxy.initialize();
-		galaxy.instantiate();
+		galaxy.loadLevel("level-1.json");
     }
 
     public animate(): void {

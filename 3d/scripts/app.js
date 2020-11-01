@@ -205,6 +205,7 @@ class Galaxy extends BABYLON.TransformNode {
         this.width = 10;
         this.height = 6;
         this.depth = 8;
+        this.editionMode = false;
     }
     isIJKValid(ijk) {
         if (ijk.i === 0 || ijk.i === this.width || ijk.j === 0 || ijk.j === this.height || ijk.k === 0 || ijk.k === this.depth) {
@@ -221,6 +222,29 @@ class Galaxy extends BABYLON.TransformNode {
         this.templatePoleCorner = await Main.loadMeshes("pole");
         this.templateLightning = await Main.loadMeshes("lightning");
     }
+    async loadLevel(fileName) {
+        return new Promise(resolve => {
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', "assets/levels/" + fileName);
+            xhr.onload = () => {
+                let data = JSON.parse(xhr.responseText);
+                this.width = data.width;
+                this.height = data.height;
+                this.depth = data.depth;
+                this.instantiate();
+                for (let i = 0; i < data.orbTiles.length; i++) {
+                    let orbTile = data.orbTiles[i];
+                    let tile = this.getItem(orbTile.i, orbTile.j, orbTile.k);
+                    if (tile && tile instanceof Tile) {
+                        tile.hasOrb = true;
+                        tile.refresh();
+                    }
+                }
+                resolve();
+            };
+            xhr.send();
+        });
+    }
     instantiate() {
         this.position.copyFromFloats(-this.width * 0.5, -this.height * 0.5, -this.depth * 0.5);
         this.items = [];
@@ -235,7 +259,6 @@ class Galaxy extends BABYLON.TransformNode {
                         this.items[i][j][k] = item;
                         if (item instanceof Tile) {
                             this.tiles.push(item);
-                            item.hasOrb = Math.random() < 0.05;
                         }
                         item.instantiate();
                     }
@@ -444,7 +467,32 @@ class Galaxy extends BABYLON.TransformNode {
                 this.toggleBorder(ijk);
                 this.updateZones();
             }
+            if (odds === 2 && this.editionMode) {
+                let item = this.getItem(ijk);
+                if (item instanceof Tile) {
+                    item.hasOrb = !item.hasOrb;
+                    item.refresh();
+                    this.updateZones();
+                }
+            }
         }
+    }
+    serialize() {
+        let data = {};
+        data.width = this.width;
+        data.height = this.height;
+        data.depth = this.depth;
+        data.orbTiles = [];
+        this.tiles.forEach(t => {
+            if (t.hasOrb) {
+                data.orbTiles.push({
+                    i: t.i,
+                    j: t.j,
+                    k: t.k
+                });
+            }
+        });
+        return data;
     }
 }
 /// <reference path="../../lib/babylon.d.ts"/>
@@ -529,7 +577,7 @@ class Main {
         Main.Light = new BABYLON.HemisphericLight("AmbientLight", new BABYLON.Vector3(1, 3, 2), Main.Scene);
         let galaxy = new Galaxy();
         await galaxy.initialize();
-        galaxy.instantiate();
+        galaxy.loadLevel("level-1.json");
     }
     animate() {
         Main.Engine.runRenderLoop(() => {
@@ -634,6 +682,18 @@ class Tile extends GalaxyItem {
     }
     instantiate() {
         this.galaxy.templateTile.clone("clone", this);
+        if (this.hasOrb) {
+            this.orbMesh = BABYLON.MeshBuilder.CreateSphere("orb", { segments: 8, diameter: 0.5 }, Main.Scene);
+            this.orbMesh.parent = this;
+            this.orbMesh.position.y = 0.5;
+            this.orbMesh.material = Main.blueMaterial;
+        }
+    }
+    refresh() {
+        if (this.orbMesh) {
+            this.orbMesh.dispose();
+            this.orbMesh = undefined;
+        }
         if (this.hasOrb) {
             this.orbMesh = BABYLON.MeshBuilder.CreateSphere("orb", { segments: 8, diameter: 0.5 }, Main.Scene);
             this.orbMesh.parent = this;
