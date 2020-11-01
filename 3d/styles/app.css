@@ -25,6 +25,23 @@ html, body {
     padding: 10px;
 }
 
+#level-selection {
+    position: fixed;
+    top: 20%;
+    left: 20%;
+    z-index: 1;
+    color: white;
+    background-color: black;
+    padding: 10px;
+}
+
+.level-btn {
+    height: 40px;
+    width: 200px;
+    font-size: 30px;
+    margin: 10px;
+}
+
 #btn-menu {
     height: 30px;
     font-size: 20px;

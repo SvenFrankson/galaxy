@@ -9,6 +9,7 @@ class Main {
     public static Engine: BABYLON.Engine;
     public static Scene: BABYLON.Scene;
 	public static Light: BABYLON.Light;
+	public static Galaxy: Galaxy;
 	private static _CameraPosition: BABYLON.Vector2;
 	public static get CameraPosition(): BABYLON.Vector2 {
 		if (!Main._CameraPosition) {
@@ -113,11 +114,50 @@ class Main {
 
         Main.Light = new BABYLON.HemisphericLight("AmbientLight", new BABYLON.Vector3(1, 3, 2), Main.Scene);
 
-		let galaxy = new Galaxy();
-		galaxy.editionMode = true;
-		await galaxy.initialize();
-		galaxy.loadLevel("level-1.json");
-    }
+		Main.Galaxy = new Galaxy();
+		await Main.Galaxy.initialize();
+
+		for (let i = 1; i <= 2; i++) {
+			document.getElementById("btn-level-" + i).onclick = () => {
+				Main.Galaxy.editionMode = false;
+				Main.Galaxy.loadLevel("level-" + i + ".json");
+				this.showUI();
+				this.hideLevelSelection();
+			}
+		}
+		document.getElementById("btn-editor").onclick = () => {
+			Main.Galaxy.editionMode = true;
+			Main.Galaxy.width = 4;
+			Main.Galaxy.height = 4;
+			Main.Galaxy.depth = 4;
+			Main.Galaxy.instantiate();
+			this.showUI();
+			this.hideLevelSelection();
+		}
+		document.getElementById("btn-menu").onclick = () => {
+			Main.Galaxy.clear();
+			this.hideUI();
+			this.showLevelSelection();
+		}
+		this.hideUI();
+		this.showLevelSelection();
+	}
+	
+	public showUI(): void {
+		document.getElementById("ui").style.display = "block";
+	}
+	
+	public hideUI(): void {
+		document.getElementById("ui").style.display = "none";
+	}
+	
+	public showLevelSelection(): void {
+		document.getElementById("level-selection").style.display = "block";
+	}
+	
+	public hideLevelSelection(): void {
+		document.getElementById("level-selection").style.display = "none";
+	}
 
     public animate(): void {
         Main.Engine.runRenderLoop(() => {

@@ -107,18 +107,22 @@ class Galaxy extends BABYLON.TransformNode {
         });
     }
 
-    public instantiate() {
+    public clear(): void {
         while (this.getChildren().length > 0) {
             let child = this.getChildren()[0];
             child.dispose();
         }
+        this.items = [];
+        this.tiles = [];
+    }
+
+    public instantiate() {
         this.position.copyFromFloats(
             - this.width * 0.5,
             - this.height * 0.5,
             - this.depth * 0.5
         );
-        this.items = [];
-        this.tiles = [];
+        this.clear();
         for (let i = 0; i <= this.width; i++) {
             this.items[i] = [];
             for (let j = 0; j <= this.height; j++) {
@@ -199,6 +203,7 @@ class Galaxy extends BABYLON.TransformNode {
         else {
             document.getElementById("editor-part").style.display = "none";
         }
+        this.updateZones();
     }
 
     public updateZones(): void {

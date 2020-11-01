@@ -259,14 +259,17 @@ class Galaxy extends BABYLON.TransformNode {
             xhr.send();
         });
     }
-    instantiate() {
+    clear() {
         while (this.getChildren().length > 0) {
             let child = this.getChildren()[0];
             child.dispose();
         }
-        this.position.copyFromFloats(-this.width * 0.5, -this.height * 0.5, -this.depth * 0.5);
         this.items = [];
         this.tiles = [];
+    }
+    instantiate() {
+        this.position.copyFromFloats(-this.width * 0.5, -this.height * 0.5, -this.depth * 0.5);
+        this.clear();
         for (let i = 0; i <= this.width; i++) {
             this.items[i] = [];
             for (let j = 0; j <= this.height; j++) {
@@ -342,6 +345,7 @@ class Galaxy extends BABYLON.TransformNode {
         else {
             document.getElementById("editor-part").style.display = "none";
         }
+        this.updateZones();
     }
     updateZones() {
         this.zones = [];
@@ -635,10 +639,44 @@ class Main {
         Main.Scene = new BABYLON.Scene(Main.Engine);
         this.initializeCamera();
         Main.Light = new BABYLON.HemisphericLight("AmbientLight", new BABYLON.Vector3(1, 3, 2), Main.Scene);
-        let galaxy = new Galaxy();
-        galaxy.editionMode = true;
-        await galaxy.initialize();
-        galaxy.loadLevel("level-1.json");
+        Main.Galaxy = new Galaxy();
+        await Main.Galaxy.initialize();
+        for (let i = 1; i <= 2; i++) {
+            document.getElementById("btn-level-" + i).onclick = () => {
+                Main.Galaxy.editionMode = false;
+                Main.Galaxy.loadLevel("level-" + i + ".json");
+                this.showUI();
+                this.hideLevelSelection();
+            };
+        }
+        document.getElementById("btn-editor").onclick = () => {
+            Main.Galaxy.editionMode = true;
+            Main.Galaxy.width = 4;
+            Main.Galaxy.height = 4;
+            Main.Galaxy.depth = 4;
+            Main.Galaxy.instantiate();
+            this.showUI();
+            this.hideLevelSelection();
+        };
+        document.getElementById("btn-menu").onclick = () => {
+            Main.Galaxy.clear();
+            this.hideUI();
+            this.showLevelSelection();
+        };
+        this.hideUI();
+        this.showLevelSelection();
+    }
+    showUI() {
+        document.getElementById("ui").style.display = "block";
+    }
+    hideUI() {
+        document.getElementById("ui").style.display = "none";
+    }
+    showLevelSelection() {
+        document.getElementById("level-selection").style.display = "block";
+    }
+    hideLevelSelection() {
+        document.getElementById("level-selection").style.display = "none";
     }
     animate() {
         Main.Engine.runRenderLoop(() => {
