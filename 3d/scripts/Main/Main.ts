@@ -114,6 +114,7 @@ class Main {
         Main.Light = new BABYLON.HemisphericLight("AmbientLight", new BABYLON.Vector3(1, 3, 2), Main.Scene);
 
 		let galaxy = new Galaxy();
+		galaxy.editionMode = true;
 		await galaxy.initialize();
 		galaxy.loadLevel("level-1.json");
     }

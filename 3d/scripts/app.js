@@ -206,6 +206,20 @@ class Galaxy extends BABYLON.TransformNode {
         this.height = 6;
         this.depth = 8;
         this.editionMode = false;
+        this._pointerDownX = NaN;
+        this._pointerDownY = NaN;
+        this.pointerObservable = (eventData) => {
+            if (eventData.type === BABYLON.PointerEventTypes.POINTERDOWN) {
+                this._pointerDownX = eventData.event.clientX;
+                this._pointerDownY = eventData.event.clientY;
+            }
+            if (eventData.type === BABYLON.PointerEventTypes.POINTERUP) {
+                let delta = Math.abs(this._pointerDownX - eventData.event.clientX) + Math.abs(this._pointerDownY - eventData.event.clientY);
+                if (delta < 10) {
+                    this.onPointerUp();
+                }
+            }
+        };
     }
     isIJKValid(ijk) {
         if (ijk.i === 0 || ijk.i === this.width || ijk.j === 0 || ijk.j === this.height || ijk.k === 0 || ijk.k === this.depth) {
@@ -246,6 +260,10 @@ class Galaxy extends BABYLON.TransformNode {
         });
     }
     instantiate() {
+        while (this.getChildren().length > 0) {
+            let child = this.getChildren()[0];
+            child.dispose();
+        }
         this.position.copyFromFloats(-this.width * 0.5, -this.height * 0.5, -this.depth * 0.5);
         this.items = [];
         this.tiles = [];
@@ -279,20 +297,51 @@ class Galaxy extends BABYLON.TransformNode {
                 }
             }
         }
-        let pointerDownX = NaN;
-        let pointerDownY = NaN;
-        Main.Scene.onPointerObservable.add((eventData) => {
-            if (eventData.type === BABYLON.PointerEventTypes.POINTERDOWN) {
-                pointerDownX = eventData.event.clientX;
-                pointerDownY = eventData.event.clientY;
-            }
-            if (eventData.type === BABYLON.PointerEventTypes.POINTERUP) {
-                let delta = Math.abs(pointerDownX - eventData.event.clientX) + Math.abs(pointerDownY - eventData.event.clientY);
-                if (delta < 10) {
-                    this.onPointerUp();
-                }
-            }
-        });
+        Main.Scene.onPointerObservable.removeCallback(this.pointerObservable);
+        Main.Scene.onPointerObservable.add(this.pointerObservable);
+        if (this.editionMode) {
+            document.getElementById("editor-part").style.display = "block";
+            document.getElementById("width-value").textContent = this.width.toFixed(0);
+            document.getElementById("btn-width-dec").onclick = () => {
+                this.width = Math.max(2, this.width - 2);
+                this.instantiate();
+            };
+            document.getElementById("btn-width-inc").onclick = () => {
+                this.width = this.width + 2;
+                this.instantiate();
+            };
+            document.getElementById("height-value").textContent = this.height.toFixed(0);
+            document.getElementById("btn-height-dec").onclick = () => {
+                this.height = Math.max(2, this.height - 2);
+                this.instantiate();
+            };
+            document.getElementById("btn-height-inc").onclick = () => {
+                this.height = this.height + 2;
+                this.instantiate();
+            };
+            document.getElementById("depth-value").textContent = this.depth.toFixed(0);
+            document.getElementById("btn-depth-dec").onclick = () => {
+                this.depth = Math.max(2, this.depth - 2);
+                this.instantiate();
+            };
+            document.getElementById("btn-depth-inc").onclick = () => {
+                this.depth = this.depth + 2;
+                this.instantiate();
+            };
+            document.getElementById("btn-download").onclick = () => {
+                let data = this.serialize();
+                var tmpLink = document.createElement('a');
+                let name = "galaxy-editor";
+                tmpLink.download = name + ".json";
+                tmpLink.href = 'data:json;charset=utf-8,' + encodeURIComponent(JSON.stringify(data));
+                document.body.appendChild(tmpLink);
+                tmpLink.click();
+                document.body.removeChild(tmpLink);
+            };
+        }
+        else {
+            document.getElementById("editor-part").style.display = "none";
+        }
     }
     updateZones() {
         this.zones = [];
@@ -303,14 +352,25 @@ class Galaxy extends BABYLON.TransformNode {
             this.addToZone(zone, tile, tiles);
             this.zones.push(zone);
         }
+        let solved = true;
         for (let i = 0; i < this.zones.length; i++) {
             let zone = this.zones[i];
             let zoneStatus = this.isZoneValid(zone);
+            if (zoneStatus != ZoneStatus.Valid) {
+                solved = false;
+            }
             zone.forEach(t => {
                 t.setIsValid(zoneStatus);
             });
         }
-        console.log(this.zones.length + " zones detected.");
+        if (solved) {
+            document.getElementById("solve-status").textContent = "SOLVED";
+            document.getElementById("solve-status").style.color = "green";
+        }
+        else {
+            document.getElementById("solve-status").textContent = "NOT SOLVED";
+            document.getElementById("solve-status").style.color = "red";
+        }
     }
     areSymetrical(tileA, edgeA, tileB, edgeB, tilesToConsider) {
         let footPrintA = tileA.getFootPrint(edgeA);
@@ -576,6 +636,7 @@ class Main {
         this.initializeCamera();
         Main.Light = new BABYLON.HemisphericLight("AmbientLight", new BABYLON.Vector3(1, 3, 2), Main.Scene);
         let galaxy = new Galaxy();
+        galaxy.editionMode = true;
         await galaxy.initialize();
         galaxy.loadLevel("level-1.json");
     }
