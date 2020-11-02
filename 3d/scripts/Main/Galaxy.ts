@@ -117,11 +117,7 @@ class Galaxy extends BABYLON.TransformNode {
     }
 
     public instantiate() {
-        this.position.copyFromFloats(
-            - this.width * 0.5,
-            - this.height * 0.5,
-            - this.depth * 0.5
-        );
+        this.rotation.y = 0;
         this.clear();
         for (let i = 0; i <= this.width; i++) {
             this.items[i] = [];

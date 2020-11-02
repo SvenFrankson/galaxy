@@ -68,7 +68,7 @@ class GalaxyItem extends BABYLON.Mesh {
         this.galaxy = galaxy;
         this._ijk = new IJK(i, j, k);
         this.parent = galaxy;
-        this.position.copyFromFloats(i, j, k);
+        this.position.copyFromFloats(i - 0.5 * this.galaxy.width, j - 0.5 * this.galaxy.height, k - 0.5 * this.galaxy.depth);
         this.updateRotation();
     }
     get ijk() {
@@ -268,7 +268,7 @@ class Galaxy extends BABYLON.TransformNode {
         this.tiles = [];
     }
     instantiate() {
-        this.position.copyFromFloats(-this.width * 0.5, -this.height * 0.5, -this.depth * 0.5);
+        this.rotation.y = 0;
         this.clear();
         for (let i = 0; i <= this.width; i++) {
             this.items[i] = [];
@@ -563,6 +563,19 @@ class Galaxy extends BABYLON.TransformNode {
 /// <reference path="../../lib/babylon.gui.d.ts"/>
 var COS30 = Math.cos(Math.PI / 6);
 class Main {
+    constructor(canvasElement) {
+        this._tIdleCamera = 0;
+        this._idleCamera = () => {
+            if (Main.Camera.radius === 25) {
+                let betaTarget = (Math.PI / 2 - Math.PI / 8) + Math.sin(this._tIdleCamera) * Math.PI / 8;
+                Main.Galaxy.rotation.y += 0.002;
+                Main.Camera.beta = Main.Camera.beta * 0.995 + betaTarget * 0.005;
+                this._tIdleCamera += 0.002;
+            }
+        };
+        Main.Canvas = document.getElementById(canvasElement);
+        Main.Engine = new BABYLON.Engine(Main.Canvas, true, { preserveDrawingBuffer: true, stencil: true });
+    }
     static get CameraPosition() {
         if (!Main._CameraPosition) {
             Main._CameraPosition = BABYLON.Vector2.Zero();
@@ -604,10 +617,6 @@ class Main {
         }
         return Main._whiteMaterial;
     }
-    constructor(canvasElement) {
-        Main.Canvas = document.getElementById(canvasElement);
-        Main.Engine = new BABYLON.Engine(Main.Canvas, true, { preserveDrawingBuffer: true, stencil: true });
-    }
     initializeCamera() {
         Main.Camera = new BABYLON.ArcRotateCamera("camera", 0, 0, 10, BABYLON.Vector3.Zero(), Main.Scene);
         Main.Camera.setPosition(new BABYLON.Vector3(-2, 6, -10));
@@ -635,18 +644,48 @@ class Main {
             });
         });
     }
+    animateCamera() {
+        Main.Camera.radius = 100;
+        let step = () => {
+            if (Main.Camera.radius > 25) {
+                Main.Camera.radius *= 0.99;
+                Main.Camera.alpha += 0.01;
+                requestAnimationFrame(step);
+            }
+            else {
+                Main.Camera.radius = 25;
+            }
+        };
+        step();
+    }
     async initializeScene() {
         Main.Scene = new BABYLON.Scene(Main.Engine);
         this.initializeCamera();
         Main.Light = new BABYLON.HemisphericLight("AmbientLight", new BABYLON.Vector3(1, 3, 2), Main.Scene);
+        Main.Skybox = BABYLON.MeshBuilder.CreateBox("skyBox", { size: 2000.0 }, Main.Scene);
+        Main.Skybox.rotation.y = Math.PI / 2;
+        Main.Skybox.infiniteDistance = true;
+        let skyboxMaterial = new BABYLON.StandardMaterial("skyBox", Main.Scene);
+        skyboxMaterial.backFaceCulling = false;
+        Main.EnvironmentTexture = new BABYLON.CubeTexture("./assets/skyboxes/sky", Main.Scene, ["-px.png", "-py.png", "-pz.png", "-nx.png", "-ny.png", "-nz.png"]);
+        skyboxMaterial.reflectionTexture = Main.EnvironmentTexture;
+        skyboxMaterial.reflectionTexture.coordinatesMode = BABYLON.Texture.SKYBOX_MODE;
+        skyboxMaterial.diffuseColor = new BABYLON.Color3(0, 0, 0);
+        skyboxMaterial.specularColor = new BABYLON.Color3(0, 0, 0);
+        Main.Skybox.material = skyboxMaterial;
+        Main.Scene.onBeforeRenderObservable.add(() => {
+            Main.Skybox.rotation.y += 0.0001;
+        });
         Main.Galaxy = new Galaxy();
         await Main.Galaxy.initialize();
+        Main.Galaxy.instantiate();
         for (let i = 1; i <= 2; i++) {
             document.getElementById("btn-level-" + i).onclick = () => {
                 Main.Galaxy.editionMode = false;
                 Main.Galaxy.loadLevel("level-" + i + ".json");
                 this.showUI();
                 this.hideLevelSelection();
+                this.animateCamera();
             };
         }
         document.getElementById("btn-editor").onclick = () => {
@@ -657,14 +696,16 @@ class Main {
             Main.Galaxy.instantiate();
             this.showUI();
             this.hideLevelSelection();
+            this.animateCamera();
         };
         document.getElementById("btn-menu").onclick = () => {
-            Main.Galaxy.clear();
             this.hideUI();
             this.showLevelSelection();
+            this.animateCamera();
         };
         this.hideUI();
         this.showLevelSelection();
+        this.animateCamera();
     }
     showUI() {
         document.getElementById("ui").style.display = "block";
@@ -674,9 +715,12 @@ class Main {
     }
     showLevelSelection() {
         document.getElementById("level-selection").style.display = "block";
+        Main.Scene.onBeforeRenderObservable.removeCallback(this._idleCamera);
+        Main.Scene.onBeforeRenderObservable.add(this._idleCamera);
     }
     hideLevelSelection() {
         document.getElementById("level-selection").style.display = "none";
+        Main.Scene.onBeforeRenderObservable.removeCallback(this._idleCamera);
     }
     animate() {
         Main.Engine.runRenderLoop(() => {

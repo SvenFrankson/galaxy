@@ -10,6 +10,9 @@ class Main {
     public static Scene: BABYLON.Scene;
 	public static Light: BABYLON.Light;
 	public static Galaxy: Galaxy;
+	public static Skybox: BABYLON.Mesh;
+	public static EnvironmentTexture: BABYLON.CubeTexture;
+
 	private static _CameraPosition: BABYLON.Vector2;
 	public static get CameraPosition(): BABYLON.Vector2 {
 		if (!Main._CameraPosition) {
@@ -107,15 +110,53 @@ class Main {
 		);
 	}
 
+    public animateCamera(): void {
+        Main.Camera.radius = 100;
+        let step = () => {
+            if (Main.Camera.radius > 25) {
+				Main.Camera.radius *= 0.99;
+				Main.Camera.alpha += 0.01;
+                requestAnimationFrame(step);
+			}
+			else {
+				Main.Camera.radius = 25;
+			}
+        }
+        step();
+    }
+
     public async initializeScene(): Promise<void> {
 		Main.Scene = new BABYLON.Scene(Main.Engine);
 
 		this.initializeCamera();
 
-        Main.Light = new BABYLON.HemisphericLight("AmbientLight", new BABYLON.Vector3(1, 3, 2), Main.Scene);
+		Main.Light = new BABYLON.HemisphericLight("AmbientLight", new BABYLON.Vector3(1, 3, 2), Main.Scene);
+		
+		Main.Skybox = BABYLON.MeshBuilder.CreateBox("skyBox", { size: 2000.0 }, Main.Scene);
+		Main.Skybox.rotation.y = Math.PI / 2;
+		Main.Skybox.infiniteDistance = true;
+		let skyboxMaterial: BABYLON.StandardMaterial = new BABYLON.StandardMaterial("skyBox", Main.Scene);
+		skyboxMaterial.backFaceCulling = false;
+		Main.EnvironmentTexture = new BABYLON.CubeTexture(
+			"./assets/skyboxes/sky",
+			Main.Scene,
+			["-px.png", "-py.png", "-pz.png", "-nx.png", "-ny.png", "-nz.png"]);
+		skyboxMaterial.reflectionTexture = Main.EnvironmentTexture;
+		skyboxMaterial.reflectionTexture.coordinatesMode = BABYLON.Texture.SKYBOX_MODE;
+		skyboxMaterial.diffuseColor = new BABYLON.Color3(0, 0, 0);
+		skyboxMaterial.specularColor = new BABYLON.Color3(0, 0, 0);
+		Main.Skybox.material = skyboxMaterial;
+
+		Main.Scene.onBeforeRenderObservable.add(
+			() => {
+				Main.Skybox.rotation.y += 0.0001;
+			}
+		)
+
 
 		Main.Galaxy = new Galaxy();
 		await Main.Galaxy.initialize();
+		Main.Galaxy.instantiate();
 
 		for (let i = 1; i <= 2; i++) {
 			document.getElementById("btn-level-" + i).onclick = () => {
@@ -123,6 +164,7 @@ class Main {
 				Main.Galaxy.loadLevel("level-" + i + ".json");
 				this.showUI();
 				this.hideLevelSelection();
+				this.animateCamera();
 			}
 		}
 		document.getElementById("btn-editor").onclick = () => {
@@ -133,14 +175,26 @@ class Main {
 			Main.Galaxy.instantiate();
 			this.showUI();
 			this.hideLevelSelection();
+			this.animateCamera();
 		}
 		document.getElementById("btn-menu").onclick = () => {
-			Main.Galaxy.clear();
 			this.hideUI();
 			this.showLevelSelection();
+			this.animateCamera();
 		}
 		this.hideUI();
 		this.showLevelSelection();
+		this.animateCamera();
+	}
+
+	private _tIdleCamera: number = 0;
+	private _idleCamera = () => {
+		if (Main.Camera.radius === 25) {
+			let betaTarget = (Math.PI / 2 - Math.PI / 8) + Math.sin(this._tIdleCamera) * Math.PI / 8;
+			Main.Galaxy.rotation.y += 0.002;
+			Main.Camera.beta = Main.Camera.beta * 0.995 + betaTarget * 0.005;
+			this._tIdleCamera += 0.002;
+		}
 	}
 	
 	public showUI(): void {
@@ -153,10 +207,13 @@ class Main {
 	
 	public showLevelSelection(): void {
 		document.getElementById("level-selection").style.display = "block";
+		Main.Scene.onBeforeRenderObservable.removeCallback(this._idleCamera);
+		Main.Scene.onBeforeRenderObservable.add(this._idleCamera);
 	}
 	
 	public hideLevelSelection(): void {
 		document.getElementById("level-selection").style.display = "none";
+		Main.Scene.onBeforeRenderObservable.removeCallback(this._idleCamera);
 	}
 
     public animate(): void {

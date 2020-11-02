@@ -42,7 +42,11 @@ abstract class GalaxyItem extends BABYLON.Mesh {
         super("galaxy-item");
         this._ijk = new IJK(i, j, k);
         this.parent = galaxy;
-        this.position.copyFromFloats(i, j, k);
+        this.position.copyFromFloats(
+            i - 0.5 * this.galaxy.width,
+            j - 0.5 * this.galaxy.height,
+            k - 0.5 * this.galaxy.depth
+        );
         this.updateRotation();
     }
 
