@@ -49,8 +49,7 @@ class Main {
 	public static get blueMaterial(): BABYLON.StandardMaterial {
 		if (!Main._blueMaterial) {
 			Main._blueMaterial = new BABYLON.StandardMaterial("blue-material", Main.Scene);
-			Main._blueMaterial.diffuseColor.copyFromFloats(0.1, 0.1, 0.9);
-			Main._blueMaterial.emissiveColor.copyFromFloats(0.05, 0.05, 0.45);
+			Main._blueMaterial.emissiveColor.copyFromFloats(0.8, 0.8, 1);
 		}
 		return Main._blueMaterial;
 	}
@@ -90,6 +89,8 @@ class Main {
 					"",
 					Main.Scene,
 					(meshes) => {
+						var gl = new BABYLON.GlowLayer("glow", Main.Scene);
+						gl.intensity = 0.4;		
 						console.log("Load model : " + modelName);
 						meshes.forEach(
 							(mesh) => {
@@ -158,7 +159,7 @@ class Main {
 		await Main.Galaxy.initialize();
 		Main.Galaxy.instantiate();
 
-		for (let i = 1; i <= 2; i++) {
+		for (let i = 1; i <= 3; i++) {
 			document.getElementById("btn-level-" + i).onclick = () => {
 				Main.Galaxy.editionMode = false;
 				Main.Galaxy.loadLevel("level-" + i + ".json");
