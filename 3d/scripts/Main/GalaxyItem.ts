@@ -53,36 +53,43 @@ abstract class GalaxyItem extends BABYLON.Mesh {
     public abstract instantiate();
 
     public updateRotation(): void {
+        if (!this.rotationQuaternion) {
+            this.rotationQuaternion = BABYLON.Quaternion.Identity();
+        }
+        GalaxyItem.UpdateRotationToRef(this.ijk, this.galaxy, this.rotationQuaternion);
+    }
+
+    public static UpdateRotationToRef(ijk: IJK, galaxy: Galaxy, quaternionRef: BABYLON.Quaternion): void {
         let up = BABYLON.Vector3.Zero();
-        if (this.i === 0) {
+        if (ijk.i === 0) {
             up.x = - 1;
         }
-        else if (this.i === this.galaxy.width) {
+        else if (ijk.i === galaxy.width) {
             up.x = 1;
         }
-        if (this.j === 0) {
+        if (ijk.j === 0) {
             up.y = - 1;
         }
-        else if (this.j === this.galaxy.height) {
+        else if (ijk.j === galaxy.height) {
             up.y = 1;
         }
-        if (this.k === 0) {
+        if (ijk.k === 0) {
             up.z = - 1;
         }
-        else if (this.k === this.galaxy.depth) {
+        else if (ijk.k === galaxy.depth) {
             up.z = 1;
         }
         up.normalize();
         if (up.y === 1) {
-            this.rotationQuaternion = BABYLON.Quaternion.Identity();
+            quaternionRef.copyFrom(BABYLON.Quaternion.Identity());
         }
         else if (up.y === -1) {
-            this.rotationQuaternion = BABYLON.Quaternion.RotationAxis(BABYLON.Axis.Z, Math.PI);
+            BABYLON.Quaternion.RotationAxisToRef(BABYLON.Axis.Z, Math.PI, quaternionRef);
         }
         else {
             let forward = BABYLON.Vector3.Cross(up, BABYLON.Axis.Y).normalize();
             let right = BABYLON.Vector3.Cross(up, forward).normalize();
-            this.rotationQuaternion = BABYLON.Quaternion.RotationQuaternionFromAxis(right, up, forward);
+            BABYLON.Quaternion.RotationQuaternionFromAxisToRef(right, up, forward, quaternionRef);
         }
     }
 }

@@ -20,16 +20,20 @@ class Border extends GalaxyItem {
 
     public updateRotation(): void {
         super.updateRotation();
-        if (this.i === 0 || this.i === this.galaxy.width || this.k === 0 || this.k === this.galaxy.depth) {
-            if (this.j % 2 === 1) {
+        Border.UpdateRotationToRef(this.ijk, this.galaxy, this.rotationQuaternion);
+    }
+
+    public static UpdateRotationToRef(ijk: IJK, galaxy: Galaxy, quaternionRef: BABYLON.Quaternion): void {
+        if (ijk.i === 0 || ijk.i === galaxy.width || ijk.k === 0 || ijk.k === galaxy.depth) {
+            if (ijk.j % 2 === 1) {
                 let q = BABYLON.Quaternion.RotationAxis(BABYLON.Axis.Y, Math.PI * 0.5);
-                this.rotationQuaternion.multiplyInPlace(q);
+                quaternionRef.multiplyInPlace(q);
             }
         }
         else {
-            if (this.i % 2 === 1) {
+            if (ijk.i % 2 === 1) {
                 let q = BABYLON.Quaternion.RotationAxis(BABYLON.Axis.Y, Math.PI * 0.5);
-                this.rotationQuaternion.multiplyInPlace(q);
+                quaternionRef.multiplyInPlace(q);
             }
         }
     }

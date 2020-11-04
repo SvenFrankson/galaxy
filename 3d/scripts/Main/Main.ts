@@ -54,6 +54,15 @@ class Main {
 		return Main._blueMaterial;
 	}
 
+	public static _orbMaterial: BABYLON.StandardMaterial;
+	public static get orbMaterial(): BABYLON.StandardMaterial {
+		if (!Main._orbMaterial) {
+			Main._orbMaterial = new BABYLON.StandardMaterial("blue-material", Main.Scene);
+			Main._orbMaterial.emissiveColor.copyFromFloats(0.8, 0.8, 1);
+		}
+		return Main._orbMaterial;
+	}
+
 	public static _whiteMaterial: BABYLON.StandardMaterial;
 	public static get whiteMaterial(): BABYLON.StandardMaterial {
 		if (!Main._whiteMaterial) {

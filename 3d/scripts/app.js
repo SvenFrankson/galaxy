@@ -102,36 +102,42 @@ class GalaxyItem extends BABYLON.Mesh {
         return undefined;
     }
     updateRotation() {
+        if (!this.rotationQuaternion) {
+            this.rotationQuaternion = BABYLON.Quaternion.Identity();
+        }
+        GalaxyItem.UpdateRotationToRef(this.ijk, this.galaxy, this.rotationQuaternion);
+    }
+    static UpdateRotationToRef(ijk, galaxy, quaternionRef) {
         let up = BABYLON.Vector3.Zero();
-        if (this.i === 0) {
+        if (ijk.i === 0) {
             up.x = -1;
         }
-        else if (this.i === this.galaxy.width) {
+        else if (ijk.i === galaxy.width) {
             up.x = 1;
         }
-        if (this.j === 0) {
+        if (ijk.j === 0) {
             up.y = -1;
         }
-        else if (this.j === this.galaxy.height) {
+        else if (ijk.j === galaxy.height) {
             up.y = 1;
         }
-        if (this.k === 0) {
+        if (ijk.k === 0) {
             up.z = -1;
         }
-        else if (this.k === this.galaxy.depth) {
+        else if (ijk.k === galaxy.depth) {
             up.z = 1;
         }
         up.normalize();
         if (up.y === 1) {
-            this.rotationQuaternion = BABYLON.Quaternion.Identity();
+            quaternionRef.copyFrom(BABYLON.Quaternion.Identity());
         }
         else if (up.y === -1) {
-            this.rotationQuaternion = BABYLON.Quaternion.RotationAxis(BABYLON.Axis.Z, Math.PI);
+            BABYLON.Quaternion.RotationAxisToRef(BABYLON.Axis.Z, Math.PI, quaternionRef);
         }
         else {
             let forward = BABYLON.Vector3.Cross(up, BABYLON.Axis.Y).normalize();
             let right = BABYLON.Vector3.Cross(up, forward).normalize();
-            this.rotationQuaternion = BABYLON.Quaternion.RotationQuaternionFromAxis(right, up, forward);
+            BABYLON.Quaternion.RotationQuaternionFromAxisToRef(right, up, forward, quaternionRef);
         }
     }
 }
@@ -148,16 +154,19 @@ class Border extends GalaxyItem {
     }
     updateRotation() {
         super.updateRotation();
-        if (this.i === 0 || this.i === this.galaxy.width || this.k === 0 || this.k === this.galaxy.depth) {
-            if (this.j % 2 === 1) {
+        Border.UpdateRotationToRef(this.ijk, this.galaxy, this.rotationQuaternion);
+    }
+    static UpdateRotationToRef(ijk, galaxy, quaternionRef) {
+        if (ijk.i === 0 || ijk.i === galaxy.width || ijk.k === 0 || ijk.k === galaxy.depth) {
+            if (ijk.j % 2 === 1) {
                 let q = BABYLON.Quaternion.RotationAxis(BABYLON.Axis.Y, Math.PI * 0.5);
-                this.rotationQuaternion.multiplyInPlace(q);
+                quaternionRef.multiplyInPlace(q);
             }
         }
         else {
-            if (this.i % 2 === 1) {
+            if (ijk.i % 2 === 1) {
                 let q = BABYLON.Quaternion.RotationAxis(BABYLON.Axis.Y, Math.PI * 0.5);
-                this.rotationQuaternion.multiplyInPlace(q);
+                quaternionRef.multiplyInPlace(q);
             }
         }
     }
@@ -217,6 +226,56 @@ class Galaxy extends BABYLON.TransformNode {
                 let delta = Math.abs(this._pointerDownX - eventData.event.clientX) + Math.abs(this._pointerDownY - eventData.event.clientY);
                 if (delta < 10) {
                     this.onPointerUp();
+                }
+            }
+        };
+        this.updateObservable = () => {
+            let pick = Main.Scene.pick(Main.Scene.pointerX, Main.Scene.pointerY);
+            let showPreviewmesh = false;
+            if (pick && pick.hit) {
+                let ijk = this.worldPositionToIJK(pick.pickedPoint);
+                let odds = 0;
+                if (ijk.i % 2 === 1) {
+                    odds++;
+                }
+                if (ijk.j % 2 === 1) {
+                    odds++;
+                }
+                if (ijk.k % 2 === 1) {
+                    odds++;
+                }
+                if (odds === 1) {
+                    let edge = this.getItem(ijk);
+                    if (!this.previewMesh) {
+                        this.previewMesh = this.templateLightning.clone("preview-mesh", undefined);
+                        this.previewMesh.rotationQuaternion = BABYLON.Quaternion.Identity();
+                    }
+                    if (edge) {
+                        this.previewMesh.material = Main.redMaterial;
+                    }
+                    else {
+                        this.previewMesh.material = Main.whiteMaterial;
+                    }
+                    this.previewMesh.getChildMeshes().forEach(m => {
+                        m.material = this.previewMesh.material;
+                    });
+                    this.previewMesh.position.copyFromFloats(ijk.i - 0.5 * this.width, ijk.j - 0.5 * this.height, ijk.k - 0.5 * this.depth);
+                    GalaxyItem.UpdateRotationToRef(ijk, this, this.previewMesh.rotationQuaternion);
+                    Border.UpdateRotationToRef(ijk, this, this.previewMesh.rotationQuaternion);
+                    this.previewMesh.position.addInPlace(this.previewMesh.getDirection(BABYLON.Axis.Y).scale(0.25));
+                    this.previewMesh.isVisible = true;
+                    this.previewMesh.getChildMeshes().forEach(m => {
+                        m.isVisible = true;
+                    });
+                    showPreviewmesh = true;
+                }
+            }
+            if (!showPreviewmesh) {
+                if (this.previewMesh) {
+                    this.previewMesh.isVisible = false;
+                    this.previewMesh.getChildMeshes().forEach(m => {
+                        m.isVisible = false;
+                    });
                 }
             }
         };
@@ -302,6 +361,8 @@ class Galaxy extends BABYLON.TransformNode {
         }
         Main.Scene.onPointerObservable.removeCallback(this.pointerObservable);
         Main.Scene.onPointerObservable.add(this.pointerObservable);
+        Main.Scene.onBeforeRenderObservable.removeCallback(this.updateObservable);
+        Main.Scene.onBeforeRenderObservable.add(this.updateObservable);
         if (this.editionMode) {
             document.getElementById("editor-part").style.display = "block";
             document.getElementById("width-value").textContent = this.width.toFixed(0);
@@ -608,6 +669,13 @@ class Main {
         }
         return Main._blueMaterial;
     }
+    static get orbMaterial() {
+        if (!Main._orbMaterial) {
+            Main._orbMaterial = new BABYLON.StandardMaterial("blue-material", Main.Scene);
+            Main._orbMaterial.emissiveColor.copyFromFloats(0.8, 0.8, 1);
+        }
+        return Main._orbMaterial;
+    }
     static get whiteMaterial() {
         if (!Main._whiteMaterial) {
             Main._whiteMaterial = new BABYLON.StandardMaterial("white-material", Main.Scene);
@@ -830,7 +898,7 @@ class Tile extends GalaxyItem {
             this.orbMesh = BABYLON.MeshBuilder.CreateSphere("orb", { segments: 8, diameter: 0.5 }, Main.Scene);
             this.orbMesh.parent = this;
             this.orbMesh.position.y = 0.5;
-            this.orbMesh.material = Main.blueMaterial;
+            this.orbMesh.material = Main.orbMaterial;
         }
     }
     refresh() {
@@ -842,7 +910,7 @@ class Tile extends GalaxyItem {
             this.orbMesh = BABYLON.MeshBuilder.CreateSphere("orb", { segments: 8, diameter: 0.5 }, Main.Scene);
             this.orbMesh.parent = this;
             this.orbMesh.position.y = 0.5;
-            this.orbMesh.material = Main.blueMaterial;
+            this.orbMesh.material = Main.orbMaterial;
         }
     }
     setIsValid(v) {

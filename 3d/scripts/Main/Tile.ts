@@ -80,7 +80,7 @@ class Tile extends GalaxyItem {
             this.orbMesh = BABYLON.MeshBuilder.CreateSphere("orb", { segments: 8, diameter: 0.5 }, Main.Scene);
             this.orbMesh.parent = this;
             this.orbMesh.position.y = 0.5;
-            this.orbMesh.material = Main.blueMaterial;
+            this.orbMesh.material = Main.orbMaterial;
         }
     }
 
@@ -93,7 +93,7 @@ class Tile extends GalaxyItem {
             this.orbMesh = BABYLON.MeshBuilder.CreateSphere("orb", { segments: 8, diameter: 0.5 }, Main.Scene);
             this.orbMesh.parent = this;
             this.orbMesh.position.y = 0.5;
-            this.orbMesh.material = Main.blueMaterial;
+            this.orbMesh.material = Main.orbMaterial;
         }
     }
 

@@ -62,6 +62,8 @@ class Galaxy extends BABYLON.TransformNode {
     private _pointerDownX: number = NaN;
     private _pointerDownY: number = NaN;
 
+    public previewMesh: BABYLON.AbstractMesh;
+
     constructor() {
         super("galaxy");
     }
@@ -80,7 +82,7 @@ class Galaxy extends BABYLON.TransformNode {
 		this.templatePole = await Main.loadMeshes("pole");
 		this.templatePoleEdge = await Main.loadMeshes("pole");
 		this.templatePoleCorner = await Main.loadMeshes("pole");
-		this.templateLightning = await Main.loadMeshes("lightning");
+        this.templateLightning = await Main.loadMeshes("lightning");
     }
 
     public async loadLevel(fileName: string): Promise<void> {
@@ -153,6 +155,9 @@ class Galaxy extends BABYLON.TransformNode {
 
         Main.Scene.onPointerObservable.removeCallback(this.pointerObservable);
         Main.Scene.onPointerObservable.add(this.pointerObservable);
+        
+        Main.Scene.onBeforeRenderObservable.removeCallback(this.updateObservable);
+        Main.Scene.onBeforeRenderObservable.add(this.updateObservable);
 
         if (this.editionMode) {
             document.getElementById("editor-part").style.display = "block";
@@ -392,6 +397,66 @@ class Galaxy extends BABYLON.TransformNode {
             let delta = Math.abs(this._pointerDownX - eventData.event.clientX) + Math.abs(this._pointerDownY - eventData.event.clientY);
             if (delta < 10) {
                 this.onPointerUp();
+            }
+        }
+    }
+
+    public updateObservable = () => {
+        let pick = Main.Scene.pick(
+            Main.Scene.pointerX,
+            Main.Scene.pointerY
+        );
+        let showPreviewmesh: boolean = false;
+        if (pick && pick.hit) {
+            let ijk = this.worldPositionToIJK(pick.pickedPoint);
+            
+            let odds = 0;
+            if (ijk.i % 2 === 1) {
+                odds++;
+            }
+            if (ijk.j % 2 === 1) {
+                odds++;
+            }
+            if (ijk.k % 2 === 1) {
+                odds++;
+            }
+
+            if (odds === 1) {
+                let edge = this.getItem(ijk);
+                if (!this.previewMesh) {
+                    this.previewMesh = this.templateLightning.clone("preview-mesh", undefined);
+                    this.previewMesh.rotationQuaternion = BABYLON.Quaternion.Identity();
+                }
+                if (edge) {
+                    this.previewMesh.material = Main.redMaterial;
+                }
+                else {
+                    this.previewMesh.material = Main.whiteMaterial;
+                }
+                this.previewMesh.getChildMeshes().forEach(m => {
+                    m.material = this.previewMesh.material;
+                })
+                this.previewMesh.position.copyFromFloats(
+                    ijk.i - 0.5 * this.width,
+                    ijk.j - 0.5 * this.height,
+                    ijk.k - 0.5 * this.depth
+                );
+                GalaxyItem.UpdateRotationToRef(ijk, this, this.previewMesh.rotationQuaternion);
+                Border.UpdateRotationToRef(ijk, this, this.previewMesh.rotationQuaternion);
+                this.previewMesh.position.addInPlace(this.previewMesh.getDirection(BABYLON.Axis.Y).scale(0.25));
+                this.previewMesh.isVisible = true;
+                this.previewMesh.getChildMeshes().forEach(m => {
+                    m.isVisible = true;
+                })
+                showPreviewmesh = true;
+            }
+        }
+        if (!showPreviewmesh) {
+            if (this.previewMesh) {
+                this.previewMesh.isVisible = false;
+                this.previewMesh.getChildMeshes().forEach(m => {
+                    m.isVisible = false;
+                })
             }
         }
     }
