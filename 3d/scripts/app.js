@@ -292,7 +292,7 @@ class Galaxy extends BABYLON.TransformNode {
         this.templateTile = await Main.loadMeshes("tile-lp");
         this.templatePole = await Main.loadMeshes("pole");
         this.templatePoleEdge = await Main.loadMeshes("pole");
-        this.templatePoleCorner = await Main.loadMeshes("pole");
+        this.templatePoleCorner = await Main.loadMeshes("tripole");
         this.templateLightning = await Main.loadMeshes("lightning");
     }
     async loadLevel(fileName) {
