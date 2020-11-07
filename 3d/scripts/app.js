@@ -792,8 +792,10 @@ class Main {
         Main.Scene.onBeforeRenderObservable.removeCallback(this._idleCamera);
     }
     animate() {
+        let fpsInfoElement = document.getElementById("fps-info");
         Main.Engine.runRenderLoop(() => {
             Main.Scene.render();
+            fpsInfoElement.innerText = Main.Engine.getFps().toFixed(0) + " fps";
         });
         window.addEventListener("resize", () => {
             Main.Engine.resize();

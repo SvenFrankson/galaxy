@@ -81,3 +81,14 @@ html, body {
 .editor-btn {
     width: 30px;
 }
+
+#fps-info {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    width: 100px;
+    font-size: 20px;
+    color: red;
+    text-align: right;
+    font-family: monospace;
+}

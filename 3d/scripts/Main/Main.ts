@@ -227,8 +227,10 @@ class Main {
 	}
 
     public animate(): void {
+		let fpsInfoElement = document.getElementById("fps-info");
         Main.Engine.runRenderLoop(() => {
 			Main.Scene.render();
+			fpsInfoElement.innerText = Main.Engine.getFps().toFixed(0) + " fps"
         });
 
         window.addEventListener("resize", () => {
