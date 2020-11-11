@@ -736,6 +736,9 @@ class Main {
                             material.transparencyMode = undefined;
                             material.albedoTexture.hasAlpha = true;
                         }
+                        if (material.name === "bottom") {
+                            material.emissiveColor.copyFromFloats(0, 0, 0);
+                        }
                     }
                 });
                 resolve(meshes[0]);
