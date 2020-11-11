@@ -48,7 +48,7 @@ class Galaxy extends BABYLON.TransformNode {
 	public templatePole: BABYLON.AbstractMesh;
 	public templatePoleEdge: BABYLON.AbstractMesh;
 	public templatePoleCorner: BABYLON.AbstractMesh;
-	public templateLightning: BABYLON.AbstractMesh;
+	public templateLightning: BABYLON.Mesh;
 
     public width: number = 10;
     public height: number = 6;
@@ -82,7 +82,34 @@ class Galaxy extends BABYLON.TransformNode {
 		this.templatePole = await Main.loadMeshes("pole");
 		this.templatePoleEdge = await Main.loadMeshes("pole");
 		this.templatePoleCorner = await Main.loadMeshes("tripole");
-        this.templateLightning = await Main.loadMeshes("lightning");
+        let templateLightningRaw = await Main.loadMeshes("lightning");
+        this.templateLightning = new BABYLON.Mesh("templateLightningOneMesh");
+        let templateLightningData = new BABYLON.VertexData();
+        let positions = [];
+        let indices = [];
+        let normals = [];
+        let uvs = [];
+        let templateLightningChildren = templateLightningRaw.getChildMeshes();
+        for (let i = 0; i < templateLightningChildren.length; i++) {
+            let child = templateLightningChildren[i];
+            if (child instanceof BABYLON.Mesh) {
+                let l = positions.length / 3;
+                let data = BABYLON.VertexData.ExtractFromMesh(child);
+                positions.push(...data.positions);
+                normals.push(...data.normals);
+                uvs.push(...data.uvs);
+                for (let j = 0; j < data.indices.length; j++) {
+                    indices.push(data.indices[j] + l);
+                }
+                this.templateLightning.material = child.material;
+            }
+        }
+        templateLightningData.positions = positions;
+        templateLightningData.indices = indices;
+        templateLightningData.normals = normals;
+        templateLightningData.uvs = uvs;
+        templateLightningData.applyToMesh(this.templateLightning);
+
     }
 
     public async loadLevel(fileName: string): Promise<void> {

@@ -82,6 +82,7 @@ class Tile extends GalaxyItem {
             this.orbMesh.position.y = 0.5;
             this.orbMesh.material = Main.orbMaterial;
         }
+        this.freezeWorldMatrix();
     }
 
     public refresh(): void {

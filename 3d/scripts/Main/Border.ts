@@ -15,7 +15,9 @@ class Border extends GalaxyItem {
     }
 
     public instantiate(): void {
-        this.galaxy.templateLightning.clone("clone", this);
+        //this.galaxy.templateLightning.clone("clone", this);
+        this.galaxy.templateLightning.createInstance("clone").parent = this;
+        this.freezeWorldMatrix();
     }
 
     public updateRotation(): void {

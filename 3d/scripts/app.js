@@ -70,6 +70,7 @@ class GalaxyItem extends BABYLON.Mesh {
         this.parent = galaxy;
         this.position.copyFromFloats(i - 0.5 * this.galaxy.width, j - 0.5 * this.galaxy.height, k - 0.5 * this.galaxy.depth);
         this.updateRotation();
+        this.freezeWorldMatrix();
     }
     get ijk() {
         return this._ijk;
@@ -150,7 +151,9 @@ class Border extends GalaxyItem {
         this.position.addInPlace(up.scale(0.25));
     }
     instantiate() {
-        this.galaxy.templateLightning.clone("clone", this);
+        //this.galaxy.templateLightning.clone("clone", this);
+        this.galaxy.templateLightning.createInstance("clone").parent = this;
+        this.freezeWorldMatrix();
     }
     updateRotation() {
         super.updateRotation();
@@ -293,7 +296,33 @@ class Galaxy extends BABYLON.TransformNode {
         this.templatePole = await Main.loadMeshes("pole");
         this.templatePoleEdge = await Main.loadMeshes("pole");
         this.templatePoleCorner = await Main.loadMeshes("tripole");
-        this.templateLightning = await Main.loadMeshes("lightning");
+        let templateLightningRaw = await Main.loadMeshes("lightning");
+        this.templateLightning = new BABYLON.Mesh("templateLightningOneMesh");
+        let templateLightningData = new BABYLON.VertexData();
+        let positions = [];
+        let indices = [];
+        let normals = [];
+        let uvs = [];
+        let templateLightningChildren = templateLightningRaw.getChildMeshes();
+        for (let i = 0; i < templateLightningChildren.length; i++) {
+            let child = templateLightningChildren[i];
+            if (child instanceof BABYLON.Mesh) {
+                let l = positions.length / 3;
+                let data = BABYLON.VertexData.ExtractFromMesh(child);
+                positions.push(...data.positions);
+                normals.push(...data.normals);
+                uvs.push(...data.uvs);
+                for (let j = 0; j < data.indices.length; j++) {
+                    indices.push(data.indices[j] + l);
+                }
+                this.templateLightning.material = child.material;
+            }
+        }
+        templateLightningData.positions = positions;
+        templateLightningData.indices = indices;
+        templateLightningData.normals = normals;
+        templateLightningData.uvs = uvs;
+        templateLightningData.applyToMesh(this.templateLightning);
     }
     async loadLevel(fileName) {
         return new Promise(resolve => {
@@ -832,6 +861,7 @@ class Plot extends GalaxyItem {
         if (edges === 3) {
             this.galaxy.templatePoleCorner.clone("clone", this);
         }
+        this.freezeWorldMatrix();
     }
 }
 /// <reference path="GalaxyItem.ts"/>
@@ -902,6 +932,7 @@ class Tile extends GalaxyItem {
             this.orbMesh.position.y = 0.5;
             this.orbMesh.material = Main.orbMaterial;
         }
+        this.freezeWorldMatrix();
     }
     refresh() {
         if (this.orbMesh) {

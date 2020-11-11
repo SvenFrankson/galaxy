@@ -48,6 +48,7 @@ abstract class GalaxyItem extends BABYLON.Mesh {
             k - 0.5 * this.galaxy.depth
         );
         this.updateRotation();
+        this.freezeWorldMatrix();
     }
 
     public abstract instantiate();
