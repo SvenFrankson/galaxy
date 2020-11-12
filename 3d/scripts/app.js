@@ -781,31 +781,37 @@ class Main {
         await Main.Galaxy.initialize();
         Main.Galaxy.instantiate();
         for (let i = 1; i <= 3; i++) {
-            document.getElementById("btn-level-" + i).onclick = () => {
+            document.getElementById("level-" + i).onclick = () => {
                 Main.Galaxy.editionMode = false;
                 Main.Galaxy.loadLevel("level-" + i + ".json");
                 this.showUI();
-                this.hideLevelSelection();
+                this.hideMainUI();
                 this.animateCamera();
             };
         }
-        document.getElementById("btn-editor").onclick = () => {
+        document.getElementById("editor").onclick = () => {
             Main.Galaxy.editionMode = true;
             Main.Galaxy.width = 4;
             Main.Galaxy.height = 4;
             Main.Galaxy.depth = 4;
             Main.Galaxy.instantiate();
             this.showUI();
-            this.hideLevelSelection();
+            this.hideMainUI();
             this.animateCamera();
         };
         document.getElementById("btn-menu").onclick = () => {
             this.hideUI();
-            this.showLevelSelection();
+            this.showMainUI();
             this.animateCamera();
         };
+        document.getElementById("new-game").onclick = () => {
+            document.getElementById("main-panel").classList.remove("show");
+            document.getElementById("levels-choice").classList.add("show");
+        };
+        const buttons = document.querySelectorAll('.back-button');
+        [...buttons].map(btn => btn.addEventListener("click", this.backToMainMenu));
         this.hideUI();
-        this.showLevelSelection();
+        this.showMainUI();
         this.animateCamera();
     }
     showUI() {
@@ -814,14 +820,17 @@ class Main {
     hideUI() {
         document.getElementById("ui").style.display = "none";
     }
-    showLevelSelection() {
-        document.getElementById("level-selection").style.display = "block";
-        Main.Scene.onBeforeRenderObservable.removeCallback(this._idleCamera);
-        Main.Scene.onBeforeRenderObservable.add(this._idleCamera);
+    showMainUI() {
+        document.getElementById("main-ui").style.display = "block";
+        document.getElementById("levels-choice").classList.remove("show");
+        document.getElementById("main-panel").classList.add("show");
     }
-    hideLevelSelection() {
-        document.getElementById("level-selection").style.display = "none";
-        Main.Scene.onBeforeRenderObservable.removeCallback(this._idleCamera);
+    hideMainUI() {
+        document.getElementById("main-ui").style.display = "none";
+    }
+    backToMainMenu() {
+        document.getElementById("levels-choice").classList.remove("show");
+        document.getElementById("main-panel").classList.add("show");
     }
     animate() {
         let fpsInfoElement = document.getElementById("fps-info");
@@ -951,23 +960,18 @@ class Tile extends GalaxyItem {
     }
     setIsValid(v) {
         if (v != this.isValid) {
-            if (this.isValidMesh) {
-                this.isValidMesh.dispose();
-                this.isValidMesh = undefined;
+            /*if (this._children[0]._children[1]._children[1]._material.emissiveColor.r != 0) {
+                this._children[0]._children[1]._children[1]._material.emissiveColor.copyFromFloats(0, 0, 0);
             }
             this._isValid = v;
             if (this.isValid != ZoneStatus.None) {
-                this.isValidMesh = BABYLON.MeshBuilder.CreatePlane("", { size: 1.8 }, Main.Scene);
-                this.isValidMesh.parent = this;
-                this.isValidMesh.position.y = 0.05;
-                this.isValidMesh.rotation.x = Math.PI * 0.5;
                 if (this.isValid === ZoneStatus.Valid) {
-                    this.isValidMesh.material = Main.greenMaterial;
+                    this._children[0]._children[1]._children[1]._material.emissiveColor.copyFromFloats(0.05, 0.45, 0.05);
                 }
                 else if (this.isValid === ZoneStatus.Invalid) {
-                    this.isValidMesh.material = Main.redMaterial;
+                    this._children[0]._children[1]._children[1]._material.emissiveColor.copyFromFloats(0.45, 0.05, 0.05);
                 }
-            }
+            }*/
         }
     }
     getFootPrint(ijk) {
