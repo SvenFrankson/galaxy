@@ -3,23 +3,89 @@
 
 <head>
     <meta http-equiv="Content-Type" content="text/html" charset="utf-8" />
-    <title>Galaxy</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Galaxies</title>
     <script src="https://cdn.babylonjs.com/babylon.max.js"></script>
     <script src="./lib/babylon.gui.js"></script>
     <script src="./lib/babylon.cellMaterial.js"></script>
     <script src="./scripts/app.js"></script>
     <script src="https://preview.babylonjs.com/loaders/babylonjs.loaders.js"></script>
     <link rel="stylesheet" type="text/css" href="./lib/normalize.css">
+    <link rel="stylesheet" type="text/css" href="./lib/fontawesome.min.css">
     <link rel="stylesheet" type="text/css" href="./styles/app.css">
 </head>
 
 <body>
   <canvas id="render-canvas"></canvas>
-  <div id="level-selection">
-    <button id="btn-level-1" class="level-btn">LEVEL 1</button>
-    <button id="btn-level-2" class="level-btn">LEVEL 2</button>
-    <button id="btn-level-3" class="level-btn">LEVEL 3</button>
-    <button id="btn-editor" class="level-btn">EDITOR</button>
+  <div class="main-ui" id="main-ui">
+    <h1 class="glow noselect">GALAXIES</h1>
+    <div class="panel" id="main-panel">
+      <ul class="menu noselect" id="main">
+        <li><div class="menu-item disabled"><span>CONTINUE</span></div></li>
+        <li><div class="menu-item" id="new-game">NEW GAME</div></li>
+        <li><div class="menu-item" id="editor">EDITOR</div></li>
+        <li><div class="menu-item">SETTINGS</div></li>
+        <li><div class="menu-item">CREDITS</div></li>
+      </ul>
+    </div>
+    <div class="panel" id="levels-choice">
+      <div class="menu-top-bar noselect">
+        <div class="back-button">
+          <i class="fas fa-chevron-left"></i>
+        </div>
+        <h2>LEVEL SELECT</h2>
+      </div>
+      <div class="levels noselect">
+        <div class="level" id="level-1">
+          <div>
+            <h3>1</h3>
+            <div class="stats">
+              <i class="fas fa-star"></i>
+              <i class="fas fa-star"></i>
+              <i class="far fa-star"></i>
+            </div>
+            </div>
+        </div>
+        <div class="level" id="level-2">
+          <h3>2</h3>
+          <div class="stats">
+            <i class="fas fa-star"></i>
+            <i class="far fa-star"></i>
+            <i class="far fa-star"></i>
+          </div>
+      </div>
+        <div class="level" id="level-3">
+          <h3>3</h3>
+        </div>
+        <div class="level locked">
+          <img src="/assets/graphics/lock.svg">
+        </div>
+        <div class="level locked">
+          <img src="/assets/graphics/lock.svg" >
+        </div>
+        <div class="level locked">
+          <img src="/assets/graphics/lock.svg" >
+        </div>
+        <div class="level locked">
+          <img src="/assets/graphics/lock.svg" >
+        </div>
+        <div class="level locked">
+          <img src="/assets/graphics/lock.svg" >
+        </div>
+        <div class="level locked">
+          <img src="/assets/graphics/lock.svg" >
+        </div>
+        <div class="level locked">
+          <img src="/assets/graphics/lock.svg" >
+        </div>
+        <div class="level locked">
+          <img src="/assets/graphics/lock.svg" >
+        </div>
+        <div class="level locked">
+          <img src="/assets/graphics/lock.svg" >
+        </div>
+      </div>
+    </div>
   </div>
   <div id="ui">
     <div id="fps-info"></div>
