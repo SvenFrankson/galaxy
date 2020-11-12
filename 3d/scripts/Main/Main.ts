@@ -172,31 +172,39 @@ class Main {
 		Main.Galaxy.instantiate();
 
 		for (let i = 1; i <= 3; i++) {
-			document.getElementById("btn-level-" + i).onclick = () => {
+			document.getElementById("level-" + i).onclick = () => {
 				Main.Galaxy.editionMode = false;
 				Main.Galaxy.loadLevel("level-" + i + ".json");
 				this.showUI();
-				this.hideLevelSelection();
+				this.hideMainUI();
 				this.animateCamera();
 			}
 		}
-		document.getElementById("btn-editor").onclick = () => {
+		document.getElementById("editor").onclick = () => {
 			Main.Galaxy.editionMode = true;
 			Main.Galaxy.width = 4;
 			Main.Galaxy.height = 4;
 			Main.Galaxy.depth = 4;
 			Main.Galaxy.instantiate();
 			this.showUI();
-			this.hideLevelSelection();
+			this.hideMainUI();
 			this.animateCamera();
 		}
 		document.getElementById("btn-menu").onclick = () => {
 			this.hideUI();
-			this.showLevelSelection();
+			this.showMainUI();
 			this.animateCamera();
 		}
+		document.getElementById("new-game").onclick = () => {
+			document.getElementById("main-panel").classList.remove("show");
+			document.getElementById("levels-choice").classList.add("show");
+		}
+		
+		const buttons = document.querySelectorAll('.back-button');
+		[...buttons].map( btn => btn.addEventListener("click", this.backToMainMenu));
+
 		this.hideUI();
-		this.showLevelSelection();
+		this.showMainUI();
 		this.animateCamera();
 	}
 
@@ -218,15 +226,19 @@ class Main {
 		document.getElementById("ui").style.display = "none";
 	}
 	
-	public showLevelSelection(): void {
-		document.getElementById("level-selection").style.display = "block";
-		Main.Scene.onBeforeRenderObservable.removeCallback(this._idleCamera);
-		Main.Scene.onBeforeRenderObservable.add(this._idleCamera);
+	public showMainUI(): void {
+		document.getElementById("main-ui").style.display = "block";
+		document.getElementById("levels-choice").classList.remove("show");
+		document.getElementById("main-panel").classList.add("show");
 	}
 	
-	public hideLevelSelection(): void {
-		document.getElementById("level-selection").style.display = "none";
-		Main.Scene.onBeforeRenderObservable.removeCallback(this._idleCamera);
+	public hideMainUI(): void {
+		document.getElementById("main-ui").style.display = "none";
+	}
+
+	public backToMainMenu() {
+		document.getElementById("levels-choice").classList.remove("show");
+		document.getElementById("main-panel").classList.add("show");
 	}
 
     public animate(): void {
