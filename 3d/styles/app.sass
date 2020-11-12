@@ -1,8 +1,37 @@
+$lightning-color: #50b9ff
+$lightning-white: #afdfff
+$disabled-state: #747474
+$star-color: #ff8500
+$error-color: #e51313
+    
 @font-face
     font-family: 'akashi'
     src: url('../assets/fonts/akashi-webfont.woff2') format('woff2'), url('../assets/fonts/akashi-webfont.woff') format('woff')
     font-weight: normal
     font-style: normal
+
+@font-face
+  font-family: 'FontAwesomeSolid'
+  font-style: normal
+  font-weight: 900
+  font-display: block
+  src: url("../assets/fonts/fa-solid-900.woff2") format("woff2"), url("../assets/fonts/fa-solid-900.woff") format("woff")
+
+.fa,
+.fas
+  font-family: 'FontAwesomeSolid'
+  font-weight: 900
+
+@font-face
+  font-family: 'FontAwesomeRegular'
+  font-style: normal
+  font-weight: 400
+  font-display: block
+  src: url("../assets/fonts/fa-regular-400.woff2") format("woff2"), url("../assets/fonts/fa-regular-400.woff") format("woff")
+
+.far
+  font-family: 'FontAwesomeRegular'
+  font-weight: 400
     
 html,
 body
@@ -11,8 +40,136 @@ body
     height: 100%
     margin: 0
     padding: 0
-    font-family: 'akashi', cursive
-    font-size: 12px
+    font-family: 'akashi', sans-serif
+    font-size: 100%
+    color: white
+
+.noselect
+    -webkit-touch-callout: none
+    -webkit-user-select: none
+    -khtml-user-select: none
+    -moz-user-select: none
+    -ms-user-select: none
+    user-select: none
+
+.main-ui
+    //pointer-events: none
+    position: fixed
+    top: 0
+    bottom: 0
+    left: 0
+    right: 0
+    h1
+        text-align: center
+        padding: .5rem
+        font-size: 4rem
+    .glow
+        text-shadow: 0 0 1rem white, 0 0 2rem lighten($lightning-color, .25), 0 0 3rem lighten($lightning-color, .5), 0 0 4rem lighten($lightning-color, .75), 0 0 5rem $lightning-color
+    .panel
+        padding: 1rem
+        margin: auto
+        background-color: rgba(black, .7)
+        text-align: center
+        max-width: 30rem
+        display: none
+        &#main-panel.show
+            display: block
+        &#levels-choice
+            //display: block
+            height: 60%
+            overflow: hidden
+            //display: flex
+            flex-direction: column
+            &.show
+                display: flex
+        .menu-top-bar
+            display: flex
+            align-items: center
+            .back-button
+                cursor: pointer
+                font-size: 2rem
+                color: $lightning-color
+                &:hover
+                    color: white
+                    text-shadow: 0 0 .2rem white, 0 0 .4rem lighten($lightning-color, .25), 0 0 .6rem lighten($lightning-color, .5), 0 0 .8rem lighten($lightning-color, .75), 0 0 1rem $lightning-color
+
+            h2
+                flex: 2
+        .menu
+            padding: 0
+            margin: 0
+            list-style: none
+            font-size: 2rem
+            display: flex
+            flex-direction: column
+            justify-content: space-between
+            align-items: center
+            li
+                margin-bottom: 1rem
+                &:last-child
+                    margin-bottom: 0
+                .menu-item
+                    padding: 1rem
+                    position: relative
+                    text-decoration: none
+                    cursor: pointer
+                    &:before
+                        content: ''
+                        position: absolute
+                        bottom: 0
+                        left: 0
+                        width: 100%
+                        height: 100%
+                        z-index: 1
+                        opacity: 0
+                        -webkit-transition: all 0.3s
+                        transition: all 0.3s
+                        border-top: 1px solid $lightning-white
+                        border-bottom: 1px solid $lightning-white
+                        -webkit-transform: scale(0.1, 1)
+                        transform: scale(0.1, 1)
+                    &.disabled
+                        color: $disabled-state
+                        cursor: default
+                    &:not(.disabled):hover
+                        text-shadow: 0 0 1rem lighten($lightning-color, .25), 0 0 2rem lighten($lightning-color, .5), 0 0 3rem $lightning-color
+                        &:before
+                            opacity: 1
+                            -webkit-transform: scale(1, 1)
+                            transform: scale(1, 1)
+        .levels
+            overflow: auto
+            padding: 1rem
+            display: flex
+            flex-wrap: wrap
+            justify-content: space-between
+            align-items: stretch
+            .level
+                cursor: pointer
+                height: 7rem
+                border: 1px solid $lightning-color
+                flex: 0 48%
+                margin-bottom: 3%
+                display: flex
+                flex-direction: column
+                justify-content: center
+                h3
+                    margin: 0
+                    font-size: 4rem
+                .stats
+                    font-size: 1.2rem
+                    color: $star-color
+                &:not(.locked):hover
+                    box-shadow: 0 0 .2rem white, 0 0 .4rem lighten($lightning-color, .25), 0 0 .6rem lighten($lightning-color, .5), 0 0 .8rem lighten($lightning-color, .75), 0 0 1rem $lightning-color
+                &.locked
+                    cursor: not-allowed
+                    img
+                        margin: .5rem auto
+                        display: block
+                        max-height: 5.2rem          
+                    &:hover
+                        box-shadow: 0 0 .2rem white, 0 0 .4rem lighten($error-color, .25), 0 0 .6rem lighten($error-color, .5), 0 0 .8rem lighten($error-color, .75), 0 0 1rem $error-color
+
 
 #render-canvas
     width: 100%
@@ -28,24 +185,6 @@ body
     color: white
     background-color: black
     padding: 10px
-
-#level-selection
-    position: fixed
-    bottom: 20%
-    left: 30%
-    width: 40%
-    text-align: center
-    z-index: 1
-    color: white
-    background-color: black
-    padding: 10px
-
-.level-btn
-    height: 80px
-    width: 30%
-    font-size: 30px
-    margin: 10px
-    vertical-align: middle
 
 #btn-menu
     height: 30px
