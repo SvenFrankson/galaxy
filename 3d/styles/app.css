@@ -245,6 +245,10 @@ body {
   width: 30px;
 }
 
+#editor-action-type {
+  margin-top: 10px;
+}
+
 #fps-info {
   position: fixed;
   top: 10px;

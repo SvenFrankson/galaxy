@@ -150,11 +150,6 @@ class Border extends GalaxyItem {
         let up = this.getDirection(BABYLON.Axis.Y);
         this.position.addInPlace(up.scale(0.25));
     }
-    instantiate() {
-        //this.galaxy.templateLightning.clone("clone", this);
-        this.galaxy.templateLightning.createInstance("clone").parent = this;
-        this.freezeWorldMatrix();
-    }
     updateRotation() {
         super.updateRotation();
         Border.UpdateRotationToRef(this.ijk, this.galaxy, this.rotationQuaternion);
@@ -172,6 +167,20 @@ class Border extends GalaxyItem {
                 quaternionRef.multiplyInPlace(q);
             }
         }
+    }
+}
+class Lightning extends Border {
+    instantiate() {
+        //this.galaxy.templateLightning.clone("clone", this);
+        this.galaxy.templateLightning.createInstance("clone").parent = this;
+        this.freezeWorldMatrix();
+    }
+}
+class EdgeBlock extends Border {
+    instantiate() {
+        let edgeBlock = BABYLON.MeshBuilder.CreateBox("edge-block", { width: 0.2, height: 0.5, depth: 2 });
+        edgeBlock.parent = this;
+        this.freezeWorldMatrix();
     }
 }
 var ZoneStatus;
@@ -211,6 +220,12 @@ class IJK {
         callback(new IJK(this.i, this.j, this.k + 1));
     }
 }
+var GalaxyEditionActionType;
+(function (GalaxyEditionActionType) {
+    GalaxyEditionActionType[GalaxyEditionActionType["Play"] = 0] = "Play";
+    GalaxyEditionActionType[GalaxyEditionActionType["Orb"] = 1] = "Orb";
+    GalaxyEditionActionType[GalaxyEditionActionType["Block"] = 2] = "Block";
+})(GalaxyEditionActionType || (GalaxyEditionActionType = {}));
 class Galaxy extends BABYLON.TransformNode {
     constructor() {
         super("galaxy");
@@ -218,6 +233,7 @@ class Galaxy extends BABYLON.TransformNode {
         this.height = 6;
         this.depth = 8;
         this.editionMode = false;
+        this.galaxyEditionActionType = GalaxyEditionActionType.Play;
         this._pointerDownX = NaN;
         this._pointerDownY = NaN;
         this.pointerObservable = (eventData) => {
@@ -431,6 +447,20 @@ class Galaxy extends BABYLON.TransformNode {
                 tmpLink.click();
                 document.body.removeChild(tmpLink);
             };
+            document.addEventListener("keyup", () => {
+                this.galaxyEditionActionType = (this.galaxyEditionActionType + 1) % 3;
+                let uiInfo = "";
+                if (this.galaxyEditionActionType === GalaxyEditionActionType.Play) {
+                    uiInfo = "Click : ADD LIGHTNING";
+                }
+                else if (this.galaxyEditionActionType === GalaxyEditionActionType.Orb) {
+                    uiInfo = "Click : ADD ORB";
+                }
+                else if (this.galaxyEditionActionType === GalaxyEditionActionType.Block) {
+                    uiInfo = "Click : ADD BLOCK";
+                }
+                document.getElementById("editor-action-type").innerText = uiInfo;
+            });
         }
         else {
             document.getElementById("editor-part").style.display = "none";
@@ -587,12 +617,15 @@ class Galaxy extends BABYLON.TransformNode {
     }
     toggleBorder(ijk) {
         let item = this.getItem(ijk);
-        if (item) {
+        if (item instanceof EdgeBlock) {
+            return;
+        }
+        if (item instanceof Lightning) {
             item.dispose();
             this.setItem(ijk, undefined);
         }
         else {
-            let border = new Border(ijk.i, ijk.j, ijk.k, this);
+            let border = new Lightning(ijk.i, ijk.j, ijk.k, this);
             border.instantiate();
             this.setItem(ijk, border);
         }
@@ -618,8 +651,28 @@ class Galaxy extends BABYLON.TransformNode {
                 odds++;
             }
             if (odds === 1) {
-                this.toggleBorder(ijk);
-                this.updateZones();
+                if (!this.editionMode || this.galaxyEditionActionType === GalaxyEditionActionType.Play) {
+                    this.toggleBorder(ijk);
+                    this.updateZones();
+                }
+                else {
+                    if (this.galaxyEditionActionType === GalaxyEditionActionType.Block) {
+                        let item = this.getItem(ijk);
+                        if (item instanceof EdgeBlock) {
+                            item.dispose();
+                            this.setItem(ijk, undefined);
+                        }
+                        else {
+                            if (item instanceof Lightning) {
+                                item.dispose();
+                                this.setItem(ijk, undefined);
+                            }
+                            let border = new EdgeBlock(ijk.i, ijk.j, ijk.k, this);
+                            border.instantiate();
+                            this.setItem(ijk, border);
+                        }
+                    }
+                }
             }
             if (odds === 2 && this.editionMode) {
                 let item = this.getItem(ijk);
@@ -960,18 +1013,23 @@ class Tile extends GalaxyItem {
     }
     setIsValid(v) {
         if (v != this.isValid) {
-            /*if (this._children[0]._children[1]._children[1]._material.emissiveColor.r != 0) {
-                this._children[0]._children[1]._children[1]._material.emissiveColor.copyFromFloats(0, 0, 0);
+            if (this.isValidMesh) {
+                this.isValidMesh.dispose();
+                this.isValidMesh = undefined;
             }
             this._isValid = v;
             if (this.isValid != ZoneStatus.None) {
+                this.isValidMesh = BABYLON.MeshBuilder.CreatePlane("", { size: 1.8 }, Main.Scene);
+                this.isValidMesh.parent = this;
+                this.isValidMesh.position.y = 0.05;
+                this.isValidMesh.rotation.x = Math.PI * 0.5;
                 if (this.isValid === ZoneStatus.Valid) {
-                    this._children[0]._children[1]._children[1]._material.emissiveColor.copyFromFloats(0.05, 0.45, 0.05);
+                    this.isValidMesh.material = Main.greenMaterial;
                 }
                 else if (this.isValid === ZoneStatus.Invalid) {
-                    this._children[0]._children[1]._children[1]._material.emissiveColor.copyFromFloats(0.45, 0.05, 0.05);
+                    this.isValidMesh.material = Main.redMaterial;
                 }
-            }*/
+            }
         }
     }
     getFootPrint(ijk) {

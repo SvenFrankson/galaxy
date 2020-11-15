@@ -1,6 +1,6 @@
 /// <reference path="GalaxyItem.ts"/>
 
-class Border extends GalaxyItem {
+abstract class Border extends GalaxyItem {
 
     constructor(
         i: number,
@@ -14,11 +14,7 @@ class Border extends GalaxyItem {
         this.position.addInPlace(up.scale(0.25));
     }
 
-    public instantiate(): void {
-        //this.galaxy.templateLightning.clone("clone", this);
-        this.galaxy.templateLightning.createInstance("clone").parent = this;
-        this.freezeWorldMatrix();
-    }
+    public abstract instantiate(): void;
 
     public updateRotation(): void {
         super.updateRotation();
@@ -38,5 +34,23 @@ class Border extends GalaxyItem {
                 quaternionRef.multiplyInPlace(q);
             }
         }
+    }
+}
+
+class Lightning extends Border {
+
+    public instantiate(): void {
+        //this.galaxy.templateLightning.clone("clone", this);
+        this.galaxy.templateLightning.createInstance("clone").parent = this;
+        this.freezeWorldMatrix();
+    }
+}
+
+class EdgeBlock extends Border {
+
+    public instantiate(): void {
+        let edgeBlock = BABYLON.MeshBuilder.CreateBox("edge-block", { width: 0.2, height: 0.5, depth: 2 });
+        edgeBlock.parent = this;
+        this.freezeWorldMatrix();
     }
 }
