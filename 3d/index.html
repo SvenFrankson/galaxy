@@ -1,120 +1,123 @@
 <!DOCTYPE html>
 <html>
-
-<head>
+  <head>
     <meta http-equiv="Content-Type" content="text/html" charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Galaxies</title>
     <script src="https://cdn.babylonjs.com/babylon.max.js"></script>
     <script src="./lib/babylon.gui.js"></script>
     <script src="./lib/babylon.cellMaterial.js"></script>
     <script src="./scripts/app.js"></script>
     <script src="https://preview.babylonjs.com/loaders/babylonjs.loaders.js"></script>
-    <link rel="stylesheet" type="text/css" href="./lib/normalize.css">
-    <link rel="stylesheet" type="text/css" href="./lib/fontawesome.min.css">
-    <link rel="stylesheet" type="text/css" href="./styles/app.css">
-</head>
+    <link rel="stylesheet" type="text/css" href="./lib/normalize.css" />
+    <link rel="stylesheet" type="text/css" href="./lib/fontawesome.min.css" />
+    <link rel="stylesheet" type="text/css" href="./styles/app.css" />
+  </head>
 
-<body>
-  <canvas id="render-canvas"></canvas>
-  <div class="main-ui" id="main-ui">
-    <h1 class="glow noselect">GALAXIES</h1>
-    <div class="panel" id="main-panel">
-      <ul class="menu noselect" id="main">
-        <li><div class="menu-item disabled"><span>CONTINUE</span></div></li>
-        <li><div class="menu-item" id="new-game">NEW GAME</div></li>
-        <li><div class="menu-item" id="editor">EDITOR</div></li>
-        <li><div class="menu-item">SETTINGS</div></li>
-        <li><div class="menu-item">CREDITS</div></li>
-      </ul>
-    </div>
-    <div class="panel" id="levels-choice">
-      <div class="menu-top-bar noselect">
-        <div class="back-button">
-          <i class="fas fa-chevron-left"></i>
-        </div>
-        <h2>LEVEL SELECT</h2>
+  <body>
+    <canvas id="render-canvas"></canvas>
+    <div class="main-ui" id="main-ui">
+      <h1 class="glow noselect">GALAXIES</h1>
+      <div class="panel" id="main-panel">
+        <ul class="menu noselect" id="main">
+          <li>
+            <div class="menu-item disabled"><span>CONTINUE</span></div>
+          </li>
+          <li><div class="menu-item" id="new-game">NEW GAME</div></li>
+          <li><div class="menu-item" id="editor">EDITOR</div></li>
+          <li><div class="menu-item">SETTINGS</div></li>
+          <li><div class="menu-item">CREDITS</div></li>
+        </ul>
       </div>
-      <div class="levels noselect">
-        <div class="level" id="level-1">
-          <div>
-            <h3>1</h3>
+      <div class="panel" id="levels-choice">
+        <div class="menu-top-bar noselect">
+          <div class="back-button">
+            <i class="fas fa-chevron-left"></i>
+          </div>
+          <h2>LEVEL SELECT</h2>
+        </div>
+        <div class="levels noselect">
+          <div class="level" id="level-1">
+            <div>
+              <h3>1</h3>
+              <div class="stats">
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+                <i class="far fa-star"></i>
+              </div>
+            </div>
+          </div>
+          <div class="level" id="level-2">
+            <h3>2</h3>
             <div class="stats">
               <i class="fas fa-star"></i>
-              <i class="fas fa-star"></i>
+              <i class="far fa-star"></i>
               <i class="far fa-star"></i>
             </div>
-            </div>
-        </div>
-        <div class="level" id="level-2">
-          <h3>2</h3>
-          <div class="stats">
-            <i class="fas fa-star"></i>
-            <i class="far fa-star"></i>
-            <i class="far fa-star"></i>
           </div>
-      </div>
-        <div class="level" id="level-3">
-          <h3>3</h3>
-        </div>
-        <div class="level locked">
-          <img src="/assets/graphics/lock.svg">
-        </div>
-        <div class="level locked">
-          <img src="/assets/graphics/lock.svg" >
-        </div>
-        <div class="level locked">
-          <img src="/assets/graphics/lock.svg" >
-        </div>
-        <div class="level locked">
-          <img src="/assets/graphics/lock.svg" >
-        </div>
-        <div class="level locked">
-          <img src="/assets/graphics/lock.svg" >
-        </div>
-        <div class="level locked">
-          <img src="/assets/graphics/lock.svg" >
-        </div>
-        <div class="level locked">
-          <img src="/assets/graphics/lock.svg" >
-        </div>
-        <div class="level locked">
-          <img src="/assets/graphics/lock.svg" >
-        </div>
-        <div class="level locked">
-          <img src="/assets/graphics/lock.svg" >
+          <div class="level" id="level-3">
+            <h3>3</h3>
+          </div>
+          <div class="level" id="level-4">
+            <h3>4</h3>
+          </div>
+          <div class="level" id="level-5">
+            <h3>5</h3>
+          </div>
+          <div class="level locked">
+            <img src="/assets/graphics/lock.svg" />
+          </div>
+          <div class="level locked">
+            <img src="/assets/graphics/lock.svg" />
+          </div>
+          <div class="level locked">
+            <img src="/assets/graphics/lock.svg" />
+          </div>
+          <div class="level locked">
+            <img src="/assets/graphics/lock.svg" />
+          </div>
+          <div class="level locked">
+            <img src="/assets/graphics/lock.svg" />
+          </div>
+          <div class="level locked">
+            <img src="/assets/graphics/lock.svg" />
+          </div>
+          <div class="level locked">
+            <img src="/assets/graphics/lock.svg" />
+          </div>
+          <div class="level locked">
+            <img src="/assets/graphics/lock.svg" />
+          </div>
         </div>
       </div>
     </div>
-  </div>
-  <div id="ui">
-    <div id="fps-info"></div>
-    <button id="btn-menu">MENU</button>
-    <div id="solve-status">NOT SOLVED</div>
-    <div id="editor-part">
-      <div>
-        <div id="width" class="editor-label">WIDTH</div>
-        <div id="width-value" class="editor-value">2</div>
-        <button id="btn-width-dec" class="editor-btn">-</button>
-        <button id="btn-width-inc" class="editor-btn">+</button>
+    <div id="ui">
+      <div id="fps-info"></div>
+      <button id="btn-menu">MENU</button>
+      <div id="solve-status">NOT SOLVED</div>
+      <div id="editor-part">
+        <div>
+          <div id="width" class="editor-label">WIDTH</div>
+          <div id="width-value" class="editor-value">2</div>
+          <button id="btn-width-dec" class="editor-btn">-</button>
+          <button id="btn-width-inc" class="editor-btn">+</button>
+        </div>
+        <div>
+          <div id="height" class="editor-label">HEIGHT</div>
+          <div id="height-value" class="editor-value">2</div>
+          <button id="btn-height-dec" class="editor-btn">-</button>
+          <button id="btn-height-inc" class="editor-btn">+</button>
+        </div>
+        <div>
+          <div id="depth" class="editor-label">DEPTH</div>
+          <div id="depth-value" class="editor-value">2</div>
+          <button id="btn-depth-dec" class="editor-btn">-</button>
+          <button id="btn-depth-inc" class="editor-btn">+</button>
+        </div>
+        <div id="editor-action-type">Click : ADD LIGHTNING</div>
+        <div>(press M to switch)</div>
+        <button id="btn-download">DOWNLOAD</button>
       </div>
-      <div>
-        <div id="height" class="editor-label">HEIGHT</div>
-        <div id="height-value" class="editor-value">2</div>
-        <button id="btn-height-dec" class="editor-btn">-</button>
-        <button id="btn-height-inc" class="editor-btn">+</button>
-      </div>
-      <div>
-        <div id="depth" class="editor-label">DEPTH</div>
-        <div id="depth-value" class="editor-value">2</div>
-        <button id="btn-depth-dec" class="editor-btn">-</button>
-        <button id="btn-depth-inc" class="editor-btn">+</button>
-      </div>
-      <div id="editor-action-type">Click : ADD LIGHTNING</div>
-      <div>(press M to switch)</div>
-      <button id="btn-download">DOWNLOAD</button>
     </div>
-  </div>
-</body>
-
+  </body>
 </html>

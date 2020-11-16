@@ -10,7 +10,15 @@ class Tile extends GalaxyItem {
         return this._isValid;
     }
     
-    public hasOrb: boolean = false;
+    private _hasOrb: boolean = false;
+    public get hasOrb(): boolean {
+        return this._hasOrb && !this.isBlock;
+    }
+    public setHasOrb(v: boolean): void {
+        if (!this.isBlock) {
+            this._hasOrb = v;
+        }
+    }
     public isBlock: boolean = false;
     public orbMesh: BABYLON.Mesh;
 
@@ -77,8 +85,13 @@ class Tile extends GalaxyItem {
     }
 
     public instantiate(): void {
+        while (this.getChildren().length > 0) {
+            let child = this.getChildren()[0];
+            child.dispose();
+        }
         if (this.isBlock) {
-
+            let tileBlock = BABYLON.MeshBuilder.CreateBox("edge-block", { width: 2, height: 0.5, depth: 2 });
+            tileBlock.parent = this;
         }
         else {
             this.galaxy.templateTile.clone("clone", this);
@@ -89,6 +102,7 @@ class Tile extends GalaxyItem {
                 this.orbMesh.material = Main.orbMaterial;
             }
         }
+
         this.freezeWorldMatrix();
     }
 
@@ -102,6 +116,38 @@ class Tile extends GalaxyItem {
             this.orbMesh.parent = this;
             this.orbMesh.position.y = 0.5;
             this.orbMesh.material = Main.orbMaterial;
+        }
+
+        if (this.isBlock) {
+            this.edges.forEach(edgeIJK => {
+                let edgeItem = this.galaxy.getItem(edgeIJK);
+                if (edgeItem instanceof EdgeBlock) {
+                    edgeItem.isLogicalBlock = true;
+                    edgeItem.instantiate();
+                }
+                else {
+                    if (edgeItem instanceof Lightning) {
+                        edgeItem.dispose();
+                        this.galaxy.setItem(undefined, edgeIJK);
+                    }
+                    let edgeBlock = new EdgeBlock(edgeIJK.i, edgeIJK.j, edgeIJK.k, this.galaxy);
+                    edgeBlock.isLogicalBlock = true;
+                    edgeBlock.instantiate();
+                    this.galaxy.setItem(edgeBlock, edgeIJK);
+                }
+            });
+        }
+        else {
+            this.edges.forEach(edgeIJK => {
+                let edgeItem = this.galaxy.getItem(edgeIJK);
+                if (edgeItem instanceof EdgeBlock && edgeItem.isLogicalBlock) {
+                    let other = this.getNeighbour(edgeItem.ijk);
+                    if (!(other instanceof Tile && other.isBlock)) {
+                        edgeItem.dispose();
+                        this.galaxy.setItem(undefined, edgeIJK);
+                    }
+                }
+            });
         }
     }
 
@@ -148,7 +194,7 @@ class Tile extends GalaxyItem {
         return undefined;
     }
 
-    public getNeighbour(ijk: IJK, offset: number): Tile {
+    public getNeighbour(ijk: IJK, offset: number = 0): Tile {
         let index = this.getEdgeIndex(ijk);
         if (index != -1) {
             index = (index + offset) % 4;

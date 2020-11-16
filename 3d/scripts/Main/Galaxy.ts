@@ -133,8 +133,30 @@ class Galaxy extends BABYLON.TransformNode {
                     let orbTile = data.orbTiles[i];
                     let tile = this.getItem(orbTile.i, orbTile.j, orbTile.k);
                     if (tile && tile instanceof Tile) {
-                        tile.hasOrb = true;
+                        tile.setHasOrb(true);
                         tile.refresh();
+                    }
+                }
+                if (data.tileBlocks) {
+                    for (let i = 0; i < data.tileBlocks.length; i++) {
+                        let tileBlock = data.tileBlocks[i];
+                        let tile = this.getItem(tileBlock.i, tileBlock.j, tileBlock.k);
+                        if (tile && tile instanceof Tile) {
+                            tile.isBlock = true;
+                            tile.refresh();
+                            tile.instantiate();
+                        }
+                    }
+                }
+                if (data.edgeBlocks) {
+                    for (let i = 0; i < data.edgeBlocks.length; i++) {
+                        let edgeBlockData = data.edgeBlocks[i];
+                        let edge = this.getItem(edgeBlockData.i, edgeBlockData.j, edgeBlockData.k);
+                        if (!edge) {
+                            let edgeBlock = new EdgeBlock(edgeBlockData.i, edgeBlockData.j, edgeBlockData.k, this);
+                            this.setItem(edgeBlock, edgeBlockData.i, edgeBlockData.j,edgeBlockData.k);
+                            edgeBlock.instantiate();
+                        }
                     }
                 }
                 resolve();
@@ -234,7 +256,7 @@ class Galaxy extends BABYLON.TransformNode {
                 tmpLink.click(); 
                 document.body.removeChild( tmpLink );
             }
-            document.addEventListener("keyup", () => {
+            document.body.onkeyup = () => {
                 this.galaxyEditionActionType = (this.galaxyEditionActionType + 1) % 3;
                 let uiInfo = "";
                 if (this.galaxyEditionActionType === GalaxyEditionActionType.Play) {
@@ -247,7 +269,7 @@ class Galaxy extends BABYLON.TransformNode {
                     uiInfo = "Click : ADD BLOCK";
                 }
                 document.getElementById("editor-action-type").innerText = uiInfo;
-            });
+            };
         }
         else {
             document.getElementById("editor-part").style.display = "none";
@@ -257,7 +279,12 @@ class Galaxy extends BABYLON.TransformNode {
 
     public updateZones(): void {
         this.zones = [];
-        let tiles = [...this.tiles];
+        let tiles = [];
+        for (let i = 0; i < this.tiles.length; i++) {
+            if (!this.tiles[i].isBlock) {
+                tiles.push(this.tiles[i]);
+            }
+        }
         while (tiles.length > 0) {
             let tile = tiles.pop();
             let zone = [];
@@ -411,23 +438,38 @@ class Galaxy extends BABYLON.TransformNode {
         }
     }
 
-    public setItem(ijk: IJK, item: GalaxyItem): void {
-        this.items[ijk.i][ijk.j][ijk.k] = item;
+    public setItem(item: GalaxyItem, ijk: IJK): void;
+    public setItem(item: GalaxyItem, i: number, j: number, k: number): void;
+    public setItem(item: GalaxyItem, a: IJK | number, j?: number, k?: number) : void {
+        let i: number;
+        if (a instanceof IJK) {
+            i = a.i;
+            j = a.j;
+            k = a.k;
+        }
+        else {
+            i = a;
+        }
+        if (this.items[i]) {
+            if (this.items[i][j]) {
+                this.items[i][j][k] = item;
+            }
+        }
     }
 
-    public toggleBorder(ijk: IJK): void {
+    public toggleLightning(ijk: IJK): void {
         let item = this.getItem(ijk);
         if (item instanceof EdgeBlock) {
             return;
         }
         if (item instanceof Lightning) {
             item.dispose();
-            this.setItem(ijk, undefined);
+            this.setItem(undefined, ijk);
         }
         else {
             let border = new Lightning(ijk.i, ijk.j, ijk.k, this);
             border.instantiate();
-            this.setItem(ijk, border);
+            this.setItem(border, ijk);
         }
     }
 
@@ -533,34 +575,46 @@ class Galaxy extends BABYLON.TransformNode {
 
             if (odds === 1) {
                 if (!this.editionMode || this.galaxyEditionActionType === GalaxyEditionActionType.Play) {
-                    this.toggleBorder(ijk);
+                    this.toggleLightning(ijk);
                     this.updateZones();
                 }
                 else {
                     if (this.galaxyEditionActionType === GalaxyEditionActionType.Block) {
                         let item = this.getItem(ijk);
                         if (item instanceof EdgeBlock) {
-                            item.dispose();
-                            this.setItem(ijk, undefined);
+                            if (!item.isLogicalBlock) {
+                                item.dispose();
+                                this.setItem(undefined, ijk);
+                            }
                         }
                         else {
                             if (item instanceof Lightning) {
                                 item.dispose();
-                                this.setItem(ijk, undefined);
+                                this.setItem(undefined, ijk);
                             }
                             let border = new EdgeBlock(ijk.i, ijk.j, ijk.k, this);
                             border.instantiate();
-                            this.setItem(ijk, border);
+                            this.setItem(border, ijk);
                         }
                     }
                 }
             }
             if (odds === 2 && this.editionMode) {
                 let item = this.getItem(ijk);
-                if (item instanceof Tile) {
-                    item.hasOrb = !item.hasOrb;
-                    item.refresh();
-                    this.updateZones();
+                if (this.galaxyEditionActionType === GalaxyEditionActionType.Orb) {
+                    if (item instanceof Tile) {
+                        item.setHasOrb(!item.hasOrb);
+                        item.refresh();
+                        this.updateZones();
+                    }
+                }
+                else if (this.galaxyEditionActionType === GalaxyEditionActionType.Block) {
+                    if (item instanceof Tile) {
+                        item.isBlock = !item.isBlock;
+                        item.refresh();
+                        item.instantiate();
+                        this.updateZones();
+                    }
                 }
             }
         }
@@ -572,6 +626,8 @@ class Galaxy extends BABYLON.TransformNode {
         data.height = this.height;
         data.depth = this.depth;
         data.orbTiles = [];
+        data.tileBlocks = [];
+        data.edgeBlocks = [];
         this.tiles.forEach(t => {
             if (t.hasOrb) {
                 data.orbTiles.push(
@@ -582,7 +638,32 @@ class Galaxy extends BABYLON.TransformNode {
                     }
                 )
             }
+            if (t.isBlock) {
+                data.tileBlocks.push(
+                    {
+                        i: t.i,
+                        j: t.j,
+                        k: t.k
+                    }
+                )
+            }
         });
+        for (let i = 0; i <= this.width; i++) {
+            for (let j = 0; j <= this.height; j++) {
+                for (let k = 0; k <= this.depth; k++) {
+                    let item = this.getItem(i, j, k);
+                    if (item instanceof EdgeBlock && !item.isLogicalBlock) {
+                        data.edgeBlocks.push(
+                            {
+                                i: item.i,
+                                j: item.j,
+                                k: item.k
+                            }
+                        )
+                    }
+                }
+            }
+        }
         return data;
     }
 }

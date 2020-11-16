@@ -30,7 +30,6 @@ class Main {
 		if (!Main._redMaterial) {
 			Main._redMaterial = new BABYLON.StandardMaterial("red-material", Main.Scene);
 			Main._redMaterial.diffuseColor.copyFromFloats(0.9, 0.1, 0.1);
-			Main._redMaterial.emissiveColor.copyFromFloats(0.45, 0.05, 0.05);
 		}
 		return Main._redMaterial;
 	}
@@ -40,7 +39,6 @@ class Main {
 		if (!Main._greenMaterial) {
 			Main._greenMaterial = new BABYLON.StandardMaterial("green-material", Main.Scene);
 			Main._greenMaterial.diffuseColor.copyFromFloats(0.1, 0.9, 0.1);
-			Main._greenMaterial.emissiveColor.copyFromFloats(0.05, 0.45, 0.05);
 		}
 		return Main._greenMaterial;
 	}
@@ -49,7 +47,7 @@ class Main {
 	public static get blueMaterial(): BABYLON.StandardMaterial {
 		if (!Main._blueMaterial) {
 			Main._blueMaterial = new BABYLON.StandardMaterial("blue-material", Main.Scene);
-			Main._blueMaterial.emissiveColor.copyFromFloats(0.8, 0.8, 1);
+			Main._blueMaterial.diffuseColor.copyFromFloats(0.1, 0.1, 0.9);
 		}
 		return Main._blueMaterial;
 	}
@@ -59,7 +57,6 @@ class Main {
 		if (!Main._whiteMaterial) {
 			Main._whiteMaterial = new BABYLON.StandardMaterial("white-material", Main.Scene);
 			Main._whiteMaterial.diffuseColor.copyFromFloats(0.9, 0.9, 0.9);
-			Main._whiteMaterial.emissiveColor.copyFromFloats(0.45, 0.45, 0.45);
 		}
 		return Main._whiteMaterial;
 	}
@@ -191,7 +188,7 @@ class Main {
 		await Main.Galaxy.initialize();
 		Main.Galaxy.instantiate();
 
-		for (let i = 1; i <= 3; i++) {
+		for (let i = 1; i <= 5; i++) {
 			document.getElementById("level-" + i).onclick = () => {
 				Main.Galaxy.editionMode = false;
 				Main.Galaxy.loadLevel("level-" + i + ".json");

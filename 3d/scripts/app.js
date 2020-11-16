@@ -143,6 +143,7 @@ class GalaxyItem extends BABYLON.Mesh {
     }
 }
 /// <reference path="GalaxyItem.ts"/>
+var DEBUG_SHOW_LOGICAL_EDGEBLOCK = true;
 class Border extends GalaxyItem {
     constructor(i, j, k, galaxy) {
         super(i, j, k, galaxy);
@@ -171,16 +172,37 @@ class Border extends GalaxyItem {
 }
 class Lightning extends Border {
     instantiate() {
-        //this.galaxy.templateLightning.clone("clone", this);
+        while (this.getChildren().length > 0) {
+            let child = this.getChildren()[0];
+            child.dispose();
+        }
         this.galaxy.templateLightning.createInstance("clone").parent = this;
         this.freezeWorldMatrix();
     }
 }
 class EdgeBlock extends Border {
+    constructor(i, j, k, galaxy) {
+        super(i, j, k, galaxy);
+        this.isLogicalBlock = false;
+    }
     instantiate() {
-        let edgeBlock = BABYLON.MeshBuilder.CreateBox("edge-block", { width: 0.2, height: 0.5, depth: 2 });
-        edgeBlock.parent = this;
-        this.freezeWorldMatrix();
+        while (this.getChildren().length > 0) {
+            let child = this.getChildren()[0];
+            child.dispose();
+        }
+        if (!this.isLogicalBlock) {
+            let edgeBlock = BABYLON.MeshBuilder.CreateBox("edge-block", { width: 0.2, height: 0.5, depth: 1.8 });
+            edgeBlock.material = Main.blueMaterial;
+            edgeBlock.parent = this;
+            this.freezeWorldMatrix();
+        }
+        if (this.isLogicalBlock && DEBUG_SHOW_LOGICAL_EDGEBLOCK) {
+            let edgeBlock = BABYLON.MeshBuilder.CreateBox("edge-block", { width: 0.1, height: 0.5, depth: 1.8 });
+            edgeBlock.material = Main.redMaterial;
+            edgeBlock.visibility = 0.5;
+            edgeBlock.parent = this;
+            this.freezeWorldMatrix();
+        }
     }
 }
 var ZoneStatus;
@@ -354,8 +376,30 @@ class Galaxy extends BABYLON.TransformNode {
                     let orbTile = data.orbTiles[i];
                     let tile = this.getItem(orbTile.i, orbTile.j, orbTile.k);
                     if (tile && tile instanceof Tile) {
-                        tile.hasOrb = true;
+                        tile.setHasOrb(true);
                         tile.refresh();
+                    }
+                }
+                if (data.tileBlocks) {
+                    for (let i = 0; i < data.tileBlocks.length; i++) {
+                        let tileBlock = data.tileBlocks[i];
+                        let tile = this.getItem(tileBlock.i, tileBlock.j, tileBlock.k);
+                        if (tile && tile instanceof Tile) {
+                            tile.isBlock = true;
+                            tile.refresh();
+                            tile.instantiate();
+                        }
+                    }
+                }
+                if (data.edgeBlocks) {
+                    for (let i = 0; i < data.edgeBlocks.length; i++) {
+                        let edgeBlockData = data.edgeBlocks[i];
+                        let edge = this.getItem(edgeBlockData.i, edgeBlockData.j, edgeBlockData.k);
+                        if (!edge) {
+                            let edgeBlock = new EdgeBlock(edgeBlockData.i, edgeBlockData.j, edgeBlockData.k, this);
+                            this.setItem(edgeBlock, edgeBlockData.i, edgeBlockData.j, edgeBlockData.k);
+                            edgeBlock.instantiate();
+                        }
                     }
                 }
                 resolve();
@@ -447,7 +491,7 @@ class Galaxy extends BABYLON.TransformNode {
                 tmpLink.click();
                 document.body.removeChild(tmpLink);
             };
-            document.addEventListener("keyup", () => {
+            document.body.onkeyup = () => {
                 this.galaxyEditionActionType = (this.galaxyEditionActionType + 1) % 3;
                 let uiInfo = "";
                 if (this.galaxyEditionActionType === GalaxyEditionActionType.Play) {
@@ -460,7 +504,7 @@ class Galaxy extends BABYLON.TransformNode {
                     uiInfo = "Click : ADD BLOCK";
                 }
                 document.getElementById("editor-action-type").innerText = uiInfo;
-            });
+            };
         }
         else {
             document.getElementById("editor-part").style.display = "none";
@@ -469,7 +513,12 @@ class Galaxy extends BABYLON.TransformNode {
     }
     updateZones() {
         this.zones = [];
-        let tiles = [...this.tiles];
+        let tiles = [];
+        for (let i = 0; i < this.tiles.length; i++) {
+            if (!this.tiles[i].isBlock) {
+                tiles.push(this.tiles[i]);
+            }
+        }
         while (tiles.length > 0) {
             let tile = tiles.pop();
             let zone = [];
@@ -612,22 +661,35 @@ class Galaxy extends BABYLON.TransformNode {
             }
         }
     }
-    setItem(ijk, item) {
-        this.items[ijk.i][ijk.j][ijk.k] = item;
+    setItem(item, a, j, k) {
+        let i;
+        if (a instanceof IJK) {
+            i = a.i;
+            j = a.j;
+            k = a.k;
+        }
+        else {
+            i = a;
+        }
+        if (this.items[i]) {
+            if (this.items[i][j]) {
+                this.items[i][j][k] = item;
+            }
+        }
     }
-    toggleBorder(ijk) {
+    toggleLightning(ijk) {
         let item = this.getItem(ijk);
         if (item instanceof EdgeBlock) {
             return;
         }
         if (item instanceof Lightning) {
             item.dispose();
-            this.setItem(ijk, undefined);
+            this.setItem(undefined, ijk);
         }
         else {
             let border = new Lightning(ijk.i, ijk.j, ijk.k, this);
             border.instantiate();
-            this.setItem(ijk, border);
+            this.setItem(border, ijk);
         }
     }
     worldPositionToIJK(worldPosition) {
@@ -652,34 +714,46 @@ class Galaxy extends BABYLON.TransformNode {
             }
             if (odds === 1) {
                 if (!this.editionMode || this.galaxyEditionActionType === GalaxyEditionActionType.Play) {
-                    this.toggleBorder(ijk);
+                    this.toggleLightning(ijk);
                     this.updateZones();
                 }
                 else {
                     if (this.galaxyEditionActionType === GalaxyEditionActionType.Block) {
                         let item = this.getItem(ijk);
                         if (item instanceof EdgeBlock) {
-                            item.dispose();
-                            this.setItem(ijk, undefined);
+                            if (!item.isLogicalBlock) {
+                                item.dispose();
+                                this.setItem(undefined, ijk);
+                            }
                         }
                         else {
                             if (item instanceof Lightning) {
                                 item.dispose();
-                                this.setItem(ijk, undefined);
+                                this.setItem(undefined, ijk);
                             }
                             let border = new EdgeBlock(ijk.i, ijk.j, ijk.k, this);
                             border.instantiate();
-                            this.setItem(ijk, border);
+                            this.setItem(border, ijk);
                         }
                     }
                 }
             }
             if (odds === 2 && this.editionMode) {
                 let item = this.getItem(ijk);
-                if (item instanceof Tile) {
-                    item.hasOrb = !item.hasOrb;
-                    item.refresh();
-                    this.updateZones();
+                if (this.galaxyEditionActionType === GalaxyEditionActionType.Orb) {
+                    if (item instanceof Tile) {
+                        item.setHasOrb(!item.hasOrb);
+                        item.refresh();
+                        this.updateZones();
+                    }
+                }
+                else if (this.galaxyEditionActionType === GalaxyEditionActionType.Block) {
+                    if (item instanceof Tile) {
+                        item.isBlock = !item.isBlock;
+                        item.refresh();
+                        item.instantiate();
+                        this.updateZones();
+                    }
                 }
             }
         }
@@ -690,6 +764,8 @@ class Galaxy extends BABYLON.TransformNode {
         data.height = this.height;
         data.depth = this.depth;
         data.orbTiles = [];
+        data.tileBlocks = [];
+        data.edgeBlocks = [];
         this.tiles.forEach(t => {
             if (t.hasOrb) {
                 data.orbTiles.push({
@@ -698,7 +774,28 @@ class Galaxy extends BABYLON.TransformNode {
                     k: t.k
                 });
             }
+            if (t.isBlock) {
+                data.tileBlocks.push({
+                    i: t.i,
+                    j: t.j,
+                    k: t.k
+                });
+            }
         });
+        for (let i = 0; i <= this.width; i++) {
+            for (let j = 0; j <= this.height; j++) {
+                for (let k = 0; k <= this.depth; k++) {
+                    let item = this.getItem(i, j, k);
+                    if (item instanceof EdgeBlock && !item.isLogicalBlock) {
+                        data.edgeBlocks.push({
+                            i: item.i,
+                            j: item.j,
+                            k: item.k
+                        });
+                    }
+                }
+            }
+        }
         return data;
     }
 }
@@ -732,7 +829,6 @@ class Main {
         if (!Main._redMaterial) {
             Main._redMaterial = new BABYLON.StandardMaterial("red-material", Main.Scene);
             Main._redMaterial.diffuseColor.copyFromFloats(0.9, 0.1, 0.1);
-            Main._redMaterial.emissiveColor.copyFromFloats(0.45, 0.05, 0.05);
         }
         return Main._redMaterial;
     }
@@ -740,14 +836,13 @@ class Main {
         if (!Main._greenMaterial) {
             Main._greenMaterial = new BABYLON.StandardMaterial("green-material", Main.Scene);
             Main._greenMaterial.diffuseColor.copyFromFloats(0.1, 0.9, 0.1);
-            Main._greenMaterial.emissiveColor.copyFromFloats(0.05, 0.45, 0.05);
         }
         return Main._greenMaterial;
     }
     static get blueMaterial() {
         if (!Main._blueMaterial) {
             Main._blueMaterial = new BABYLON.StandardMaterial("blue-material", Main.Scene);
-            Main._blueMaterial.emissiveColor.copyFromFloats(0.8, 0.8, 1);
+            Main._blueMaterial.diffuseColor.copyFromFloats(0.1, 0.1, 0.9);
         }
         return Main._blueMaterial;
     }
@@ -755,7 +850,6 @@ class Main {
         if (!Main._whiteMaterial) {
             Main._whiteMaterial = new BABYLON.StandardMaterial("white-material", Main.Scene);
             Main._whiteMaterial.diffuseColor.copyFromFloats(0.9, 0.9, 0.9);
-            Main._whiteMaterial.emissiveColor.copyFromFloats(0.45, 0.45, 0.45);
         }
         return Main._whiteMaterial;
     }
@@ -847,7 +941,7 @@ class Main {
         Main.Galaxy = new Galaxy();
         await Main.Galaxy.initialize();
         Main.Galaxy.instantiate();
-        for (let i = 1; i <= 3; i++) {
+        for (let i = 1; i <= 5; i++) {
             document.getElementById("level-" + i).onclick = () => {
                 Main.Galaxy.editionMode = false;
                 Main.Galaxy.loadLevel("level-" + i + ".json");
@@ -950,7 +1044,7 @@ class Tile extends GalaxyItem {
         this.edges = [];
         this.neighbours = [];
         this._isValid = ZoneStatus.None;
-        this.hasOrb = false;
+        this._hasOrb = false;
         this.isBlock = false;
         this.name = "tile-" + i + "-" + j + "-" + k;
         this.isBlock = isBlock;
@@ -990,6 +1084,14 @@ class Tile extends GalaxyItem {
     get isValid() {
         return this._isValid;
     }
+    get hasOrb() {
+        return this._hasOrb && !this.isBlock;
+    }
+    setHasOrb(v) {
+        if (!this.isBlock) {
+            this._hasOrb = v;
+        }
+    }
     updateNeighbours() {
         this.neighbours = [];
         for (let i = 0; i < this.edges.length; i++) {
@@ -1006,7 +1108,13 @@ class Tile extends GalaxyItem {
         }
     }
     instantiate() {
+        while (this.getChildren().length > 0) {
+            let child = this.getChildren()[0];
+            child.dispose();
+        }
         if (this.isBlock) {
+            let tileBlock = BABYLON.MeshBuilder.CreateBox("edge-block", { width: 2, height: 0.5, depth: 2 });
+            tileBlock.parent = this;
         }
         else {
             this.galaxy.templateTile.clone("clone", this);
@@ -1030,6 +1138,37 @@ class Tile extends GalaxyItem {
             this.orbMesh.position.y = 0.5;
             this.orbMesh.material = Main.orbMaterial;
         }
+        if (this.isBlock) {
+            this.edges.forEach(edgeIJK => {
+                let edgeItem = this.galaxy.getItem(edgeIJK);
+                if (edgeItem instanceof EdgeBlock) {
+                    edgeItem.isLogicalBlock = true;
+                    edgeItem.instantiate();
+                }
+                else {
+                    if (edgeItem instanceof Lightning) {
+                        edgeItem.dispose();
+                        this.galaxy.setItem(undefined, edgeIJK);
+                    }
+                    let edgeBlock = new EdgeBlock(edgeIJK.i, edgeIJK.j, edgeIJK.k, this.galaxy);
+                    edgeBlock.isLogicalBlock = true;
+                    edgeBlock.instantiate();
+                    this.galaxy.setItem(edgeBlock, edgeIJK);
+                }
+            });
+        }
+        else {
+            this.edges.forEach(edgeIJK => {
+                let edgeItem = this.galaxy.getItem(edgeIJK);
+                if (edgeItem instanceof EdgeBlock && edgeItem.isLogicalBlock) {
+                    let other = this.getNeighbour(edgeItem.ijk);
+                    if (!(other instanceof Tile && other.isBlock)) {
+                        edgeItem.dispose();
+                        this.galaxy.setItem(undefined, edgeIJK);
+                    }
+                }
+            });
+        }
     }
     setIsValid(v) {
         if (v != this.isValid) {
@@ -1038,10 +1177,10 @@ class Tile extends GalaxyItem {
             if (this.isValid === ZoneStatus.None) {
                 mesh.material = Main.defaultTileMaterial;
             }
-            if (this.isValid === ZoneStatus.Valid) {
+            else if (this.isValid === ZoneStatus.Valid) {
                 mesh.material = Main.validTileMaterial;
             }
-            if (this.isValid === ZoneStatus.Invalid) {
+            else if (this.isValid === ZoneStatus.Invalid) {
                 mesh.material = Main.invalidTileMaterial;
             }
         }
@@ -1070,7 +1209,7 @@ class Tile extends GalaxyItem {
         }
         return undefined;
     }
-    getNeighbour(ijk, offset) {
+    getNeighbour(ijk, offset = 0) {
         let index = this.getEdgeIndex(ijk);
         if (index != -1) {
             index = (index + offset) % 4;
