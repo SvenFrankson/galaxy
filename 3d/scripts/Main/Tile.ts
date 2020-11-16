@@ -6,22 +6,24 @@ class Tile extends GalaxyItem {
     public neighbours: Tile[] = [];
 
     private _isValid: ZoneStatus = ZoneStatus.None;
-    public isValidMesh: BABYLON.Mesh;
     public get isValid(): ZoneStatus {
         return this._isValid;
     }
     
     public hasOrb: boolean = false;
+    public isBlock: boolean = false;
     public orbMesh: BABYLON.Mesh;
 
     constructor(
         i: number,
         j: number,
         k: number,
-        galaxy: Galaxy
+        galaxy: Galaxy,
+        isBlock: boolean = false
     ) {
         super(i, j, k, galaxy);
         this.name = "tile-" + i + "-" + j + "-" + k;
+        this.isBlock = isBlock;
 
         let ei0 = new IJK(this.i - 1, this.j, this.k);
         if (this.galaxy.isIJKValid(ei0)) {
@@ -75,12 +77,17 @@ class Tile extends GalaxyItem {
     }
 
     public instantiate(): void {
-        this.galaxy.templateTile.clone("clone", this);
-        if (this.hasOrb) {
-            this.orbMesh = BABYLON.MeshBuilder.CreateSphere("orb", { segments: 8, diameter: 0.5 }, Main.Scene);
-            this.orbMesh.parent = this;
-            this.orbMesh.position.y = 0.5;
-            this.orbMesh.material = Main.orbMaterial;
+        if (this.isBlock) {
+
+        }
+        else {
+            this.galaxy.templateTile.clone("clone", this);
+            if (this.hasOrb) {
+                this.orbMesh = BABYLON.MeshBuilder.CreateSphere("orb", { segments: 8, diameter: 0.5 }, Main.Scene);
+                this.orbMesh.parent = this;
+                this.orbMesh.position.y = 0.5;
+                this.orbMesh.material = Main.orbMaterial;
+            }
         }
         this.freezeWorldMatrix();
     }
@@ -100,22 +107,16 @@ class Tile extends GalaxyItem {
 
     public setIsValid(v: ZoneStatus): void {
         if (v != this.isValid) {
-            if (this.isValidMesh) {
-                this.isValidMesh.dispose();
-                this.isValidMesh = undefined;
-            }
             this._isValid = v;
-            if (this.isValid != ZoneStatus.None) {
-                this.isValidMesh = BABYLON.MeshBuilder.CreatePlane("", { size: 1.8 }, Main.Scene);
-                this.isValidMesh.parent = this;
-                this.isValidMesh.position.y = 0.05;
-                this.isValidMesh.rotation.x = Math.PI * 0.5;
-                if (this.isValid === ZoneStatus.Valid) {
-                    this.isValidMesh.material = Main.greenMaterial;
-                }
-                else if (this.isValid === ZoneStatus.Invalid) {
-                    this.isValidMesh.material = Main.redMaterial;
-                }
+            let mesh = this.getChildMeshes()[0].getChildMeshes()[2];
+            if (this.isValid === ZoneStatus.None) {
+                mesh.material = Main.defaultTileMaterial;
+            }
+            else if (this.isValid === ZoneStatus.Valid) {
+                mesh.material = Main.validTileMaterial;
+            }
+            else if (this.isValid === ZoneStatus.Invalid) {
+                mesh.material = Main.invalidTileMaterial;
             }
         }
     }

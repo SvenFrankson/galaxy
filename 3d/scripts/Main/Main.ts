@@ -54,6 +54,16 @@ class Main {
 		return Main._blueMaterial;
 	}
 
+	public static _whiteMaterial: BABYLON.StandardMaterial;
+	public static get whiteMaterial(): BABYLON.StandardMaterial {
+		if (!Main._whiteMaterial) {
+			Main._whiteMaterial = new BABYLON.StandardMaterial("white-material", Main.Scene);
+			Main._whiteMaterial.diffuseColor.copyFromFloats(0.9, 0.9, 0.9);
+			Main._whiteMaterial.emissiveColor.copyFromFloats(0.45, 0.45, 0.45);
+		}
+		return Main._whiteMaterial;
+	}
+
 	public static _orbMaterial: BABYLON.StandardMaterial;
 	public static get orbMaterial(): BABYLON.StandardMaterial {
 		if (!Main._orbMaterial) {
@@ -63,14 +73,19 @@ class Main {
 		return Main._orbMaterial;
 	}
 
-	public static _whiteMaterial: BABYLON.StandardMaterial;
-	public static get whiteMaterial(): BABYLON.StandardMaterial {
-		if (!Main._whiteMaterial) {
-			Main._whiteMaterial = new BABYLON.StandardMaterial("white-material", Main.Scene);
-			Main._whiteMaterial.diffuseColor.copyFromFloats(0.9, 0.9, 0.9);
-			Main._whiteMaterial.emissiveColor.copyFromFloats(0.45, 0.45, 0.45);
-		}
-		return Main._whiteMaterial;
+	public static _defaultTileMaterial: BABYLON.PBRMaterial;
+	public static get defaultTileMaterial(): BABYLON.PBRMaterial {
+		return Main._defaultTileMaterial;
+	}
+
+	public static _validTileMaterial: BABYLON.PBRMaterial;
+	public static get validTileMaterial(): BABYLON.PBRMaterial {
+		return Main._validTileMaterial;
+	}
+
+	public static _invalidTileMaterial: BABYLON.PBRMaterial;
+	public static get invalidTileMaterial(): BABYLON.PBRMaterial {
+		return Main._invalidTileMaterial;
 	}
 
     constructor(canvasElement: string) {
@@ -112,6 +127,11 @@ class Main {
 									}
 									if (material.name === "bottom") {
 										material.emissiveColor.copyFromFloats(0, 0, 0);
+										Main._defaultTileMaterial = material;
+										Main._validTileMaterial = material.clone("valid-tile-material");
+										Main._validTileMaterial.emissiveColor.copyFromFloats(0.05, 0.45, 0.05);
+										Main._invalidTileMaterial = material.clone("invalid-tile-material");
+										Main._invalidTileMaterial.emissiveColor.copyFromFloats(0.45, 0.05, 0.05);
 									}
 								}
 							}

@@ -751,13 +751,6 @@ class Main {
         }
         return Main._blueMaterial;
     }
-    static get orbMaterial() {
-        if (!Main._orbMaterial) {
-            Main._orbMaterial = new BABYLON.StandardMaterial("blue-material", Main.Scene);
-            Main._orbMaterial.emissiveColor.copyFromFloats(0.8, 0.8, 1);
-        }
-        return Main._orbMaterial;
-    }
     static get whiteMaterial() {
         if (!Main._whiteMaterial) {
             Main._whiteMaterial = new BABYLON.StandardMaterial("white-material", Main.Scene);
@@ -765,6 +758,22 @@ class Main {
             Main._whiteMaterial.emissiveColor.copyFromFloats(0.45, 0.45, 0.45);
         }
         return Main._whiteMaterial;
+    }
+    static get orbMaterial() {
+        if (!Main._orbMaterial) {
+            Main._orbMaterial = new BABYLON.StandardMaterial("blue-material", Main.Scene);
+            Main._orbMaterial.emissiveColor.copyFromFloats(0.8, 0.8, 1);
+        }
+        return Main._orbMaterial;
+    }
+    static get defaultTileMaterial() {
+        return Main._defaultTileMaterial;
+    }
+    static get validTileMaterial() {
+        return Main._validTileMaterial;
+    }
+    static get invalidTileMaterial() {
+        return Main._invalidTileMaterial;
     }
     initializeCamera() {
         Main.Camera = new BABYLON.ArcRotateCamera("camera", 0, 0, 10, BABYLON.Vector3.Zero(), Main.Scene);
@@ -791,6 +800,11 @@ class Main {
                         }
                         if (material.name === "bottom") {
                             material.emissiveColor.copyFromFloats(0, 0, 0);
+                            Main._defaultTileMaterial = material;
+                            Main._validTileMaterial = material.clone("valid-tile-material");
+                            Main._validTileMaterial.emissiveColor.copyFromFloats(0.05, 0.45, 0.05);
+                            Main._invalidTileMaterial = material.clone("invalid-tile-material");
+                            Main._invalidTileMaterial.emissiveColor.copyFromFloats(0.45, 0.05, 0.05);
                         }
                     }
                 });
@@ -931,13 +945,15 @@ class Plot extends GalaxyItem {
 }
 /// <reference path="GalaxyItem.ts"/>
 class Tile extends GalaxyItem {
-    constructor(i, j, k, galaxy) {
+    constructor(i, j, k, galaxy, isBlock = false) {
         super(i, j, k, galaxy);
         this.edges = [];
         this.neighbours = [];
         this._isValid = ZoneStatus.None;
         this.hasOrb = false;
+        this.isBlock = false;
         this.name = "tile-" + i + "-" + j + "-" + k;
+        this.isBlock = isBlock;
         let ei0 = new IJK(this.i - 1, this.j, this.k);
         if (this.galaxy.isIJKValid(ei0)) {
             this.edges.push(ei0);
@@ -990,12 +1006,16 @@ class Tile extends GalaxyItem {
         }
     }
     instantiate() {
-        this.galaxy.templateTile.clone("clone", this);
-        if (this.hasOrb) {
-            this.orbMesh = BABYLON.MeshBuilder.CreateSphere("orb", { segments: 8, diameter: 0.5 }, Main.Scene);
-            this.orbMesh.parent = this;
-            this.orbMesh.position.y = 0.5;
-            this.orbMesh.material = Main.orbMaterial;
+        if (this.isBlock) {
+        }
+        else {
+            this.galaxy.templateTile.clone("clone", this);
+            if (this.hasOrb) {
+                this.orbMesh = BABYLON.MeshBuilder.CreateSphere("orb", { segments: 8, diameter: 0.5 }, Main.Scene);
+                this.orbMesh.parent = this;
+                this.orbMesh.position.y = 0.5;
+                this.orbMesh.material = Main.orbMaterial;
+            }
         }
         this.freezeWorldMatrix();
     }
@@ -1013,22 +1033,16 @@ class Tile extends GalaxyItem {
     }
     setIsValid(v) {
         if (v != this.isValid) {
-            if (this.isValidMesh) {
-                this.isValidMesh.dispose();
-                this.isValidMesh = undefined;
-            }
             this._isValid = v;
-            if (this.isValid != ZoneStatus.None) {
-                this.isValidMesh = BABYLON.MeshBuilder.CreatePlane("", { size: 1.8 }, Main.Scene);
-                this.isValidMesh.parent = this;
-                this.isValidMesh.position.y = 0.05;
-                this.isValidMesh.rotation.x = Math.PI * 0.5;
-                if (this.isValid === ZoneStatus.Valid) {
-                    this.isValidMesh.material = Main.greenMaterial;
-                }
-                else if (this.isValid === ZoneStatus.Invalid) {
-                    this.isValidMesh.material = Main.redMaterial;
-                }
+            let mesh = this.getChildMeshes()[0].getChildMeshes()[2];
+            if (this.isValid === ZoneStatus.None) {
+                mesh.material = Main.defaultTileMaterial;
+            }
+            if (this.isValid === ZoneStatus.Valid) {
+                mesh.material = Main.validTileMaterial;
+            }
+            if (this.isValid === ZoneStatus.Invalid) {
+                mesh.material = Main.invalidTileMaterial;
             }
         }
     }
