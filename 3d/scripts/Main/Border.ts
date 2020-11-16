@@ -70,10 +70,7 @@ class EdgeBlock extends Border {
             child.dispose();
         }
         if (!this.isLogicalBlock) {
-            let edgeBlock = BABYLON.MeshBuilder.CreateBox("edge-block", { width: 0.2, height: 0.5, depth: 1.8 });
-            edgeBlock.material = Main.blueMaterial;
-            edgeBlock.parent = this;
-            this.freezeWorldMatrix();
+            this.galaxy.templateEdgeBlock.clone("clone", this);
         }
         if (this.isLogicalBlock && DEBUG_SHOW_LOGICAL_EDGEBLOCK) {
             let edgeBlock = BABYLON.MeshBuilder.CreateBox("edge-block", { width: 0.1, height: 0.5, depth: 1.8 });

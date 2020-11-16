@@ -90,8 +90,7 @@ class Tile extends GalaxyItem {
             child.dispose();
         }
         if (this.isBlock) {
-            let tileBlock = BABYLON.MeshBuilder.CreateBox("edge-block", { width: 2, height: 0.5, depth: 2 });
-            tileBlock.parent = this;
+            this.galaxy.templateTileBlock.clone("clone", this);
         }
         else {
             this.galaxy.templateTile.clone("clone", this);

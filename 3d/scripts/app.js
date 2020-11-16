@@ -191,10 +191,7 @@ class EdgeBlock extends Border {
             child.dispose();
         }
         if (!this.isLogicalBlock) {
-            let edgeBlock = BABYLON.MeshBuilder.CreateBox("edge-block", { width: 0.2, height: 0.5, depth: 1.8 });
-            edgeBlock.material = Main.blueMaterial;
-            edgeBlock.parent = this;
-            this.freezeWorldMatrix();
+            this.galaxy.templateEdgeBlock.clone("clone", this);
         }
         if (this.isLogicalBlock && DEBUG_SHOW_LOGICAL_EDGEBLOCK) {
             let edgeBlock = BABYLON.MeshBuilder.CreateBox("edge-block", { width: 0.1, height: 0.5, depth: 1.8 });
@@ -331,11 +328,13 @@ class Galaxy extends BABYLON.TransformNode {
     }
     async initialize() {
         this.templateTile = await Main.loadMeshes("tile-lp");
+        this.templateTileBlock = await Main.loadMeshes("tile-block");
         this.templatePole = await Main.loadMeshes("pole");
         this.templatePoleEdge = await Main.loadMeshes("pole");
         this.templatePoleCorner = await Main.loadMeshes("tripole");
         let templateLightningRaw = await Main.loadMeshes("lightning");
         this.templateLightning = new BABYLON.Mesh("templateLightningOneMesh");
+        this.templateEdgeBlock = await Main.loadMeshes("edge-block");
         let templateLightningData = new BABYLON.VertexData();
         let positions = [];
         let indices = [];
@@ -1113,8 +1112,7 @@ class Tile extends GalaxyItem {
             child.dispose();
         }
         if (this.isBlock) {
-            let tileBlock = BABYLON.MeshBuilder.CreateBox("edge-block", { width: 2, height: 0.5, depth: 2 });
-            tileBlock.parent = this;
+            this.galaxy.templateTileBlock.clone("clone", this);
         }
         else {
             this.galaxy.templateTile.clone("clone", this);

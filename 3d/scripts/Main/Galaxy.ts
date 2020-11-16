@@ -51,10 +51,12 @@ enum GalaxyEditionActionType {
 class Galaxy extends BABYLON.TransformNode {
 
 	public templateTile: BABYLON.AbstractMesh;
+	public templateTileBlock: BABYLON.AbstractMesh;
 	public templatePole: BABYLON.AbstractMesh;
 	public templatePoleEdge: BABYLON.AbstractMesh;
 	public templatePoleCorner: BABYLON.AbstractMesh;
 	public templateLightning: BABYLON.Mesh;
+	public templateEdgeBlock: BABYLON.AbstractMesh;
 
     public width: number = 10;
     public height: number = 6;
@@ -86,11 +88,13 @@ class Galaxy extends BABYLON.TransformNode {
 
     public async initialize(): Promise<void> {
 		this.templateTile = await Main.loadMeshes("tile-lp");
+		this.templateTileBlock = await Main.loadMeshes("tile-block");
 		this.templatePole = await Main.loadMeshes("pole");
 		this.templatePoleEdge = await Main.loadMeshes("pole");
 		this.templatePoleCorner = await Main.loadMeshes("tripole");
         let templateLightningRaw = await Main.loadMeshes("lightning");
         this.templateLightning = new BABYLON.Mesh("templateLightningOneMesh");
+        this.templateEdgeBlock = await Main.loadMeshes("edge-block");
         let templateLightningData = new BABYLON.VertexData();
         let positions = [];
         let indices = [];
