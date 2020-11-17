@@ -276,23 +276,16 @@ class Galaxy extends BABYLON.TransformNode {
         }
         return false;
     }
-    async initialize() {
-        this.templateTile = await Main.loadMeshes("tile-lp");
-        this.templateTileBlock = await Main.loadMeshes("tile-block");
-        this.templatePole = await Main.loadMeshes("pole");
-        this.templatePoleEdge = await Main.loadMeshes("pole");
-        this.templatePoleCorner = await Main.loadMeshes("tripole");
-        let templateLightningRaw = await Main.loadMeshes("lightning");
-        this.templateLightning = new BABYLON.Mesh("templateLightningOneMesh");
-        this.templateEdgeBlock = await Main.loadMeshes("edge-block");
-        let templateLightningData = new BABYLON.VertexData();
+    mergeTemplateIntoOneMeshTemplate(template) {
+        let oneMeshTemplate = new BABYLON.Mesh("template");
+        let vertexData = new BABYLON.VertexData();
         let positions = [];
         let indices = [];
         let normals = [];
         let uvs = [];
-        let templateLightningChildren = templateLightningRaw.getChildMeshes();
-        for (let i = 0; i < templateLightningChildren.length; i++) {
-            let child = templateLightningChildren[i];
+        let templateChildren = template.getChildMeshes();
+        for (let i = 0; i < templateChildren.length; i++) {
+            let child = templateChildren[i];
             if (child instanceof BABYLON.Mesh) {
                 let l = positions.length / 3;
                 let data = BABYLON.VertexData.ExtractFromMesh(child);
@@ -302,14 +295,28 @@ class Galaxy extends BABYLON.TransformNode {
                 for (let j = 0; j < data.indices.length; j++) {
                     indices.push(data.indices[j] + l);
                 }
-                this.templateLightning.material = child.material;
+                oneMeshTemplate.material = child.material;
             }
         }
-        templateLightningData.positions = positions;
-        templateLightningData.indices = indices;
-        templateLightningData.normals = normals;
-        templateLightningData.uvs = uvs;
-        templateLightningData.applyToMesh(this.templateLightning);
+        vertexData.positions = positions;
+        vertexData.indices = indices;
+        vertexData.normals = normals;
+        vertexData.uvs = uvs;
+        vertexData.applyToMesh(oneMeshTemplate);
+        return oneMeshTemplate;
+    }
+    async initialize() {
+        this.templateTile = await Main.loadMeshes("tile-lp");
+        this.templateTileBlock = await Main.loadMeshes("tile-block");
+        let templatePoleRaw = await Main.loadMeshes("pole");
+        this.templatePole = this.mergeTemplateIntoOneMeshTemplate(templatePoleRaw);
+        let templatePoleEdgeRaw = await Main.loadMeshes("pole");
+        this.templatePoleEdge = this.mergeTemplateIntoOneMeshTemplate(templatePoleEdgeRaw);
+        let templatePoleCornerRaw = await Main.loadMeshes("tripole");
+        this.templatePoleCorner = this.mergeTemplateIntoOneMeshTemplate(templatePoleCornerRaw);
+        let templateLightningRaw = await Main.loadMeshes("lightning");
+        this.templateLightning = this.mergeTemplateIntoOneMeshTemplate(templateLightningRaw);
+        this.templateEdgeBlock = await Main.loadMeshes("edge-block");
     }
     async loadLevel(fileName) {
         return new Promise(resolve => {
@@ -982,13 +989,13 @@ class Plot extends GalaxyItem {
             edges++;
         }
         if (edges === 1) {
-            this.galaxy.templatePole.clone("clone", this);
+            this.galaxy.templatePole.createInstance("clone").parent = this;
         }
         if (edges === 2) {
-            this.galaxy.templatePoleEdge.clone("clone", this);
+            this.galaxy.templatePoleEdge.createInstance("clone").parent = this;
         }
         if (edges === 3) {
-            this.galaxy.templatePoleCorner.clone("clone", this);
+            this.galaxy.templatePoleCorner.createInstance("clone").parent = this;
         }
         this.deepFreezeWorldMatrix();
     }

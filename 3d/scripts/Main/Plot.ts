@@ -23,13 +23,13 @@ class Plot extends GalaxyItem {
         }
 
         if (edges === 1) {
-            this.galaxy.templatePole.clone("clone", this);
+            this.galaxy.templatePole.createInstance("clone").parent = this;
         }
         if (edges === 2) {
-            this.galaxy.templatePoleEdge.clone("clone", this);
+            this.galaxy.templatePoleEdge.createInstance("clone").parent = this;
         }
         if (edges === 3) {
-            this.galaxy.templatePoleCorner.clone("clone", this);
+            this.galaxy.templatePoleCorner.createInstance("clone").parent = this;
         }
         this.deepFreezeWorldMatrix();
     }

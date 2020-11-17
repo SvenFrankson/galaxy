@@ -52,9 +52,9 @@ class Galaxy extends BABYLON.TransformNode {
 
 	public templateTile: BABYLON.AbstractMesh;
 	public templateTileBlock: BABYLON.AbstractMesh;
-	public templatePole: BABYLON.AbstractMesh;
-	public templatePoleEdge: BABYLON.AbstractMesh;
-	public templatePoleCorner: BABYLON.AbstractMesh;
+	public templatePole: BABYLON.Mesh;
+	public templatePoleEdge: BABYLON.Mesh;
+	public templatePoleCorner: BABYLON.Mesh;
 	public templateLightning: BABYLON.Mesh;
 	public templateEdgeBlock: BABYLON.AbstractMesh;
 
@@ -86,23 +86,16 @@ class Galaxy extends BABYLON.TransformNode {
         return false;
     }
 
-    public async initialize(): Promise<void> {
-		this.templateTile = await Main.loadMeshes("tile-lp");
-		this.templateTileBlock = await Main.loadMeshes("tile-block");
-		this.templatePole = await Main.loadMeshes("pole");
-		this.templatePoleEdge = await Main.loadMeshes("pole");
-		this.templatePoleCorner = await Main.loadMeshes("tripole");
-        let templateLightningRaw = await Main.loadMeshes("lightning");
-        this.templateLightning = new BABYLON.Mesh("templateLightningOneMesh");
-        this.templateEdgeBlock = await Main.loadMeshes("edge-block");
-        let templateLightningData = new BABYLON.VertexData();
+    private mergeTemplateIntoOneMeshTemplate(template: BABYLON.AbstractMesh): BABYLON.Mesh {
+        let oneMeshTemplate = new BABYLON.Mesh("template");
+        let vertexData = new BABYLON.VertexData();
         let positions = [];
         let indices = [];
         let normals = [];
         let uvs = [];
-        let templateLightningChildren = templateLightningRaw.getChildMeshes();
-        for (let i = 0; i < templateLightningChildren.length; i++) {
-            let child = templateLightningChildren[i];
+        let templateChildren = template.getChildMeshes();
+        for (let i = 0; i < templateChildren.length; i++) {
+            let child = templateChildren[i];
             if (child instanceof BABYLON.Mesh) {
                 let l = positions.length / 3;
                 let data = BABYLON.VertexData.ExtractFromMesh(child);
@@ -112,15 +105,29 @@ class Galaxy extends BABYLON.TransformNode {
                 for (let j = 0; j < data.indices.length; j++) {
                     indices.push(data.indices[j] + l);
                 }
-                this.templateLightning.material = child.material;
+                oneMeshTemplate.material = child.material;
             }
         }
-        templateLightningData.positions = positions;
-        templateLightningData.indices = indices;
-        templateLightningData.normals = normals;
-        templateLightningData.uvs = uvs;
-        templateLightningData.applyToMesh(this.templateLightning);
+        vertexData.positions = positions;
+        vertexData.indices = indices;
+        vertexData.normals = normals;
+        vertexData.uvs = uvs;
+        vertexData.applyToMesh(oneMeshTemplate);
+        return oneMeshTemplate;
+    }
 
+    public async initialize(): Promise<void> {
+		this.templateTile = await Main.loadMeshes("tile-lp");
+		this.templateTileBlock = await Main.loadMeshes("tile-block");
+        let templatePoleRaw = await Main.loadMeshes("pole");
+        this.templatePole = this.mergeTemplateIntoOneMeshTemplate(templatePoleRaw);
+        let templatePoleEdgeRaw = await Main.loadMeshes("pole");
+        this.templatePoleEdge = this.mergeTemplateIntoOneMeshTemplate(templatePoleEdgeRaw);
+		let templatePoleCornerRaw = await Main.loadMeshes("tripole");
+        this.templatePoleCorner = this.mergeTemplateIntoOneMeshTemplate(templatePoleCornerRaw);
+        let templateLightningRaw = await Main.loadMeshes("lightning");
+        this.templateLightning = this.mergeTemplateIntoOneMeshTemplate(templateLightningRaw);        
+        this.templateEdgeBlock = await Main.loadMeshes("edge-block");
     }
 
     public async loadLevel(fileName: string): Promise<void> {
