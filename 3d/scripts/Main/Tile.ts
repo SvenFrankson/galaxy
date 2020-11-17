@@ -102,7 +102,7 @@ class Tile extends GalaxyItem {
             }
         }
 
-        this.freezeWorldMatrix();
+        this.deepFreezeWorldMatrix();
     }
 
     public refresh(): void {

@@ -77,7 +77,7 @@ class EdgeBlock extends Border {
             edgeBlock.material = Main.redMaterial;
             edgeBlock.visibility = 0.5;
             edgeBlock.parent = this;
-            this.freezeWorldMatrix();
+            this.deepFreezeWorldMatrix();
         }
     }
 }

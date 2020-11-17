@@ -48,10 +48,22 @@ abstract class GalaxyItem extends BABYLON.Mesh {
             k - 0.5 * this.galaxy.depth
         );
         this.updateRotation();
-        this.freezeWorldMatrix();
+        this.deepFreezeWorldMatrix();
     }
 
     public abstract instantiate();
+
+    protected deepFreezeWorldMatrix(target?: BABYLON.AbstractMesh | BABYLON.TransformNode): void {
+        if (!target) {
+            target = this;
+        }
+        target.freezeWorldMatrix();
+        target.getChildren().forEach(c => {
+            if (c instanceof BABYLON.AbstractMesh || c instanceof BABYLON.TransformNode) {
+                this.deepFreezeWorldMatrix(c);
+            }
+        })
+    }
 
     public updateRotation(): void {
         if (!this.rotationQuaternion) {

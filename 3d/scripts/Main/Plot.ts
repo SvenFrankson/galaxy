@@ -31,6 +31,6 @@ class Plot extends GalaxyItem {
         if (edges === 3) {
             this.galaxy.templatePoleCorner.clone("clone", this);
         }
-        this.freezeWorldMatrix();
+        this.deepFreezeWorldMatrix();
     }
 }

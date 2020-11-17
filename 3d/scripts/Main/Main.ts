@@ -224,16 +224,6 @@ class Main {
 		this.showMainUI();
 		this.animateCamera();
 	}
-
-	private _tIdleCamera: number = 0;
-	private _idleCamera = () => {
-		if (Main.Camera.radius === 25) {
-			let betaTarget = (Math.PI / 2 - Math.PI / 8) + Math.sin(this._tIdleCamera) * Math.PI / 8;
-			Main.Galaxy.rotation.y += 0.002;
-			Main.Camera.beta = Main.Camera.beta * 0.995 + betaTarget * 0.005;
-			this._tIdleCamera += 0.002;
-		}
-	}
 	
 	public showUI(): void {
 		document.getElementById("ui").style.display = "block";
@@ -260,9 +250,25 @@ class Main {
 
     public animate(): void {
 		let fpsInfoElement = document.getElementById("fps-info");
+		let meshesInfoTotalElement = document.getElementById("meshes-info-total");
+		let meshesInfoNonStaticUniqueElement = document.getElementById("meshes-info-nonstatic-unique");
+		let meshesInfoStaticUniqueElement = document.getElementById("meshes-info-static-unique");
+		let meshesInfoNonStaticInstanceElement = document.getElementById("meshes-info-nonstatic-instance");
+		let meshesInfoStaticInstanceElement = document.getElementById("meshes-info-static-instance");
         Main.Engine.runRenderLoop(() => {
 			Main.Scene.render();
-			fpsInfoElement.innerText = Main.Engine.getFps().toFixed(0) + " fps"
+			fpsInfoElement.innerText = Main.Engine.getFps().toFixed(0) + " fps";
+			let uniques = Main.Scene.meshes.filter(m => { return !(m instanceof BABYLON.InstancedMesh); });
+			let uniquesNonStatic = uniques.filter(m => { return !m.isWorldMatrixFrozen; });
+			let uniquesStatic = uniques.filter(m => { return m.isWorldMatrixFrozen; });
+			let instances = Main.Scene.meshes.filter(m => { return m instanceof BABYLON.InstancedMesh; });
+			let instancesNonStatic = instances.filter(m => { return !m.isWorldMatrixFrozen; });
+			let instancesStatic = instances.filter(m => { return m.isWorldMatrixFrozen; });
+			meshesInfoTotalElement.innerText = Main.Scene.meshes.length.toFixed(0).padStart(4, "0");
+			meshesInfoNonStaticUniqueElement.innerText = uniquesNonStatic.length.toFixed(0).padStart(4, "0");
+			meshesInfoStaticUniqueElement.innerText = uniquesStatic.length.toFixed(0).padStart(4, "0");
+			meshesInfoNonStaticInstanceElement.innerText = instancesNonStatic.length.toFixed(0).padStart(4, "0");
+			meshesInfoStaticInstanceElement.innerText = instancesStatic.length.toFixed(0).padStart(4, "0");
         });
 
         window.addEventListener("resize", () => {

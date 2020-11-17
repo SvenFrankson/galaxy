@@ -9,7 +9,7 @@ class GalaxyItem extends BABYLON.Mesh {
         this.parent = galaxy;
         this.position.copyFromFloats(i - 0.5 * this.galaxy.width, j - 0.5 * this.galaxy.height, k - 0.5 * this.galaxy.depth);
         this.updateRotation();
-        this.freezeWorldMatrix();
+        this.deepFreezeWorldMatrix();
     }
     get ijk() {
         return this._ijk;
@@ -40,6 +40,17 @@ class GalaxyItem extends BABYLON.Mesh {
             }
         }
         return undefined;
+    }
+    deepFreezeWorldMatrix(target) {
+        if (!target) {
+            target = this;
+        }
+        target.freezeWorldMatrix();
+        target.getChildren().forEach(c => {
+            if (c instanceof BABYLON.AbstractMesh || c instanceof BABYLON.TransformNode) {
+                this.deepFreezeWorldMatrix(c);
+            }
+        });
     }
     updateRotation() {
         if (!this.rotationQuaternion) {
@@ -137,7 +148,7 @@ class EdgeBlock extends Border {
             edgeBlock.material = Main.redMaterial;
             edgeBlock.visibility = 0.5;
             edgeBlock.parent = this;
-            this.freezeWorldMatrix();
+            this.deepFreezeWorldMatrix();
         }
     }
 }
@@ -742,15 +753,6 @@ class Galaxy extends BABYLON.TransformNode {
 var COS30 = Math.cos(Math.PI / 6);
 class Main {
     constructor(canvasElement) {
-        this._tIdleCamera = 0;
-        this._idleCamera = () => {
-            if (Main.Camera.radius === 25) {
-                let betaTarget = (Math.PI / 2 - Math.PI / 8) + Math.sin(this._tIdleCamera) * Math.PI / 8;
-                Main.Galaxy.rotation.y += 0.002;
-                Main.Camera.beta = Main.Camera.beta * 0.995 + betaTarget * 0.005;
-                this._tIdleCamera += 0.002;
-            }
-        };
         Main.Canvas = document.getElementById(canvasElement);
         Main.Engine = new BABYLON.Engine(Main.Canvas, true, { preserveDrawingBuffer: true, stencil: true });
     }
@@ -933,9 +935,25 @@ class Main {
     }
     animate() {
         let fpsInfoElement = document.getElementById("fps-info");
+        let meshesInfoTotalElement = document.getElementById("meshes-info-total");
+        let meshesInfoNonStaticUniqueElement = document.getElementById("meshes-info-nonstatic-unique");
+        let meshesInfoStaticUniqueElement = document.getElementById("meshes-info-static-unique");
+        let meshesInfoNonStaticInstanceElement = document.getElementById("meshes-info-nonstatic-instance");
+        let meshesInfoStaticInstanceElement = document.getElementById("meshes-info-static-instance");
         Main.Engine.runRenderLoop(() => {
             Main.Scene.render();
             fpsInfoElement.innerText = Main.Engine.getFps().toFixed(0) + " fps";
+            let uniques = Main.Scene.meshes.filter(m => { return !(m instanceof BABYLON.InstancedMesh); });
+            let uniquesNonStatic = uniques.filter(m => { return !m.isWorldMatrixFrozen; });
+            let uniquesStatic = uniques.filter(m => { return m.isWorldMatrixFrozen; });
+            let instances = Main.Scene.meshes.filter(m => { return m instanceof BABYLON.InstancedMesh; });
+            let instancesNonStatic = instances.filter(m => { return !m.isWorldMatrixFrozen; });
+            let instancesStatic = instances.filter(m => { return m.isWorldMatrixFrozen; });
+            meshesInfoTotalElement.innerText = Main.Scene.meshes.length.toFixed(0).padStart(4, "0");
+            meshesInfoNonStaticUniqueElement.innerText = uniquesNonStatic.length.toFixed(0).padStart(4, "0");
+            meshesInfoStaticUniqueElement.innerText = uniquesStatic.length.toFixed(0).padStart(4, "0");
+            meshesInfoNonStaticInstanceElement.innerText = instancesNonStatic.length.toFixed(0).padStart(4, "0");
+            meshesInfoStaticInstanceElement.innerText = instancesStatic.length.toFixed(0).padStart(4, "0");
         });
         window.addEventListener("resize", () => {
             Main.Engine.resize();
@@ -972,7 +990,7 @@ class Plot extends GalaxyItem {
         if (edges === 3) {
             this.galaxy.templatePoleCorner.clone("clone", this);
         }
-        this.freezeWorldMatrix();
+        this.deepFreezeWorldMatrix();
     }
 }
 /// <reference path="GalaxyItem.ts"/>
@@ -1062,7 +1080,7 @@ class Tile extends GalaxyItem {
                 this.orbMesh.material = Main.orbMaterial;
             }
         }
-        this.freezeWorldMatrix();
+        this.deepFreezeWorldMatrix();
     }
     refresh() {
         if (this.orbMesh) {
