@@ -1,4 +1,4 @@
-abstract class GalaxyItem extends BABYLON.Mesh {
+abstract class GalaxyItem extends BABYLON.TransformNode {
 
     private _ijk: IJK;
     public get ijk() {

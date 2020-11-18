@@ -21,6 +21,7 @@ class Tile extends GalaxyItem {
     }
     public isBlock: boolean = false;
     public orbMesh: BABYLON.Mesh;
+    public tileMesh: BABYLON.AbstractMesh;
 
     constructor(
         i: number,
@@ -90,10 +91,10 @@ class Tile extends GalaxyItem {
             child.dispose();
         }
         if (this.isBlock) {
-            this.galaxy.templateTileBlock.clone("clone", this);
+            this.galaxy.templateTileBlock.createInstance("clone").parent = this;
         }
         else {
-            this.galaxy.templateTile.clone("clone", this);
+            this.refreshTileMesh();
             if (this.hasOrb) {
                 this.orbMesh = BABYLON.MeshBuilder.CreateSphere("orb", { segments: 8, diameter: 0.5 }, Main.Scene);
                 this.orbMesh.parent = this;
@@ -102,6 +103,25 @@ class Tile extends GalaxyItem {
             }
         }
 
+        this.deepFreezeWorldMatrix();
+    }
+
+    public refreshTileMesh(): void {
+        if (this.tileMesh) {
+            this.tileMesh.dispose();
+        }
+        if (this.isValid === ZoneStatus.None) {
+            this.tileMesh = this.galaxy.templateTile.createInstance("clone");
+        }
+        else if (this.isValid === ZoneStatus.Valid) {
+            this.tileMesh = this.galaxy.templateTileValid.createInstance("clone");
+        }
+        else if (this.isValid === ZoneStatus.Invalid) {
+            this.tileMesh = this.galaxy.templateTileInvalid.createInstance("clone");
+        }
+        if (this.tileMesh) {
+            this.tileMesh.parent = this;
+        }
         this.deepFreezeWorldMatrix();
     }
 
@@ -153,16 +173,7 @@ class Tile extends GalaxyItem {
     public setIsValid(v: ZoneStatus): void {
         if (v != this.isValid) {
             this._isValid = v;
-            let mesh = this.getChildMeshes()[0].getChildMeshes()[2];
-            if (this.isValid === ZoneStatus.None) {
-                mesh.material = Main.defaultTileMaterial;
-            }
-            else if (this.isValid === ZoneStatus.Valid) {
-                mesh.material = Main.validTileMaterial;
-            }
-            else if (this.isValid === ZoneStatus.Invalid) {
-                mesh.material = Main.invalidTileMaterial;
-            }
+            this.refreshTileMesh();
         }
     }
 

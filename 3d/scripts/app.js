@@ -1,4 +1,4 @@
-class GalaxyItem extends BABYLON.Mesh {
+class GalaxyItem extends BABYLON.TransformNode {
     constructor(i, j, k, galaxy) {
         super("galaxy-item");
         this.i = i;
@@ -141,7 +141,7 @@ class EdgeBlock extends Border {
             child.dispose();
         }
         if (!this.isLogicalBlock) {
-            this.galaxy.templateEdgeBlock.clone("clone", this);
+            this.galaxy.templateEdgeBlock.createInstance("clone").parent = this;
         }
         if (this.isLogicalBlock && DEBUG_SHOW_LOGICAL_EDGEBLOCK) {
             let edgeBlock = BABYLON.MeshBuilder.CreateBox("edge-block", { width: 0.1, height: 0.5, depth: 1.8 });
@@ -284,10 +284,14 @@ class Galaxy extends BABYLON.TransformNode {
         let normals = [];
         let uvs = [];
         let templateChildren = template.getChildMeshes();
+        let materials = [];
+        let indexStarts = [];
+        let indexCounts = [];
         for (let i = 0; i < templateChildren.length; i++) {
             let child = templateChildren[i];
             if (child instanceof BABYLON.Mesh) {
                 let l = positions.length / 3;
+                indexStarts.push(indices.length);
                 let data = BABYLON.VertexData.ExtractFromMesh(child);
                 positions.push(...data.positions);
                 normals.push(...data.normals);
@@ -295,7 +299,8 @@ class Galaxy extends BABYLON.TransformNode {
                 for (let j = 0; j < data.indices.length; j++) {
                     indices.push(data.indices[j] + l);
                 }
-                oneMeshTemplate.material = child.material;
+                materials[i] = child.material;
+                indexCounts.push(data.indices.length);
             }
         }
         vertexData.positions = positions;
@@ -303,11 +308,47 @@ class Galaxy extends BABYLON.TransformNode {
         vertexData.normals = normals;
         vertexData.uvs = uvs;
         vertexData.applyToMesh(oneMeshTemplate);
+        if (materials.length > 0) {
+            if (materials.length === 1 || materials.every(m => { return m === materials[0]; })) {
+                oneMeshTemplate.material = materials[0];
+            }
+            else {
+                console.log("Hey !");
+                for (let i = 0; i < materials.length; i++) {
+                    BABYLON.SubMesh.CreateFromIndices(i, indexStarts[i], indexCounts[i], oneMeshTemplate);
+                }
+                let multiMaterial = new BABYLON.MultiMaterial("multi-material", Main.Scene);
+                multiMaterial.subMaterials = materials;
+                oneMeshTemplate.material = multiMaterial;
+            }
+        }
         return oneMeshTemplate;
     }
     async initialize() {
-        this.templateTile = await Main.loadMeshes("tile-lp");
-        this.templateTileBlock = await Main.loadMeshes("tile-block");
+        let templateTileRaw = await Main.loadMeshes("tile-lp");
+        this.templateTile = this.mergeTemplateIntoOneMeshTemplate(templateTileRaw);
+        this.templateTileValid = this.templateTile.clone("template-tile-valid");
+        this.templateTileValid.material = this.templateTile.material.clone("template-tile-valid-multimaterial");
+        if (this.templateTileValid.material instanceof BABYLON.MultiMaterial) {
+            let m = this.templateTileValid.material.subMaterials[2];
+            if (m instanceof BABYLON.PBRMaterial) {
+                let tileValidMaterial = m.clone("template-tile-valid-material");
+                tileValidMaterial.emissiveColor.copyFromFloats(0.05, 0.45, 0.05);
+                this.templateTileValid.material.subMaterials[2] = tileValidMaterial;
+            }
+        }
+        this.templateTileInvalid = this.templateTile.clone("template-tile-invalid");
+        this.templateTileInvalid.material = this.templateTile.material.clone("template-tile-invalid-multimaterial");
+        if (this.templateTileInvalid.material instanceof BABYLON.MultiMaterial) {
+            let m = this.templateTileInvalid.material.subMaterials[2];
+            if (m instanceof BABYLON.PBRMaterial) {
+                let tileInvalidMaterial = m.clone("template-tile-invalid-material");
+                tileInvalidMaterial.emissiveColor.copyFromFloats(0.45, 0.05, 0.05);
+                this.templateTileInvalid.material.subMaterials[2] = tileInvalidMaterial;
+            }
+        }
+        let templateTileBlockRaw = await Main.loadMeshes("tile-block");
+        this.templateTileBlock = this.mergeTemplateIntoOneMeshTemplate(templateTileBlockRaw);
         let templatePoleRaw = await Main.loadMeshes("pole");
         this.templatePole = this.mergeTemplateIntoOneMeshTemplate(templatePoleRaw);
         let templatePoleEdgeRaw = await Main.loadMeshes("pole");
@@ -316,7 +357,8 @@ class Galaxy extends BABYLON.TransformNode {
         this.templatePoleCorner = this.mergeTemplateIntoOneMeshTemplate(templatePoleCornerRaw);
         let templateLightningRaw = await Main.loadMeshes("lightning");
         this.templateLightning = this.mergeTemplateIntoOneMeshTemplate(templateLightningRaw);
-        this.templateEdgeBlock = await Main.loadMeshes("edge-block");
+        let templateEdgeBlockRaw = await Main.loadMeshes("edge-block");
+        this.templateEdgeBlock = this.mergeTemplateIntoOneMeshTemplate(templateEdgeBlockRaw);
     }
     async loadLevel(fileName) {
         return new Promise(resolve => {
@@ -807,15 +849,6 @@ class Main {
         }
         return Main._orbMaterial;
     }
-    static get defaultTileMaterial() {
-        return Main._defaultTileMaterial;
-    }
-    static get validTileMaterial() {
-        return Main._validTileMaterial;
-    }
-    static get invalidTileMaterial() {
-        return Main._invalidTileMaterial;
-    }
     initializeCamera() {
         Main.Camera = new BABYLON.ArcRotateCamera("camera", 0, 0, 10, BABYLON.Vector3.Zero(), Main.Scene);
         Main.Camera.setPosition(new BABYLON.Vector3(-2, 6, -10));
@@ -841,11 +874,6 @@ class Main {
                         }
                         if (material.name === "bottom") {
                             material.emissiveColor.copyFromFloats(0, 0, 0);
-                            Main._defaultTileMaterial = material;
-                            Main._validTileMaterial = material.clone("valid-tile-material");
-                            Main._validTileMaterial.emissiveColor.copyFromFloats(0.05, 0.45, 0.05);
-                            Main._invalidTileMaterial = material.clone("invalid-tile-material");
-                            Main._invalidTileMaterial.emissiveColor.copyFromFloats(0.45, 0.05, 0.05);
                         }
                     }
                 });
@@ -1076,16 +1104,34 @@ class Tile extends GalaxyItem {
             child.dispose();
         }
         if (this.isBlock) {
-            this.galaxy.templateTileBlock.clone("clone", this);
+            this.galaxy.templateTileBlock.createInstance("clone").parent = this;
         }
         else {
-            this.galaxy.templateTile.clone("clone", this);
+            this.refreshTileMesh();
             if (this.hasOrb) {
                 this.orbMesh = BABYLON.MeshBuilder.CreateSphere("orb", { segments: 8, diameter: 0.5 }, Main.Scene);
                 this.orbMesh.parent = this;
                 this.orbMesh.position.y = 0.5;
                 this.orbMesh.material = Main.orbMaterial;
             }
+        }
+        this.deepFreezeWorldMatrix();
+    }
+    refreshTileMesh() {
+        if (this.tileMesh) {
+            this.tileMesh.dispose();
+        }
+        if (this.isValid === ZoneStatus.None) {
+            this.tileMesh = this.galaxy.templateTile.createInstance("clone");
+        }
+        else if (this.isValid === ZoneStatus.Valid) {
+            this.tileMesh = this.galaxy.templateTileValid.createInstance("clone");
+        }
+        else if (this.isValid === ZoneStatus.Invalid) {
+            this.tileMesh = this.galaxy.templateTileInvalid.createInstance("clone");
+        }
+        if (this.tileMesh) {
+            this.tileMesh.parent = this;
         }
         this.deepFreezeWorldMatrix();
     }
@@ -1135,16 +1181,7 @@ class Tile extends GalaxyItem {
     setIsValid(v) {
         if (v != this.isValid) {
             this._isValid = v;
-            let mesh = this.getChildMeshes()[0].getChildMeshes()[2];
-            if (this.isValid === ZoneStatus.None) {
-                mesh.material = Main.defaultTileMaterial;
-            }
-            else if (this.isValid === ZoneStatus.Valid) {
-                mesh.material = Main.validTileMaterial;
-            }
-            else if (this.isValid === ZoneStatus.Invalid) {
-                mesh.material = Main.invalidTileMaterial;
-            }
+            this.refreshTileMesh();
         }
     }
     getFootPrint(ijk) {
