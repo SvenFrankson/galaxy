@@ -1,3 +1,23 @@
+class BabylonPlus {
+    static CreateInstanceDeep(target) {
+        let instance;
+        if (target.geometry) {
+            instance = target.createInstance(target.name + "-instance");
+        }
+        else {
+            instance = new BABYLON.Mesh(target.name + "-instance");
+        }
+        let children = target.getChildMeshes();
+        for (let i = 0; i < children.length; i++) {
+            let child = children[i];
+            if (child instanceof BABYLON.Mesh) {
+                let childInstance = child.createInstance(child.name + "-instance");
+                childInstance.parent = instance;
+            }
+        }
+        return instance;
+    }
+}
 class GalaxyItem extends BABYLON.TransformNode {
     constructor(i, j, k, galaxy) {
         super("galaxy-item");
@@ -287,19 +307,32 @@ class Galaxy extends BABYLON.TransformNode {
         let materials = [];
         let indexStarts = [];
         let indexCounts = [];
+        console.log(template);
         for (let i = 0; i < templateChildren.length; i++) {
             let child = templateChildren[i];
             if (child instanceof BABYLON.Mesh) {
+                child.bakeCurrentTransformIntoVertices();
+                console.log(child);
+                console.log(child.position);
+                console.log(child.rotation);
+                console.log(child.rotationQuaternion);
+                console.log(child.scaling);
                 let l = positions.length / 3;
                 indexStarts.push(indices.length);
                 let data = BABYLON.VertexData.ExtractFromMesh(child);
                 positions.push(...data.positions);
                 normals.push(...data.normals);
                 uvs.push(...data.uvs);
-                for (let j = 0; j < data.indices.length; j++) {
-                    indices.push(data.indices[j] + l);
+                for (let i = 0; i < uvs.length / 2; i++) {
+                    //uvs[2 * i + 1] = 1 - uvs[2 * i + 1];
                 }
-                materials[i] = child.material;
+                for (let j = 0; j < data.indices.length / 3; j++) {
+                    let i1 = data.indices[3 * j] + l;
+                    let i2 = data.indices[3 * j + 1] + l;
+                    let i3 = data.indices[3 * j + 2] + l;
+                    indices.push(i1, i3, i2);
+                }
+                materials.push(child.material);
                 indexCounts.push(data.indices.length);
             }
         }
@@ -319,6 +352,9 @@ class Galaxy extends BABYLON.TransformNode {
                 }
                 let multiMaterial = new BABYLON.MultiMaterial("multi-material", Main.Scene);
                 multiMaterial.subMaterials = materials;
+                if (materials.length === 3) {
+                    //multiMaterial.subMaterials = [Main.redMaterial, Main.greenMaterial, Main.blueMaterial];
+                }
                 oneMeshTemplate.material = multiMaterial;
             }
         }
@@ -326,25 +362,22 @@ class Galaxy extends BABYLON.TransformNode {
     }
     async initialize() {
         let templateTileRaw = await Main.loadMeshes("tile-lp");
-        this.templateTile = this.mergeTemplateIntoOneMeshTemplate(templateTileRaw);
+        //this.templateTile = this.mergeTemplateIntoOneMeshTemplate(templateTileRaw);
+        this.templateTile = templateTileRaw;
         this.templateTileValid = this.templateTile.clone("template-tile-valid");
-        this.templateTileValid.material = this.templateTile.material.clone("template-tile-valid-multimaterial");
-        if (this.templateTileValid.material instanceof BABYLON.MultiMaterial) {
-            let m = this.templateTileValid.material.subMaterials[2];
-            if (m instanceof BABYLON.PBRMaterial) {
-                let tileValidMaterial = m.clone("template-tile-valid-material");
-                tileValidMaterial.emissiveColor.copyFromFloats(0.05, 0.45, 0.05);
-                this.templateTileValid.material.subMaterials[2] = tileValidMaterial;
+        let templateTileValidGrid = this.templateTileValid.getChildMeshes()[2];
+        if (templateTileValidGrid) {
+            templateTileValidGrid.material = templateTileValidGrid.material.clone("template-tile-valid-material");
+            if (templateTileValidGrid.material instanceof BABYLON.PBRMaterial) {
+                templateTileValidGrid.material.emissiveColor.copyFromFloats(0.05, 0.45, 0.05);
             }
         }
         this.templateTileInvalid = this.templateTile.clone("template-tile-invalid");
-        this.templateTileInvalid.material = this.templateTile.material.clone("template-tile-invalid-multimaterial");
-        if (this.templateTileInvalid.material instanceof BABYLON.MultiMaterial) {
-            let m = this.templateTileInvalid.material.subMaterials[2];
-            if (m instanceof BABYLON.PBRMaterial) {
-                let tileInvalidMaterial = m.clone("template-tile-invalid-material");
-                tileInvalidMaterial.emissiveColor.copyFromFloats(0.45, 0.05, 0.05);
-                this.templateTileInvalid.material.subMaterials[2] = tileInvalidMaterial;
+        let templateTileInvalidGrid = this.templateTileInvalid.getChildMeshes()[2];
+        if (templateTileInvalidGrid) {
+            templateTileInvalidGrid.material = templateTileInvalidGrid.material.clone("template-tile-invalid-material");
+            if (templateTileInvalidGrid.material instanceof BABYLON.PBRMaterial) {
+                templateTileInvalidGrid.material.emissiveColor.copyFromFloats(0.45, 0.05, 0.05);
             }
         }
         let templateTileBlockRaw = await Main.loadMeshes("tile-block");
@@ -861,8 +894,8 @@ class Main {
     static async loadMeshes(modelName) {
         return new Promise(resolve => {
             BABYLON.SceneLoader.ImportMesh("", "./assets/models/" + modelName + ".glb", "", Main.Scene, (meshes) => {
-                var gl = new BABYLON.GlowLayer("glow", Main.Scene);
-                gl.intensity = 0.4;
+                //var gl = new BABYLON.GlowLayer("glow", Main.Scene);
+                //gl.intensity = 0.4;		
                 console.log("Load model : " + modelName);
                 meshes.forEach((mesh) => {
                     let material = mesh.material;
@@ -1122,13 +1155,16 @@ class Tile extends GalaxyItem {
             this.tileMesh.dispose();
         }
         if (this.isValid === ZoneStatus.None) {
-            this.tileMesh = this.galaxy.templateTile.createInstance("clone");
+            //this.tileMesh = this.galaxy.templateTile.createInstance("clone");
+            this.tileMesh = BabylonPlus.CreateInstanceDeep(this.galaxy.templateTile);
         }
         else if (this.isValid === ZoneStatus.Valid) {
-            this.tileMesh = this.galaxy.templateTileValid.createInstance("clone");
+            //this.tileMesh = this.galaxy.templateTileValid.createInstance("clone");
+            this.tileMesh = BabylonPlus.CreateInstanceDeep(this.galaxy.templateTileValid);
         }
         else if (this.isValid === ZoneStatus.Invalid) {
-            this.tileMesh = this.galaxy.templateTileInvalid.createInstance("clone");
+            //this.tileMesh = this.galaxy.templateTileInvalid.createInstance("clone");
+            this.tileMesh = BabylonPlus.CreateInstanceDeep(this.galaxy.templateTileInvalid);
         }
         if (this.tileMesh) {
             this.tileMesh.parent = this;
