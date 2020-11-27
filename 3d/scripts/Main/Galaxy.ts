@@ -50,9 +50,10 @@ enum GalaxyEditionActionType {
 
 class Galaxy extends BABYLON.TransformNode {
 
-	public templateTile: BABYLON.Mesh;
-	public templateTileValid: BABYLON.Mesh;
-	public templateTileInvalid: BABYLON.Mesh;
+    public templateTile: BABYLON.Mesh;
+    public templateTileGrid: BABYLON.Mesh;
+	public templateTileGridValid: BABYLON.Mesh;
+	public templateTileGridInvalid: BABYLON.Mesh;
 	public templateTileBlock: BABYLON.Mesh;
 	public templatePole: BABYLON.Mesh;
 	public templatePoleEdge: BABYLON.Mesh;
@@ -66,6 +67,7 @@ class Galaxy extends BABYLON.TransformNode {
 
     public items: GalaxyItem[][][];
     public tiles: Tile[];
+    public poles: Plot[];
     public zones: Tile[][];
 
     public editionMode: boolean = false;
@@ -74,6 +76,7 @@ class Galaxy extends BABYLON.TransformNode {
     private _pointerDownY: number = NaN;
 
     public previewMesh: BABYLON.AbstractMesh;
+    public tilesGridContainer: BABYLON.TransformNode;
 
     constructor() {
         super("galaxy");
@@ -161,22 +164,18 @@ class Galaxy extends BABYLON.TransformNode {
         //this.templateTile = this.mergeTemplateIntoOneMeshTemplate(templateTileRaw);
         this.templateTile = templateTileRaw as BABYLON.Mesh;
 
-        this.templateTileValid = this.templateTile.clone("template-tile-valid");
-        let templateTileValidGrid = this.templateTileValid.getChildMeshes()[2];
-        if (templateTileValidGrid) {
-            templateTileValidGrid.material = templateTileValidGrid.material.clone("template-tile-valid-material");
-            if (templateTileValidGrid.material instanceof BABYLON.PBRMaterial) {
-                templateTileValidGrid.material.emissiveColor.copyFromFloats(0.05, 0.45, 0.05);
-            }
+        this.templateTileGrid = (templateTileRaw.getChildMeshes()[2] as BABYLON.Mesh).clone("template-tile-grid");
+
+        this.templateTileGridValid = this.templateTileGrid.clone("template-tile-grid-valid");
+        this.templateTileGridValid.material = this.templateTileGridValid.material.clone("template-tile-valid-material");
+        if (this.templateTileGridValid.material instanceof BABYLON.PBRMaterial) {
+            this.templateTileGridValid.material.emissiveColor.copyFromFloats(0.05, 0.45, 0.05);
         }
 
-        this.templateTileInvalid = this.templateTile.clone("template-tile-invalid");
-        let templateTileInvalidGrid = this.templateTileInvalid.getChildMeshes()[2];
-        if (templateTileInvalidGrid) {
-            templateTileInvalidGrid.material = templateTileInvalidGrid.material.clone("template-tile-invalid-material");
-            if (templateTileInvalidGrid.material instanceof BABYLON.PBRMaterial) {
-                templateTileInvalidGrid.material.emissiveColor.copyFromFloats(0.45, 0.05, 0.05);
-            }
+        this.templateTileGridInvalid = this.templateTileGrid.clone("template-tile-grid-invalid");
+        this.templateTileGridInvalid.material = this.templateTileGridInvalid.material.clone("template-tile-invalid-material");
+        if (this.templateTileGridInvalid.material instanceof BABYLON.PBRMaterial) {
+            this.templateTileGridInvalid.material.emissiveColor.copyFromFloats(0.45, 0.05, 0.05);
         }
 
         let templateTileBlockRaw = await Main.loadMeshes("tile-block");
@@ -246,6 +245,7 @@ class Galaxy extends BABYLON.TransformNode {
         }
         this.items = [];
         this.tiles = [];
+        this.poles = [];
     }
 
     public instantiate() {
@@ -261,6 +261,9 @@ class Galaxy extends BABYLON.TransformNode {
                         this.items[i][j][k] = item;
                         if (item instanceof Tile) {
                             this.tiles.push(item);
+                        }
+                        if (item instanceof Plot) {
+                            this.poles.push(item);
                         }
                         item.instantiate();
                     }
@@ -282,6 +285,8 @@ class Galaxy extends BABYLON.TransformNode {
                 }
             }
         }
+
+        TileBuilder.GenerateGalaxyBase(this).parent = this;
 
         Main.Scene.onPointerObservable.removeCallback(this.pointerObservable);
         Main.Scene.onPointerObservable.add(this.pointerObservable);
@@ -377,6 +382,11 @@ class Galaxy extends BABYLON.TransformNode {
                 t.setIsValid(zoneStatus);
             })
         }
+        
+        if (this.tilesGridContainer) {
+            this.tilesGridContainer.dispose();
+        }
+        this.tilesGridContainer = TileBuilder.GenerateTileGrids(this);
 
         if (solved) {
             document.getElementById("solve-status").textContent = "SOLVED";

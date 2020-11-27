@@ -107,22 +107,25 @@ class Tile extends GalaxyItem {
     }
 
     public refreshTileMesh(): void {
+        // test
+        return;
         if (this.tileMesh) {
             this.tileMesh.dispose();
         }
         if (this.isValid === ZoneStatus.None) {
             //this.tileMesh = this.galaxy.templateTile.createInstance("clone");
-            this.tileMesh = BabylonPlus.CreateInstanceDeep(this.galaxy.templateTile);
+            this.tileMesh = this.galaxy.templateTileGrid.createInstance("clone");
         }
         else if (this.isValid === ZoneStatus.Valid) {
             //this.tileMesh = this.galaxy.templateTileValid.createInstance("clone");
-            this.tileMesh = BabylonPlus.CreateInstanceDeep(this.galaxy.templateTileValid);
+            this.tileMesh = this.galaxy.templateTileGridValid.createInstance("clone");
         }
         else if (this.isValid === ZoneStatus.Invalid) {
             //this.tileMesh = this.galaxy.templateTileInvalid.createInstance("clone");
-            this.tileMesh = BabylonPlus.CreateInstanceDeep(this.galaxy.templateTileInvalid);
+            this.tileMesh = this.galaxy.templateTileGridInvalid.createInstance("clone");
         }
         if (this.tileMesh) {
+            this.tileMesh.rotation.z = Math.PI;
             this.tileMesh.parent = this;
         }
         this.deepFreezeWorldMatrix();

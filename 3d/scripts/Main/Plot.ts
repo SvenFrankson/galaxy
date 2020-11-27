@@ -1,5 +1,7 @@
 class Plot extends GalaxyItem {
 
+    public poleType: number = 0;
+
     constructor(
         i: number,
         j: number,
@@ -8,9 +10,6 @@ class Plot extends GalaxyItem {
     ) {
         super(i, j, k, galaxy);
         this.name = "plot-" + i + "-" + j + "-" + k;
-    }
-
-    public instantiate(): void {
         let edges = 0;
         if (this.i === 0 || this.i === this.galaxy.width) {
             edges++;
@@ -23,12 +22,26 @@ class Plot extends GalaxyItem {
         }
 
         if (edges === 1) {
-            this.galaxy.templatePole.createInstance("clone").parent = this;
+            this.poleType = 0;
         }
         if (edges === 2) {
-            this.galaxy.templatePoleEdge.createInstance("clone").parent = this;
+            this.poleType = 1;
         }
         if (edges === 3) {
+            this.poleType = 2;
+        }
+    }
+
+    public instantiate(): void {
+        // test
+        return;
+        if (this.poleType === 0) {
+            this.galaxy.templatePole.createInstance("clone").parent = this;
+        }
+        if (this.poleType === 1) {
+            this.galaxy.templatePoleEdge.createInstance("clone").parent = this;
+        }
+        if (this.poleType === 2) {
             this.galaxy.templatePoleCorner.createInstance("clone").parent = this;
         }
         this.deepFreezeWorldMatrix();
