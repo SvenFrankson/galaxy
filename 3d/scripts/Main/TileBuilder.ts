@@ -2,7 +2,7 @@ class TileBuilder {
 
     public static GenerateGalaxyBase(galaxy: Galaxy): BABYLON.TransformNode {
 
-        let meshPartCount = 2 + 3;
+        let meshPartCount = 2 + 3 + 3;
         let datas: BABYLON.VertexData[] = [];
         let positions: number[][] = [];
         let indices: number[][] = [];
@@ -19,11 +19,20 @@ class TileBuilder {
 
         let baseDatas: BABYLON.VertexData[] = [];
         let baseMaterials: BABYLON.Material[] = [];
+        // Reference Tile meshes and materials.
         for (let i = 0; i < 2; i++) {
             let baseData = BABYLON.VertexData.ExtractFromMesh(galaxy.templateTile.getChildMeshes()[i] as BABYLON.Mesh);
             baseDatas.push(baseData);
             baseMaterials.push(galaxy.templateTile.getChildMeshes()[i].material);
         }
+
+        // Reference TileBlock meshes and materials.
+        for (let i = 0; i < 3; i++) {
+            let baseData = BABYLON.VertexData.ExtractFromMesh(galaxy.templateTileBlock.getChildMeshes()[i] as BABYLON.Mesh);
+            baseDatas.push(baseData);
+            baseMaterials.push(galaxy.templateTileBlock.getChildMeshes()[i].material);
+        }
+
         let baseDataPole = BABYLON.VertexData.ExtractFromMesh(galaxy.templatePole);
         baseDatas.push(baseDataPole);
         baseMaterials.push(galaxy.templatePole.material);
@@ -39,7 +48,15 @@ class TileBuilder {
         for (let i = 0; i < galaxy.tiles.length; i++) {
             let tile = galaxy.tiles[i];
         
-            for (let j = 0; j < 2; j++) {
+            // J0 : Index of the first mesh & material that needs to be added.
+            // JCount : Count of meshes that need to be added.
+            let j0 = 0;
+            let jCount = 2;
+            if (tile.isBlock) {
+                j0 = 2;
+                jCount = 3;
+            }
+            for (let j = j0; j < j0 + jCount; j++) {
                 let baseData = baseDatas[j];
                 
                 let l = positions[j].length / 3;
@@ -74,7 +91,7 @@ class TileBuilder {
         for (let i = 0; i < galaxy.poles.length; i++) {
             let pole = galaxy.poles[i];
         
-            let baseIndex = pole.poleType + 2;
+            let baseIndex = pole.poleType + 5;
             let baseData = baseDatas[baseIndex];
                 
             let l = positions[baseIndex].length / 3;

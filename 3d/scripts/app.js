@@ -113,7 +113,7 @@ class GalaxyItem extends BABYLON.TransformNode {
     }
 }
 /// <reference path="GalaxyItem.ts"/>
-var DEBUG_SHOW_LOGICAL_EDGEBLOCK = true;
+var DEBUG_SHOW_LOGICAL_EDGEBLOCK = false;
 class Border extends GalaxyItem {
     constructor(i, j, k, galaxy) {
         super(i, j, k, galaxy);
@@ -376,7 +376,7 @@ class Galaxy extends BABYLON.TransformNode {
             this.templateTileGridInvalid.material.emissiveColor.copyFromFloats(0.45, 0.05, 0.05);
         }
         let templateTileBlockRaw = await Main.loadMeshes("tile-block");
-        this.templateTileBlock = this.mergeTemplateIntoOneMeshTemplate(templateTileBlockRaw);
+        this.templateTileBlock = templateTileBlockRaw;
         let templatePoleRaw = await Main.loadMeshes("pole");
         this.templatePole = this.mergeTemplateIntoOneMeshTemplate(templatePoleRaw);
         let templatePoleEdgeRaw = await Main.loadMeshes("pole");
@@ -412,8 +412,6 @@ class Galaxy extends BABYLON.TransformNode {
                         let tile = this.getItem(tileBlock.i, tileBlock.j, tileBlock.k);
                         if (tile && tile instanceof Tile) {
                             tile.isBlock = true;
-                            tile.refresh();
-                            tile.instantiate();
                         }
                     }
                 }
@@ -428,6 +426,7 @@ class Galaxy extends BABYLON.TransformNode {
                         }
                     }
                 }
+                this.instantiate();
                 resolve();
             };
             xhr.send();
@@ -478,7 +477,11 @@ class Galaxy extends BABYLON.TransformNode {
                 }
             }
         }
-        TileBuilder.GenerateGalaxyBase(this).parent = this;
+        if (this.tilesContainer) {
+            this.tilesContainer.dispose();
+        }
+        this.tilesContainer = TileBuilder.GenerateGalaxyBase(this);
+        this.tilesContainer.parent = this;
         Main.Scene.onPointerObservable.removeCallback(this.pointerObservable);
         Main.Scene.onPointerObservable.add(this.pointerObservable);
         Main.Scene.onBeforeRenderObservable.removeCallback(this.updateObservable);
@@ -571,6 +574,7 @@ class Galaxy extends BABYLON.TransformNode {
             this.tilesGridContainer.dispose();
         }
         this.tilesGridContainer = TileBuilder.GenerateTileGrids(this);
+        this.tilesGridContainer.parent = this;
         if (solved) {
             document.getElementById("solve-status").textContent = "SOLVED";
             document.getElementById("solve-status").style.color = "green";
@@ -786,7 +790,11 @@ class Galaxy extends BABYLON.TransformNode {
                     if (item instanceof Tile) {
                         item.isBlock = !item.isBlock;
                         item.refresh();
-                        item.instantiate();
+                        if (this.tilesContainer) {
+                            this.tilesContainer.dispose();
+                        }
+                        this.tilesContainer = TileBuilder.GenerateGalaxyBase(this);
+                        this.tilesContainer.parent = this;
                         this.updateZones();
                     }
                 }
@@ -1274,7 +1282,7 @@ class Tile extends GalaxyItem {
 }
 class TileBuilder {
     static GenerateGalaxyBase(galaxy) {
-        let meshPartCount = 2 + 3;
+        let meshPartCount = 2 + 3 + 3;
         let datas = [];
         let positions = [];
         let indices = [];
@@ -1289,10 +1297,17 @@ class TileBuilder {
         }
         let baseDatas = [];
         let baseMaterials = [];
+        // Reference Tile meshes and materials.
         for (let i = 0; i < 2; i++) {
             let baseData = BABYLON.VertexData.ExtractFromMesh(galaxy.templateTile.getChildMeshes()[i]);
             baseDatas.push(baseData);
             baseMaterials.push(galaxy.templateTile.getChildMeshes()[i].material);
+        }
+        // Reference TileBlock meshes and materials.
+        for (let i = 0; i < 3; i++) {
+            let baseData = BABYLON.VertexData.ExtractFromMesh(galaxy.templateTileBlock.getChildMeshes()[i]);
+            baseDatas.push(baseData);
+            baseMaterials.push(galaxy.templateTileBlock.getChildMeshes()[i].material);
         }
         let baseDataPole = BABYLON.VertexData.ExtractFromMesh(galaxy.templatePole);
         baseDatas.push(baseDataPole);
@@ -1307,7 +1322,15 @@ class TileBuilder {
         let n = BABYLON.Vector3.One();
         for (let i = 0; i < galaxy.tiles.length; i++) {
             let tile = galaxy.tiles[i];
-            for (let j = 0; j < 2; j++) {
+            // J0 : Index of the first mesh & material that needs to be added.
+            // JCount : Count of meshes that need to be added.
+            let j0 = 0;
+            let jCount = 2;
+            if (tile.isBlock) {
+                j0 = 2;
+                jCount = 3;
+            }
+            for (let j = j0; j < j0 + jCount; j++) {
                 let baseData = baseDatas[j];
                 let l = positions[j].length / 3;
                 for (let k = 0; k < baseData.positions.length / 3; k++) {
@@ -1331,7 +1354,7 @@ class TileBuilder {
         }
         for (let i = 0; i < galaxy.poles.length; i++) {
             let pole = galaxy.poles[i];
-            let baseIndex = pole.poleType + 2;
+            let baseIndex = pole.poleType + 5;
             let baseData = baseDatas[baseIndex];
             let l = positions[baseIndex].length / 3;
             for (let k = 0; k < baseData.positions.length / 3; k++) {

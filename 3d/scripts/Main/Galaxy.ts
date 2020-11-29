@@ -76,6 +76,7 @@ class Galaxy extends BABYLON.TransformNode {
     private _pointerDownY: number = NaN;
 
     public previewMesh: BABYLON.AbstractMesh;
+    public tilesContainer: BABYLON.TransformNode;
     public tilesGridContainer: BABYLON.TransformNode;
 
     constructor() {
@@ -179,7 +180,8 @@ class Galaxy extends BABYLON.TransformNode {
         }
 
         let templateTileBlockRaw = await Main.loadMeshes("tile-block");
-        this.templateTileBlock = this.mergeTemplateIntoOneMeshTemplate(templateTileBlockRaw);
+        this.templateTileBlock = templateTileBlockRaw as BABYLON.Mesh;
+
         let templatePoleRaw = await Main.loadMeshes("pole");
         this.templatePole = this.mergeTemplateIntoOneMeshTemplate(templatePoleRaw);
         let templatePoleEdgeRaw = await Main.loadMeshes("pole");
@@ -216,8 +218,6 @@ class Galaxy extends BABYLON.TransformNode {
                         let tile = this.getItem(tileBlock.i, tileBlock.j, tileBlock.k);
                         if (tile && tile instanceof Tile) {
                             tile.isBlock = true;
-                            tile.refresh();
-                            tile.instantiate();
                         }
                     }
                 }
@@ -232,6 +232,7 @@ class Galaxy extends BABYLON.TransformNode {
                         }
                     }
                 }
+                this.instantiate();
                 resolve();
             }
             xhr.send();
@@ -286,7 +287,11 @@ class Galaxy extends BABYLON.TransformNode {
             }
         }
 
-        TileBuilder.GenerateGalaxyBase(this).parent = this;
+        if (this.tilesContainer) {
+            this.tilesContainer.dispose();
+        }
+        this.tilesContainer = TileBuilder.GenerateGalaxyBase(this);
+        this.tilesContainer.parent = this;
 
         Main.Scene.onPointerObservable.removeCallback(this.pointerObservable);
         Main.Scene.onPointerObservable.add(this.pointerObservable);
@@ -387,6 +392,7 @@ class Galaxy extends BABYLON.TransformNode {
             this.tilesGridContainer.dispose();
         }
         this.tilesGridContainer = TileBuilder.GenerateTileGrids(this);
+        this.tilesGridContainer.parent = this;
 
         if (solved) {
             document.getElementById("solve-status").textContent = "SOLVED";
@@ -696,7 +702,11 @@ class Galaxy extends BABYLON.TransformNode {
                     if (item instanceof Tile) {
                         item.isBlock = !item.isBlock;
                         item.refresh();
-                        item.instantiate();
+                        if (this.tilesContainer) {
+                            this.tilesContainer.dispose();
+                        }
+                        this.tilesContainer = TileBuilder.GenerateGalaxyBase(this);
+                        this.tilesContainer.parent = this;
                         this.updateZones();
                     }
                 }

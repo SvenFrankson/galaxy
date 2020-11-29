@@ -1,6 +1,6 @@
 /// <reference path="GalaxyItem.ts"/>
 
-var DEBUG_SHOW_LOGICAL_EDGEBLOCK = true;
+var DEBUG_SHOW_LOGICAL_EDGEBLOCK = false;
 
 abstract class Border extends GalaxyItem {
 
