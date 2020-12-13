@@ -14,13 +14,13 @@ class MusicManager {
     }
 
     public async play(track: number, transitionDuration: number = 1000): Promise<void> {
-        await this.pauseCurrent(transitionDuration);
+        await this._pauseCurrent(transitionDuration);
         this.currentMusic = track;
-        await this.playCurrent(transitionDuration);
+        await this._playCurrent(transitionDuration);
     }
 
     // Linearly increase volume for -duration- miliseconds, then pause. 
-    public async playCurrent(transitionDuration: number = 1000): Promise<void> {
+    private async _playCurrent(transitionDuration: number = 1000): Promise<void> {
         let currentMusic = this.getCurrentMusic();
         if (!currentMusic) {
             return;
@@ -47,7 +47,7 @@ class MusicManager {
     }
 
     // Linearly decrease volume for -duration- miliseconds, then pause. 
-    public async pauseCurrent(transitionDuration: number = 1000): Promise<void> {
+    private async _pauseCurrent(transitionDuration: number = 1000): Promise<void> {
         let currentMusic = this.getCurrentMusic();
         if (!currentMusic) {
             return;

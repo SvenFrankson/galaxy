@@ -1057,12 +1057,12 @@ class MusicManager {
         return this.musics[this.currentMusic];
     }
     async play(track, transitionDuration = 1000) {
-        await this.pauseCurrent(transitionDuration);
+        await this._pauseCurrent(transitionDuration);
         this.currentMusic = track;
-        await this.playCurrent(transitionDuration);
+        await this._playCurrent(transitionDuration);
     }
     // Linearly increase volume for -duration- miliseconds, then pause. 
-    async playCurrent(transitionDuration = 1000) {
+    async _playCurrent(transitionDuration = 1000) {
         let currentMusic = this.getCurrentMusic();
         if (!currentMusic) {
             return;
@@ -1088,7 +1088,7 @@ class MusicManager {
         });
     }
     // Linearly decrease volume for -duration- miliseconds, then pause. 
-    async pauseCurrent(transitionDuration = 1000) {
+    async _pauseCurrent(transitionDuration = 1000) {
         let currentMusic = this.getCurrentMusic();
         if (!currentMusic) {
             return;
