@@ -124,14 +124,16 @@ class TileBuilder {
 
         let container = new BABYLON.TransformNode("galaxy-base");
         for (let i = 0; i < meshPartCount; i++) {
-            let partMesh = new BABYLON.Mesh("part-" + i);
-            datas[i].positions = positions[i];
-            datas[i].indices = indices[i];
-            datas[i].normals = normals[i];
-            datas[i].uvs = uvs[i];
-            datas[i].applyToMesh(partMesh);
-            partMesh.parent = container;
-            partMesh.material = baseMaterials[i];
+            if (positions[i].length > 0) {
+                let partMesh = new BABYLON.Mesh("part-" + i);
+                datas[i].positions = positions[i];
+                datas[i].indices = indices[i];
+                datas[i].normals = normals[i];
+                datas[i].uvs = uvs[i];
+                datas[i].applyToMesh(partMesh);
+                partMesh.parent = container;
+                partMesh.material = baseMaterials[i];
+            }
         }
         return container;
     }
@@ -210,14 +212,16 @@ class TileBuilder {
 
         let container = new BABYLON.TransformNode("galaxy-base");
         for (let i = 0; i < meshPartCount; i++) {
-            let partMesh = new BABYLON.Mesh("part-" + i);
-            datas[i].positions = positions[i];
-            datas[i].indices = indices[i];
-            datas[i].normals = normals[i];
-            datas[i].uvs = uvs[i];
-            datas[i].applyToMesh(partMesh);
-            partMesh.parent = container;
-            partMesh.material = baseMaterials[i];
+            if (positions[i].length > 0) {
+                let partMesh = new BABYLON.Mesh("part-" + i);
+                datas[i].positions = positions[i];
+                datas[i].indices = indices[i];
+                datas[i].normals = normals[i];
+                datas[i].uvs = uvs[i];
+                datas[i].applyToMesh(partMesh);
+                partMesh.parent = container;
+                partMesh.material = baseMaterials[i];
+            }
         }
         return container;
     }

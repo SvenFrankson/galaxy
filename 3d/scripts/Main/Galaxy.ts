@@ -103,16 +103,10 @@ class Galaxy extends BABYLON.TransformNode {
         let materials = [];
         let indexStarts = [];
         let indexCounts = [];
-        console.log(template);
         for (let i = 0; i < templateChildren.length; i++) {
             let child = templateChildren[i];
             if (child instanceof BABYLON.Mesh) {
                 child.bakeCurrentTransformIntoVertices();
-                console.log(child);
-                console.log(child.position);
-                console.log(child.rotation);
-                console.log(child.rotationQuaternion);
-                console.log(child.scaling);
                 let l = positions.length / 3;
                 indexStarts.push(indices.length);
                 let data = BABYLON.VertexData.ExtractFromMesh(child);
@@ -143,7 +137,6 @@ class Galaxy extends BABYLON.TransformNode {
                 oneMeshTemplate.material = materials[0];
             }
             else {
-                console.log("Hey !");
                 for (let i = 0; i < materials.length; i++) {
                     BABYLON.SubMesh.CreateFromIndices(i, indexStarts[i], indexCounts[i], oneMeshTemplate);
                 }
@@ -210,6 +203,7 @@ class Galaxy extends BABYLON.TransformNode {
                     if (tile && tile instanceof Tile) {
                         tile.setHasOrb(true);
                         tile.refresh();
+                        console.log("Orb added.");
                     }
                 }
                 if (data.tileBlocks) {
@@ -232,7 +226,10 @@ class Galaxy extends BABYLON.TransformNode {
                         }
                     }
                 }
-                this.instantiate();
+                if (this.tilesContainer) {
+                    this.tilesContainer.dispose();
+                }
+                this.tilesContainer = TileBuilder.GenerateGalaxyBase(this);
                 resolve();
             }
             xhr.send();
