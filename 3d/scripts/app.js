@@ -184,6 +184,9 @@ class IJK {
         this.j = j;
         this.k = k;
     }
+    static IJK(iijk) {
+        return new IJK(iijk.i, iijk.j, iijk.k);
+    }
     isEqual(other) {
         return this.i === other.i && this.j === other.j && this.k === other.k;
     }
@@ -287,6 +290,7 @@ class Galaxy extends BABYLON.TransformNode {
                 }
             }
         };
+        console.log("Create new Galaxy.");
     }
     isIJKValid(ijk) {
         if (ijk.i === 0 || ijk.i === this.width || ijk.j === 0 || ijk.j === this.height || ijk.k === 0 || ijk.k === this.depth) {
@@ -406,6 +410,7 @@ class Galaxy extends BABYLON.TransformNode {
                         let tile = this.getItem(tileBlock.i, tileBlock.j, tileBlock.k);
                         if (tile && tile instanceof Tile) {
                             tile.isBlock = true;
+                            tile.refresh();
                         }
                     }
                 }
@@ -420,6 +425,12 @@ class Galaxy extends BABYLON.TransformNode {
                         }
                     }
                 }
+                this.solution = [];
+                if (data.lightnings) {
+                    for (let i = 0; i < data.lightnings.length; i++) {
+                        this.solution.push(IJK.IJK(data.lightnings[i]));
+                    }
+                }
                 if (this.tilesContainer) {
                     this.tilesContainer.dispose();
                 }
@@ -430,6 +441,7 @@ class Galaxy extends BABYLON.TransformNode {
         });
     }
     clear() {
+        console.log("Clear Galaxy.");
         while (this.getChildren().length > 0) {
             let child = this.getChildren()[0];
             child.dispose();
@@ -439,6 +451,7 @@ class Galaxy extends BABYLON.TransformNode {
         this.poles = [];
     }
     instantiate() {
+        console.log("Instantiate Galaxy.");
         this.rotation.y = 0;
         this.clear();
         for (let i = 0; i <= this.width; i++) {
@@ -485,6 +498,7 @@ class Galaxy extends BABYLON.TransformNode {
         Main.Scene.onBeforeRenderObservable.add(this.updateObservable);
         if (this.editionMode) {
             document.getElementById("editor-part").style.display = "block";
+            document.getElementById("level-part").style.display = "none";
             document.getElementById("width-value").textContent = this.width.toFixed(0);
             document.getElementById("btn-width-dec").onclick = () => {
                 this.width = Math.max(2, this.width - 2);
@@ -539,6 +553,7 @@ class Galaxy extends BABYLON.TransformNode {
         }
         else {
             document.getElementById("editor-part").style.display = "none";
+            document.getElementById("level-part").style.display = "block";
         }
         this.updateZones();
     }
@@ -681,6 +696,29 @@ class Galaxy extends BABYLON.TransformNode {
             }
         }
     }
+    removeAllLightnings() {
+        for (let i = 0; i <= this.width; i++) {
+            for (let j = 0; j <= this.height; j++) {
+                for (let k = 0; k <= this.depth; k++) {
+                    let item = this.getItem(i, j, k);
+                    if (item instanceof Lightning) {
+                        item.dispose();
+                        this.setItem(undefined, i, j, k);
+                    }
+                }
+            }
+        }
+        this.updateZones();
+    }
+    solve() {
+        //this.removeAllLightnings();
+        if (this.solution) {
+            for (let i = 0; i < this.solution.length; i++) {
+                this.toggleLightning(this.solution[i]);
+                this.updateZones();
+            }
+        }
+    }
     getItem(a, j, k) {
         let i;
         if (a instanceof IJK) {
@@ -719,10 +757,12 @@ class Galaxy extends BABYLON.TransformNode {
             return;
         }
         if (item instanceof Lightning) {
+            console.log("Remove Lightning");
             item.dispose();
             this.setItem(undefined, ijk);
         }
         else {
+            console.log("Add Lightning");
             let border = new Lightning(ijk.i, ijk.j, ijk.k, this);
             border.instantiate();
             this.setItem(border, ijk);
@@ -806,6 +846,7 @@ class Galaxy extends BABYLON.TransformNode {
         data.orbTiles = [];
         data.tileBlocks = [];
         data.edgeBlocks = [];
+        data.lightnings = [];
         this.tiles.forEach(t => {
             if (t.hasOrb) {
                 data.orbTiles.push({
@@ -828,6 +869,13 @@ class Galaxy extends BABYLON.TransformNode {
                     let item = this.getItem(i, j, k);
                     if (item instanceof EdgeBlock && !item.isLogicalBlock) {
                         data.edgeBlocks.push({
+                            i: item.i,
+                            j: item.j,
+                            k: item.k
+                        });
+                    }
+                    if (item instanceof Lightning) {
+                        data.lightnings.push({
                             i: item.i,
                             j: item.j,
                             k: item.k
@@ -983,6 +1031,12 @@ class Main {
             this.hideUI();
             this.showMainUI();
             this.animateCamera();
+        };
+        document.getElementById("btn-clear-lightning").onclick = () => {
+            Main.Galaxy.removeAllLightnings();
+        };
+        document.getElementById("btn-solve").onclick = () => {
+            Main.Galaxy.solve();
         };
         document.getElementById("new-game").onclick = () => {
             document.getElementById("main-panel").classList.remove("show");

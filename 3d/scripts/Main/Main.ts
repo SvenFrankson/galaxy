@@ -195,6 +195,12 @@ class Main {
 			this.showMainUI();
 			this.animateCamera();
 		}
+		document.getElementById("btn-clear-lightning").onclick = () => {
+			Main.Galaxy.removeAllLightnings();
+		}
+		document.getElementById("btn-solve").onclick = () => {
+			Main.Galaxy.solve();
+		}
 		document.getElementById("new-game").onclick = () => {
 			document.getElementById("main-panel").classList.remove("show");
 			document.getElementById("levels-choice").classList.add("show");
