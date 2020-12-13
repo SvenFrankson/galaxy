@@ -955,6 +955,7 @@ class Main {
         Main.Scene.onBeforeRenderObservable.add(() => {
             Main.Skybox.rotation.y += 0.0001;
         });
+        Main.MusicManager = new MusicManager();
         Main.Galaxy = new Galaxy();
         await Main.Galaxy.initialize();
         Main.Galaxy.instantiate();
@@ -962,6 +963,7 @@ class Main {
             document.getElementById("level-" + i).onclick = () => {
                 Main.Galaxy.editionMode = false;
                 Main.Galaxy.loadLevel("level-" + i + ".json");
+                Main.MusicManager.play((i % 2) + 1, 3000);
                 this.showUI();
                 this.hideMainUI();
                 this.animateCamera();
@@ -1002,6 +1004,7 @@ class Main {
         document.getElementById("main-ui").style.display = "block";
         document.getElementById("levels-choice").classList.remove("show");
         document.getElementById("main-panel").classList.add("show");
+        Main.MusicManager.play(0, 3000);
     }
     hideMainUI() {
         document.getElementById("main-ui").style.display = "none";
@@ -1042,6 +1045,73 @@ window.addEventListener("load", async () => {
     await main.initialize();
     main.animate();
 });
+class MusicManager {
+    constructor() {
+        this.currentMusic = -1;
+        this.musics = [];
+        for (let i = 1; i <= 3; i++) {
+            this.musics.push(new Audio("assets/musics/galaxies-" + i + ".mp3"));
+        }
+    }
+    getCurrentMusic() {
+        return this.musics[this.currentMusic];
+    }
+    async play(track, transitionDuration = 1000) {
+        await this.pauseCurrent(transitionDuration);
+        this.currentMusic = track;
+        await this.playCurrent(transitionDuration);
+    }
+    // Linearly increase volume for -duration- miliseconds, then pause. 
+    async playCurrent(transitionDuration = 1000) {
+        let currentMusic = this.getCurrentMusic();
+        if (!currentMusic) {
+            return;
+        }
+        return new Promise(resolve => {
+            let t = 0;
+            currentMusic.play();
+            currentMusic.loop = true;
+            currentMusic.volume = 0;
+            let update = () => {
+                let dt = Main.Engine.getDeltaTime();
+                t += dt;
+                if (t < transitionDuration) {
+                    currentMusic.volume = t / transitionDuration;
+                }
+                else {
+                    currentMusic.volume = 1;
+                    Main.Scene.onBeforeRenderObservable.removeCallback(update);
+                    resolve();
+                }
+            };
+            Main.Scene.onBeforeRenderObservable.add(update);
+        });
+    }
+    // Linearly decrease volume for -duration- miliseconds, then pause. 
+    async pauseCurrent(transitionDuration = 1000) {
+        let currentMusic = this.getCurrentMusic();
+        if (!currentMusic) {
+            return;
+        }
+        return new Promise(resolve => {
+            let t = 0;
+            let update = () => {
+                let dt = Main.Engine.getDeltaTime();
+                t += dt;
+                if (t < transitionDuration) {
+                    currentMusic.volume = 1 - t / transitionDuration;
+                }
+                else {
+                    currentMusic.volume = 0;
+                    currentMusic.pause();
+                    Main.Scene.onBeforeRenderObservable.removeCallback(update);
+                    resolve();
+                }
+            };
+            Main.Scene.onBeforeRenderObservable.add(update);
+        });
+    }
+}
 class Plot extends GalaxyItem {
     constructor(i, j, k, galaxy) {
         super(i, j, k, galaxy);

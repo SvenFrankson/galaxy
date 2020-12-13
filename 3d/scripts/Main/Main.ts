@@ -10,6 +10,7 @@ class Main {
     public static Scene: BABYLON.Scene;
 	public static Light: BABYLON.Light;
 	public static Galaxy: Galaxy;
+	public static MusicManager: MusicManager;
 	public static Skybox: BABYLON.Mesh;
 	public static EnvironmentTexture: BABYLON.CubeTexture;
 
@@ -163,6 +164,7 @@ class Main {
 			}
 		)
 
+		Main.MusicManager = new MusicManager();
 
 		Main.Galaxy = new Galaxy();
 		await Main.Galaxy.initialize();
@@ -172,6 +174,7 @@ class Main {
 			document.getElementById("level-" + i).onclick = () => {
 				Main.Galaxy.editionMode = false;
 				Main.Galaxy.loadLevel("level-" + i + ".json");
+				Main.MusicManager.play((i % 2) + 1, 3000);
 				this.showUI();
 				this.hideMainUI();
 				this.animateCamera();
@@ -217,6 +220,7 @@ class Main {
 		document.getElementById("main-ui").style.display = "block";
 		document.getElementById("levels-choice").classList.remove("show");
 		document.getElementById("main-panel").classList.add("show");
+		Main.MusicManager.play(0, 3000);
 	}
 	
 	public hideMainUI(): void {
