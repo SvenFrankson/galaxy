@@ -205,7 +205,15 @@ class Main {
 			document.getElementById("main-panel").classList.remove("show");
 			document.getElementById("levels-choice").classList.add("show");
 		}
-		
+		document.getElementById("settings-btn").onclick = () => {
+			document.getElementById("main-panel").classList.remove("show");
+			document.getElementById("settings").classList.add("show");
+		}
+		document.getElementById("credits-btn").onclick = () => {
+			document.getElementById("main-panel").classList.remove("show");
+			document.getElementById("credits").classList.add("show");
+		}
+
 		const buttons = document.querySelectorAll('.back-button');
 		[...buttons].map( btn => btn.addEventListener("click", this.backToMainMenu));
 
@@ -225,6 +233,8 @@ class Main {
 	public showMainUI(): void {
 		document.getElementById("main-ui").style.display = "block";
 		document.getElementById("levels-choice").classList.remove("show");
+		document.getElementById("settings").classList.remove("show");
+		document.getElementById("credits").classList.remove("show");
 		document.getElementById("main-panel").classList.add("show");
 		Main.MusicManager.play(0, 3000);
 	}
@@ -235,6 +245,8 @@ class Main {
 
 	public backToMainMenu() {
 		document.getElementById("levels-choice").classList.remove("show");
+		document.getElementById("settings").classList.remove("show");
+		document.getElementById("credits").classList.remove("show");
 		document.getElementById("main-panel").classList.add("show");
 	}
 
