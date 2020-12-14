@@ -23,9 +23,6 @@ abstract class GalaxyItem extends BABYLON.TransformNode {
             if (odds === 0) {
                 return new Plot(i, j, k, galaxy);
             }
-            else if (odds === 1) {
-                //return new Border(i, j, k, galaxy);
-            }
             else if (odds === 2) {
                 return new Tile(i, j, k, galaxy);
             }
@@ -51,7 +48,7 @@ abstract class GalaxyItem extends BABYLON.TransformNode {
         this.deepFreezeWorldMatrix();
     }
 
-    public abstract instantiate();
+    public abstract instantiate(): void;
 
     protected deepFreezeWorldMatrix(target?: BABYLON.AbstractMesh | BABYLON.TransformNode): void {
         if (!target) {

@@ -4,54 +4,6 @@ enum ZoneStatus {
     Invalid
 }
 
-interface IIJK {
-    i: number;
-    j: number;
-    k: number;
-}
-
-class IJK {
-
-    public static IJK(iijk: IIJK) {
-        return new IJK(iijk.i, iijk.j, iijk.k);
-    }
-    
-    constructor(
-        public i: number,
-        public j: number,
-        public k: number
-    ) {
-
-    }
-
-    public isEqual(other: IJK): boolean {
-        return this.i === other.i && this.j === other.j && this.k === other.k;
-    }
-
-    public isTile(): boolean {
-        let odds = 0;
-        if (this.i % 2 === 1) {
-            odds++;
-        }
-        if (this.j % 2 === 1) {
-            odds++;
-        }
-        if (this.k % 2 === 1) {
-            odds++;
-        }
-        return odds === 2;
-    }
-
-    public forEachAround(callback: (ijk: IJK) => void): void {
-        callback(new IJK(this.i - 1, this.j, this.k));
-        callback(new IJK(this.i, this.j - 1, this.k));
-        callback(new IJK(this.i, this.j, this.k - 1));
-        callback(new IJK(this.i + 1, this.j, this.k));
-        callback(new IJK(this.i, this.j + 1, this.k));
-        callback(new IJK(this.i, this.j, this.k + 1));
-    }
-}
-
 enum GalaxyEditionActionType {
     Play,
     Orb,
@@ -78,6 +30,7 @@ class Galaxy extends BABYLON.TransformNode {
     public items: GalaxyItem[][][];
     public tiles: Tile[];
     public poles: Plot[];
+    public edgeBlocks: EdgeBlock[];
     public zones: Tile[][];
 
     public solution: IJK[];
@@ -105,71 +58,12 @@ class Galaxy extends BABYLON.TransformNode {
         return false;
     }
 
-    private mergeTemplateIntoOneMeshTemplate(template: BABYLON.AbstractMesh): BABYLON.Mesh {
-        let oneMeshTemplate = new BABYLON.Mesh("template");
-        let vertexData = new BABYLON.VertexData();
-        let positions = [];
-        let indices = [];
-        let normals = [];
-        let uvs = [];
-        let templateChildren = template.getChildMeshes();
-        let materials = [];
-        let indexStarts = [];
-        let indexCounts = [];
-        for (let i = 0; i < templateChildren.length; i++) {
-            let child = templateChildren[i];
-            if (child instanceof BABYLON.Mesh) {
-                child.bakeCurrentTransformIntoVertices();
-                let l = positions.length / 3;
-                indexStarts.push(indices.length);
-                let data = BABYLON.VertexData.ExtractFromMesh(child);
-                positions.push(...data.positions);
-                normals.push(...data.normals);
-                uvs.push(...data.uvs);
-                for (let i = 0; i < uvs.length / 2; i++) {
-                    //uvs[2 * i + 1] = 1 - uvs[2 * i + 1];
-                }
-                for (let j = 0; j < data.indices.length / 3; j++) {
-                    let i1 = data.indices[3 * j] + l;
-                    let i2 = data.indices[3 * j + 1] + l;
-                    let i3 = data.indices[3 * j + 2] + l;
-                    indices.push(i1, i3, i2);
-                }
-                materials.push(child.material);
-                indexCounts.push(data.indices.length);
-            }
-        }
-        vertexData.positions = positions;
-        vertexData.indices = indices;
-        vertexData.normals = normals;
-        vertexData.uvs = uvs;
-        vertexData.applyToMesh(oneMeshTemplate);
-        
-        if (materials.length > 0) {
-            if (materials.length === 1 || materials.every(m => { return m === materials[0]; })) {
-                oneMeshTemplate.material = materials[0];
-            }
-            else {
-                for (let i = 0; i < materials.length; i++) {
-                    BABYLON.SubMesh.CreateFromIndices(i, indexStarts[i], indexCounts[i], oneMeshTemplate);
-                }
-                let multiMaterial = new BABYLON.MultiMaterial("multi-material", Main.Scene);
-                multiMaterial.subMaterials = materials;
-                if (materials.length === 3) {
-                    //multiMaterial.subMaterials = [Main.redMaterial, Main.greenMaterial, Main.blueMaterial];
-                }
-                oneMeshTemplate.material = multiMaterial;
-            }
-        }
-
-        return oneMeshTemplate;
-    }
-
     public async initialize(): Promise<void> {
         let templateTileRaw = await Main.loadMeshes("tile-lp");
-
-        //this.templateTile = this.mergeTemplateIntoOneMeshTemplate(templateTileRaw);
         this.templateTile = templateTileRaw as BABYLON.Mesh;
+
+        let templateTileBlockRaw = await Main.loadMeshes("tile-block");
+        this.templateTileBlock = templateTileBlockRaw as BABYLON.Mesh;
 
         this.templateTileGrid = (templateTileRaw.getChildMeshes()[2] as BABYLON.Mesh).clone("template-tile-grid");
 
@@ -185,19 +79,16 @@ class Galaxy extends BABYLON.TransformNode {
             this.templateTileGridInvalid.material.emissiveColor.copyFromFloats(0.45, 0.05, 0.05);
         }
 
-        let templateTileBlockRaw = await Main.loadMeshes("tile-block");
-        this.templateTileBlock = templateTileBlockRaw as BABYLON.Mesh;
-
         let templatePoleRaw = await Main.loadMeshes("pole");
-        this.templatePole = this.mergeTemplateIntoOneMeshTemplate(templatePoleRaw);
+        this.templatePole = MeshUtils.MergeTemplateIntoOneMeshTemplate(templatePoleRaw);
         let templatePoleEdgeRaw = await Main.loadMeshes("pole");
-        this.templatePoleEdge = this.mergeTemplateIntoOneMeshTemplate(templatePoleEdgeRaw);
+        this.templatePoleEdge = MeshUtils.MergeTemplateIntoOneMeshTemplate(templatePoleEdgeRaw);
 		let templatePoleCornerRaw = await Main.loadMeshes("tripole");
-        this.templatePoleCorner = this.mergeTemplateIntoOneMeshTemplate(templatePoleCornerRaw);
+        this.templatePoleCorner = MeshUtils.MergeTemplateIntoOneMeshTemplate(templatePoleCornerRaw);
         let templateLightningRaw = await Main.loadMeshes("lightning");
-        this.templateLightning = this.mergeTemplateIntoOneMeshTemplate(templateLightningRaw);
+        this.templateLightning = MeshUtils.MergeTemplateIntoOneMeshTemplate(templateLightningRaw);
         let templateEdgeBlockRaw = await Main.loadMeshes("edge-block");
-        this.templateEdgeBlock = this.mergeTemplateIntoOneMeshTemplate(templateEdgeBlockRaw);
+        this.templateEdgeBlock = MeshUtils.MergeTemplateIntoOneMeshTemplate(templateEdgeBlockRaw);
     }
 
     public async loadLevel(fileName: string): Promise<void> {
@@ -234,9 +125,7 @@ class Galaxy extends BABYLON.TransformNode {
                         let edgeBlockData = data.edgeBlocks[i];
                         let edge = this.getItem(edgeBlockData.i, edgeBlockData.j, edgeBlockData.k);
                         if (!edge) {
-                            let edgeBlock = new EdgeBlock(edgeBlockData.i, edgeBlockData.j, edgeBlockData.k, this);
-                            this.setItem(edgeBlock, edgeBlockData.i, edgeBlockData.j,edgeBlockData.k);
-                            edgeBlock.instantiate();
+                            this.addEdgeBlock(IJK.IJK(edgeBlockData));
                         }
                     }
                 }
@@ -246,10 +135,7 @@ class Galaxy extends BABYLON.TransformNode {
                         this.solution.push(IJK.IJK(data.lightnings[i]));
                     }
                 }
-                if (this.tilesContainer) {
-                    this.tilesContainer.dispose();
-                }
-                this.tilesContainer = TileBuilder.GenerateGalaxyBase(this);
+                this.rebuildTileContainer();
                 resolve();
             }
             xhr.send();
@@ -265,6 +151,7 @@ class Galaxy extends BABYLON.TransformNode {
         this.items = [];
         this.tiles = [];
         this.poles = [];
+        this.edgeBlocks = [];
     }
 
     public instantiate() {
@@ -306,12 +193,22 @@ class Galaxy extends BABYLON.TransformNode {
             }
         }
 
+        this.rebuildTileContainer();
+
+        this.registerToUI();
+
+        this.updateZones();
+    }
+
+    public rebuildTileContainer(): void {
         if (this.tilesContainer) {
             this.tilesContainer.dispose();
         }
-        this.tilesContainer = TileBuilder.GenerateGalaxyBase(this);
+        this.tilesContainer = GalaxyBuilder.GenerateGalaxyBase(this);
         this.tilesContainer.parent = this;
+    }
 
+    public registerToUI(): void {
         Main.Scene.onPointerObservable.removeCallback(this.pointerObservable);
         Main.Scene.onPointerObservable.add(this.pointerObservable);
         
@@ -379,7 +276,6 @@ class Galaxy extends BABYLON.TransformNode {
             document.getElementById("editor-part").style.display = "none";
             document.getElementById("level-part").style.display = "block";
         }
-        this.updateZones();
     }
 
     public updateZones(): void {
@@ -412,7 +308,7 @@ class Galaxy extends BABYLON.TransformNode {
         if (this.tilesGridContainer) {
             this.tilesGridContainer.dispose();
         }
-        this.tilesGridContainer = TileBuilder.GenerateTileGrids(this);
+        this.tilesGridContainer = GalaxyBuilder.GenerateTileGrids(this);
         this.tilesGridContainer.parent = this;
 
         if (solved) {
@@ -611,6 +507,26 @@ class Galaxy extends BABYLON.TransformNode {
         }
     }
 
+    public addEdgeBlock(ijk: IJK): EdgeBlock {
+        let edgeBlock = new EdgeBlock(ijk.i, ijk.j, ijk.k, this);
+        this.setItem(edgeBlock, ijk);
+        edgeBlock.instantiate();
+        this.edgeBlocks.push(edgeBlock);
+        return edgeBlock;
+    }
+
+    public removeEdgeBlock(ijk: IJK): void {
+        let item = this.getItem(ijk);
+        if (item instanceof EdgeBlock) {
+            let index = this.edgeBlocks.indexOf(item);
+            if (index != -1) {
+                this.edgeBlocks.splice(index, 1);
+            }
+            item.dispose();
+            this.setItem(undefined, ijk);
+        }
+    }
+
     public worldPositionToIJK(worldPosition: BABYLON.Vector3): IJK {
         let i = Math.round(worldPosition.x + this.width * 0.5);
         let j = Math.round(worldPosition.y + this.height * 0.5);
@@ -720,9 +636,8 @@ class Galaxy extends BABYLON.TransformNode {
                     if (this.galaxyEditionActionType === GalaxyEditionActionType.Block) {
                         let item = this.getItem(ijk);
                         if (item instanceof EdgeBlock) {
-                            if (!item.isLogicalBlock) {
-                                item.dispose();
-                                this.setItem(undefined, ijk);
+                            if (!item.isGeneratedByTile) {
+                                this.removeEdgeBlock(ijk);
                             }
                         }
                         else {
@@ -730,9 +645,8 @@ class Galaxy extends BABYLON.TransformNode {
                                 item.dispose();
                                 this.setItem(undefined, ijk);
                             }
-                            let border = new EdgeBlock(ijk.i, ijk.j, ijk.k, this);
-                            border.instantiate();
-                            this.setItem(border, ijk);
+                            this.addEdgeBlock(ijk);
+                            this.rebuildTileContainer();
                         }
                     }
                 }
@@ -750,11 +664,7 @@ class Galaxy extends BABYLON.TransformNode {
                     if (item instanceof Tile) {
                         item.isBlock = !item.isBlock;
                         item.refresh();
-                        if (this.tilesContainer) {
-                            this.tilesContainer.dispose();
-                        }
-                        this.tilesContainer = TileBuilder.GenerateGalaxyBase(this);
-                        this.tilesContainer.parent = this;
+                        this.rebuildTileContainer();
                         this.updateZones();
                     }
                 }
@@ -795,7 +705,7 @@ class Galaxy extends BABYLON.TransformNode {
             for (let j = 0; j <= this.height; j++) {
                 for (let k = 0; k <= this.depth; k++) {
                     let item = this.getItem(i, j, k);
-                    if (item instanceof EdgeBlock && !item.isLogicalBlock) {
+                    if (item instanceof EdgeBlock && !item.isGeneratedByTile) {
                         data.edgeBlocks.push(
                             {
                                 i: item.i,

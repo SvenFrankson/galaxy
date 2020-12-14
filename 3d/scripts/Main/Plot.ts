@@ -33,17 +33,6 @@ class Plot extends GalaxyItem {
     }
 
     public instantiate(): void {
-        // test
-        return;
-        if (this.poleType === 0) {
-            this.galaxy.templatePole.createInstance("clone").parent = this;
-        }
-        if (this.poleType === 1) {
-            this.galaxy.templatePoleEdge.createInstance("clone").parent = this;
-        }
-        if (this.poleType === 2) {
-            this.galaxy.templatePoleCorner.createInstance("clone").parent = this;
-        }
-        this.deepFreezeWorldMatrix();
+        
     }
 }

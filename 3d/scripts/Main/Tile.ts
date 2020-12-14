@@ -94,7 +94,6 @@ class Tile extends GalaxyItem {
             this.galaxy.templateTileBlock.createInstance("clone").parent = this;
         }
         else {
-            this.refreshTileMesh();
             if (this.hasOrb) {
                 this.orbMesh = BABYLON.MeshBuilder.CreateSphere("orb", { segments: 8, diameter: 0.5 }, Main.Scene);
                 this.orbMesh.parent = this;
@@ -103,31 +102,6 @@ class Tile extends GalaxyItem {
             }
         }
 
-        this.deepFreezeWorldMatrix();
-    }
-
-    public refreshTileMesh(): void {
-        // test
-        return;
-        if (this.tileMesh) {
-            this.tileMesh.dispose();
-        }
-        if (this.isValid === ZoneStatus.None) {
-            //this.tileMesh = this.galaxy.templateTile.createInstance("clone");
-            this.tileMesh = this.galaxy.templateTileGrid.createInstance("clone");
-        }
-        else if (this.isValid === ZoneStatus.Valid) {
-            //this.tileMesh = this.galaxy.templateTileValid.createInstance("clone");
-            this.tileMesh = this.galaxy.templateTileGridValid.createInstance("clone");
-        }
-        else if (this.isValid === ZoneStatus.Invalid) {
-            //this.tileMesh = this.galaxy.templateTileInvalid.createInstance("clone");
-            this.tileMesh = this.galaxy.templateTileGridInvalid.createInstance("clone");
-        }
-        if (this.tileMesh) {
-            this.tileMesh.rotation.z = Math.PI;
-            this.tileMesh.parent = this;
-        }
         this.deepFreezeWorldMatrix();
     }
 
@@ -147,7 +121,7 @@ class Tile extends GalaxyItem {
             this.edges.forEach(edgeIJK => {
                 let edgeItem = this.galaxy.getItem(edgeIJK);
                 if (edgeItem instanceof EdgeBlock) {
-                    edgeItem.isLogicalBlock = true;
+                    edgeItem.isGeneratedByTile = true;
                     edgeItem.instantiate();
                 }
                 else {
@@ -155,21 +129,17 @@ class Tile extends GalaxyItem {
                         edgeItem.dispose();
                         this.galaxy.setItem(undefined, edgeIJK);
                     }
-                    let edgeBlock = new EdgeBlock(edgeIJK.i, edgeIJK.j, edgeIJK.k, this.galaxy);
-                    edgeBlock.isLogicalBlock = true;
-                    edgeBlock.instantiate();
-                    this.galaxy.setItem(edgeBlock, edgeIJK);
+                    this.galaxy.addEdgeBlock(edgeIJK).isGeneratedByTile = true;
                 }
             });
         }
         else {
             this.edges.forEach(edgeIJK => {
                 let edgeItem = this.galaxy.getItem(edgeIJK);
-                if (edgeItem instanceof EdgeBlock && edgeItem.isLogicalBlock) {
+                if (edgeItem instanceof EdgeBlock && edgeItem.isGeneratedByTile) {
                     let other = this.getNeighbour(edgeItem.ijk);
                     if (!(other instanceof Tile && other.isBlock)) {
-                        edgeItem.dispose();
-                        this.galaxy.setItem(undefined, edgeIJK);
+                        this.galaxy.removeEdgeBlock(edgeIJK);
                     }
                 }
             });
@@ -179,7 +149,6 @@ class Tile extends GalaxyItem {
     public setIsValid(v: ZoneStatus): void {
         if (v != this.isValid) {
             this._isValid = v;
-            this.refreshTileMesh();
         }
     }
 

@@ -53,7 +53,7 @@ class Lightning extends Border {
 
 class EdgeBlock extends Border {
 
-    public isLogicalBlock: boolean = false;
+    public isGeneratedByTile: boolean = false;
 
     constructor(
         i: number,
@@ -64,20 +64,5 @@ class EdgeBlock extends Border {
         super(i, j, k, galaxy);
     }
 
-    public instantiate(): void {
-        while (this.getChildren().length > 0) {
-            let child = this.getChildren()[0];
-            child.dispose();
-        }
-        if (!this.isLogicalBlock) {
-            this.galaxy.templateEdgeBlock.createInstance("clone").parent = this;
-        }
-        if (this.isLogicalBlock && DEBUG_SHOW_LOGICAL_EDGEBLOCK) {
-            let edgeBlock = BABYLON.MeshBuilder.CreateBox("edge-block", { width: 0.1, height: 0.5, depth: 1.8 });
-            edgeBlock.material = Main.redMaterial;
-            edgeBlock.visibility = 0.5;
-            edgeBlock.parent = this;
-            this.deepFreezeWorldMatrix();
-        }
-    }
+    public instantiate(): void {}
 }

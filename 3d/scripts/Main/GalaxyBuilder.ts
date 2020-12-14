@@ -1,8 +1,8 @@
-class TileBuilder {
+class GalaxyBuilder {
 
     public static GenerateGalaxyBase(galaxy: Galaxy): BABYLON.TransformNode {
 
-        let meshPartCount = 2 + 3 + 3;
+        let meshPartCount = 2 + 3 + 3 + 1;
         let datas: BABYLON.VertexData[] = [];
         let positions: number[][] = [];
         let indices: number[][] = [];
@@ -42,6 +42,10 @@ class TileBuilder {
         let baseDataPoleCorner = BABYLON.VertexData.ExtractFromMesh(galaxy.templatePoleCorner);
         baseDatas.push(baseDataPoleCorner);
         baseMaterials.push(galaxy.templatePoleCorner.material);
+
+        let baseDataEdgeBlock = BABYLON.VertexData.ExtractFromMesh(galaxy.templateEdgeBlock);
+        baseDatas.push(baseDataEdgeBlock);
+        baseMaterials.push(galaxy.templateEdgeBlock.material);
 
         let p = BABYLON.Vector3.Zero();
         let n = BABYLON.Vector3.One();
@@ -115,6 +119,40 @@ class TileBuilder {
                     - baseData.normals[3 * k + 2]
                 );
                 n.rotateByQuaternionToRef(pole.rotationQuaternion, n);
+                normals[baseIndex].push(n.x, n.y, n.z);
+            }
+            for (let k = 0; k < baseData.uvs.length / 2; k++) {
+                uvs[baseIndex].push(baseData.uvs[2 * k], baseData.uvs[2 * k + 1]);
+            }
+        }
+
+        for (let i = 0; i < galaxy.edgeBlocks.length; i++) {
+            let edgeBlock = galaxy.edgeBlocks[i];
+        
+            let baseIndex = 8;
+            let baseData = baseDatas[baseIndex];
+                
+            let l = positions[baseIndex].length / 3;
+            for (let k = 0; k < baseData.positions.length / 3; k++) {
+                p.copyFromFloats(
+                    baseData.positions[3 * k],
+                    baseData.positions[3 * k + 1],
+                    - baseData.positions[3 * k + 2]
+                );
+                p.rotateByQuaternionToRef(edgeBlock.rotationQuaternion, p);
+                p.addInPlace(edgeBlock.position);
+                positions[baseIndex].push(p.x, p.y, p.z);
+            }
+            for (let k = 0; k < baseData.indices.length / 3; k++) {
+                indices[baseIndex].push(baseData.indices[3 * k] + l, baseData.indices[3 * k + 1] + l, baseData.indices[3 * k + 2] + l);
+            }
+            for (let k = 0; k < baseData.normals.length / 3; k++) {
+                n.copyFromFloats(
+                    baseData.normals[3 * k],
+                    baseData.normals[3 * k + 1],
+                    - baseData.normals[3 * k + 2]
+                );
+                n.rotateByQuaternionToRef(edgeBlock.rotationQuaternion, n);
                 normals[baseIndex].push(n.x, n.y, n.z);
             }
             for (let k = 0; k < baseData.uvs.length / 2; k++) {

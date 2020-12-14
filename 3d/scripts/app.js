@@ -52,9 +52,6 @@ class GalaxyItem extends BABYLON.TransformNode {
             if (odds === 0) {
                 return new Plot(i, j, k, galaxy);
             }
-            else if (odds === 1) {
-                //return new Border(i, j, k, galaxy);
-            }
             else if (odds === 2) {
                 return new Tile(i, j, k, galaxy);
             }
@@ -153,24 +150,9 @@ class Lightning extends Border {
 class EdgeBlock extends Border {
     constructor(i, j, k, galaxy) {
         super(i, j, k, galaxy);
-        this.isLogicalBlock = false;
+        this.isGeneratedByTile = false;
     }
-    instantiate() {
-        while (this.getChildren().length > 0) {
-            let child = this.getChildren()[0];
-            child.dispose();
-        }
-        if (!this.isLogicalBlock) {
-            this.galaxy.templateEdgeBlock.createInstance("clone").parent = this;
-        }
-        if (this.isLogicalBlock && DEBUG_SHOW_LOGICAL_EDGEBLOCK) {
-            let edgeBlock = BABYLON.MeshBuilder.CreateBox("edge-block", { width: 0.1, height: 0.5, depth: 1.8 });
-            edgeBlock.material = Main.redMaterial;
-            edgeBlock.visibility = 0.5;
-            edgeBlock.parent = this;
-            this.deepFreezeWorldMatrix();
-        }
-    }
+    instantiate() { }
 }
 var ZoneStatus;
 (function (ZoneStatus) {
@@ -178,40 +160,6 @@ var ZoneStatus;
     ZoneStatus[ZoneStatus["Valid"] = 1] = "Valid";
     ZoneStatus[ZoneStatus["Invalid"] = 2] = "Invalid";
 })(ZoneStatus || (ZoneStatus = {}));
-class IJK {
-    constructor(i, j, k) {
-        this.i = i;
-        this.j = j;
-        this.k = k;
-    }
-    static IJK(iijk) {
-        return new IJK(iijk.i, iijk.j, iijk.k);
-    }
-    isEqual(other) {
-        return this.i === other.i && this.j === other.j && this.k === other.k;
-    }
-    isTile() {
-        let odds = 0;
-        if (this.i % 2 === 1) {
-            odds++;
-        }
-        if (this.j % 2 === 1) {
-            odds++;
-        }
-        if (this.k % 2 === 1) {
-            odds++;
-        }
-        return odds === 2;
-    }
-    forEachAround(callback) {
-        callback(new IJK(this.i - 1, this.j, this.k));
-        callback(new IJK(this.i, this.j - 1, this.k));
-        callback(new IJK(this.i, this.j, this.k - 1));
-        callback(new IJK(this.i + 1, this.j, this.k));
-        callback(new IJK(this.i, this.j + 1, this.k));
-        callback(new IJK(this.i, this.j, this.k + 1));
-    }
-}
 var GalaxyEditionActionType;
 (function (GalaxyEditionActionType) {
     GalaxyEditionActionType[GalaxyEditionActionType["Play"] = 0] = "Play";
@@ -300,67 +248,11 @@ class Galaxy extends BABYLON.TransformNode {
         }
         return false;
     }
-    mergeTemplateIntoOneMeshTemplate(template) {
-        let oneMeshTemplate = new BABYLON.Mesh("template");
-        let vertexData = new BABYLON.VertexData();
-        let positions = [];
-        let indices = [];
-        let normals = [];
-        let uvs = [];
-        let templateChildren = template.getChildMeshes();
-        let materials = [];
-        let indexStarts = [];
-        let indexCounts = [];
-        for (let i = 0; i < templateChildren.length; i++) {
-            let child = templateChildren[i];
-            if (child instanceof BABYLON.Mesh) {
-                child.bakeCurrentTransformIntoVertices();
-                let l = positions.length / 3;
-                indexStarts.push(indices.length);
-                let data = BABYLON.VertexData.ExtractFromMesh(child);
-                positions.push(...data.positions);
-                normals.push(...data.normals);
-                uvs.push(...data.uvs);
-                for (let i = 0; i < uvs.length / 2; i++) {
-                    //uvs[2 * i + 1] = 1 - uvs[2 * i + 1];
-                }
-                for (let j = 0; j < data.indices.length / 3; j++) {
-                    let i1 = data.indices[3 * j] + l;
-                    let i2 = data.indices[3 * j + 1] + l;
-                    let i3 = data.indices[3 * j + 2] + l;
-                    indices.push(i1, i3, i2);
-                }
-                materials.push(child.material);
-                indexCounts.push(data.indices.length);
-            }
-        }
-        vertexData.positions = positions;
-        vertexData.indices = indices;
-        vertexData.normals = normals;
-        vertexData.uvs = uvs;
-        vertexData.applyToMesh(oneMeshTemplate);
-        if (materials.length > 0) {
-            if (materials.length === 1 || materials.every(m => { return m === materials[0]; })) {
-                oneMeshTemplate.material = materials[0];
-            }
-            else {
-                for (let i = 0; i < materials.length; i++) {
-                    BABYLON.SubMesh.CreateFromIndices(i, indexStarts[i], indexCounts[i], oneMeshTemplate);
-                }
-                let multiMaterial = new BABYLON.MultiMaterial("multi-material", Main.Scene);
-                multiMaterial.subMaterials = materials;
-                if (materials.length === 3) {
-                    //multiMaterial.subMaterials = [Main.redMaterial, Main.greenMaterial, Main.blueMaterial];
-                }
-                oneMeshTemplate.material = multiMaterial;
-            }
-        }
-        return oneMeshTemplate;
-    }
     async initialize() {
         let templateTileRaw = await Main.loadMeshes("tile-lp");
-        //this.templateTile = this.mergeTemplateIntoOneMeshTemplate(templateTileRaw);
         this.templateTile = templateTileRaw;
+        let templateTileBlockRaw = await Main.loadMeshes("tile-block");
+        this.templateTileBlock = templateTileBlockRaw;
         this.templateTileGrid = templateTileRaw.getChildMeshes()[2].clone("template-tile-grid");
         this.templateTileGridValid = this.templateTileGrid.clone("template-tile-grid-valid");
         this.templateTileGridValid.material = this.templateTileGridValid.material.clone("template-tile-valid-material");
@@ -372,18 +264,16 @@ class Galaxy extends BABYLON.TransformNode {
         if (this.templateTileGridInvalid.material instanceof BABYLON.PBRMaterial) {
             this.templateTileGridInvalid.material.emissiveColor.copyFromFloats(0.45, 0.05, 0.05);
         }
-        let templateTileBlockRaw = await Main.loadMeshes("tile-block");
-        this.templateTileBlock = templateTileBlockRaw;
         let templatePoleRaw = await Main.loadMeshes("pole");
-        this.templatePole = this.mergeTemplateIntoOneMeshTemplate(templatePoleRaw);
+        this.templatePole = MeshUtils.MergeTemplateIntoOneMeshTemplate(templatePoleRaw);
         let templatePoleEdgeRaw = await Main.loadMeshes("pole");
-        this.templatePoleEdge = this.mergeTemplateIntoOneMeshTemplate(templatePoleEdgeRaw);
+        this.templatePoleEdge = MeshUtils.MergeTemplateIntoOneMeshTemplate(templatePoleEdgeRaw);
         let templatePoleCornerRaw = await Main.loadMeshes("tripole");
-        this.templatePoleCorner = this.mergeTemplateIntoOneMeshTemplate(templatePoleCornerRaw);
+        this.templatePoleCorner = MeshUtils.MergeTemplateIntoOneMeshTemplate(templatePoleCornerRaw);
         let templateLightningRaw = await Main.loadMeshes("lightning");
-        this.templateLightning = this.mergeTemplateIntoOneMeshTemplate(templateLightningRaw);
+        this.templateLightning = MeshUtils.MergeTemplateIntoOneMeshTemplate(templateLightningRaw);
         let templateEdgeBlockRaw = await Main.loadMeshes("edge-block");
-        this.templateEdgeBlock = this.mergeTemplateIntoOneMeshTemplate(templateEdgeBlockRaw);
+        this.templateEdgeBlock = MeshUtils.MergeTemplateIntoOneMeshTemplate(templateEdgeBlockRaw);
     }
     async loadLevel(fileName) {
         return new Promise(resolve => {
@@ -419,9 +309,7 @@ class Galaxy extends BABYLON.TransformNode {
                         let edgeBlockData = data.edgeBlocks[i];
                         let edge = this.getItem(edgeBlockData.i, edgeBlockData.j, edgeBlockData.k);
                         if (!edge) {
-                            let edgeBlock = new EdgeBlock(edgeBlockData.i, edgeBlockData.j, edgeBlockData.k, this);
-                            this.setItem(edgeBlock, edgeBlockData.i, edgeBlockData.j, edgeBlockData.k);
-                            edgeBlock.instantiate();
+                            this.addEdgeBlock(IJK.IJK(edgeBlockData));
                         }
                     }
                 }
@@ -431,10 +319,7 @@ class Galaxy extends BABYLON.TransformNode {
                         this.solution.push(IJK.IJK(data.lightnings[i]));
                     }
                 }
-                if (this.tilesContainer) {
-                    this.tilesContainer.dispose();
-                }
-                this.tilesContainer = TileBuilder.GenerateGalaxyBase(this);
+                this.rebuildTileContainer();
                 resolve();
             };
             xhr.send();
@@ -449,6 +334,7 @@ class Galaxy extends BABYLON.TransformNode {
         this.items = [];
         this.tiles = [];
         this.poles = [];
+        this.edgeBlocks = [];
     }
     instantiate() {
         console.log("Instantiate Galaxy.");
@@ -487,11 +373,18 @@ class Galaxy extends BABYLON.TransformNode {
                 }
             }
         }
+        this.rebuildTileContainer();
+        this.registerToUI();
+        this.updateZones();
+    }
+    rebuildTileContainer() {
         if (this.tilesContainer) {
             this.tilesContainer.dispose();
         }
-        this.tilesContainer = TileBuilder.GenerateGalaxyBase(this);
+        this.tilesContainer = GalaxyBuilder.GenerateGalaxyBase(this);
         this.tilesContainer.parent = this;
+    }
+    registerToUI() {
         Main.Scene.onPointerObservable.removeCallback(this.pointerObservable);
         Main.Scene.onPointerObservable.add(this.pointerObservable);
         Main.Scene.onBeforeRenderObservable.removeCallback(this.updateObservable);
@@ -555,7 +448,6 @@ class Galaxy extends BABYLON.TransformNode {
             document.getElementById("editor-part").style.display = "none";
             document.getElementById("level-part").style.display = "block";
         }
-        this.updateZones();
     }
     updateZones() {
         this.zones = [];
@@ -585,7 +477,7 @@ class Galaxy extends BABYLON.TransformNode {
         if (this.tilesGridContainer) {
             this.tilesGridContainer.dispose();
         }
-        this.tilesGridContainer = TileBuilder.GenerateTileGrids(this);
+        this.tilesGridContainer = GalaxyBuilder.GenerateTileGrids(this);
         this.tilesGridContainer.parent = this;
         if (solved) {
             document.getElementById("solve-status").textContent = "SOLVED";
@@ -768,6 +660,24 @@ class Galaxy extends BABYLON.TransformNode {
             this.setItem(border, ijk);
         }
     }
+    addEdgeBlock(ijk) {
+        let edgeBlock = new EdgeBlock(ijk.i, ijk.j, ijk.k, this);
+        this.setItem(edgeBlock, ijk);
+        edgeBlock.instantiate();
+        this.edgeBlocks.push(edgeBlock);
+        return edgeBlock;
+    }
+    removeEdgeBlock(ijk) {
+        let item = this.getItem(ijk);
+        if (item instanceof EdgeBlock) {
+            let index = this.edgeBlocks.indexOf(item);
+            if (index != -1) {
+                this.edgeBlocks.splice(index, 1);
+            }
+            item.dispose();
+            this.setItem(undefined, ijk);
+        }
+    }
     worldPositionToIJK(worldPosition) {
         let i = Math.round(worldPosition.x + this.width * 0.5);
         let j = Math.round(worldPosition.y + this.height * 0.5);
@@ -797,9 +707,8 @@ class Galaxy extends BABYLON.TransformNode {
                     if (this.galaxyEditionActionType === GalaxyEditionActionType.Block) {
                         let item = this.getItem(ijk);
                         if (item instanceof EdgeBlock) {
-                            if (!item.isLogicalBlock) {
-                                item.dispose();
-                                this.setItem(undefined, ijk);
+                            if (!item.isGeneratedByTile) {
+                                this.removeEdgeBlock(ijk);
                             }
                         }
                         else {
@@ -807,9 +716,8 @@ class Galaxy extends BABYLON.TransformNode {
                                 item.dispose();
                                 this.setItem(undefined, ijk);
                             }
-                            let border = new EdgeBlock(ijk.i, ijk.j, ijk.k, this);
-                            border.instantiate();
-                            this.setItem(border, ijk);
+                            this.addEdgeBlock(ijk);
+                            this.rebuildTileContainer();
                         }
                     }
                 }
@@ -827,11 +735,7 @@ class Galaxy extends BABYLON.TransformNode {
                     if (item instanceof Tile) {
                         item.isBlock = !item.isBlock;
                         item.refresh();
-                        if (this.tilesContainer) {
-                            this.tilesContainer.dispose();
-                        }
-                        this.tilesContainer = TileBuilder.GenerateGalaxyBase(this);
-                        this.tilesContainer.parent = this;
+                        this.rebuildTileContainer();
                         this.updateZones();
                     }
                 }
@@ -867,7 +771,7 @@ class Galaxy extends BABYLON.TransformNode {
             for (let j = 0; j <= this.height; j++) {
                 for (let k = 0; k <= this.depth; k++) {
                     let item = this.getItem(i, j, k);
-                    if (item instanceof EdgeBlock && !item.isLogicalBlock) {
+                    if (item instanceof EdgeBlock && !item.isGeneratedByTile) {
                         data.edgeBlocks.push({
                             i: item.i,
                             j: item.j,
@@ -885,6 +789,248 @@ class Galaxy extends BABYLON.TransformNode {
             }
         }
         return data;
+    }
+}
+class GalaxyBuilder {
+    static GenerateGalaxyBase(galaxy) {
+        let meshPartCount = 2 + 3 + 3 + 1;
+        let datas = [];
+        let positions = [];
+        let indices = [];
+        let normals = [];
+        let uvs = [];
+        for (let i = 0; i < meshPartCount; i++) {
+            datas.push(new BABYLON.VertexData());
+            positions.push([]);
+            indices.push([]);
+            normals.push([]);
+            uvs.push([]);
+        }
+        let baseDatas = [];
+        let baseMaterials = [];
+        // Reference Tile meshes and materials.
+        for (let i = 0; i < 2; i++) {
+            let baseData = BABYLON.VertexData.ExtractFromMesh(galaxy.templateTile.getChildMeshes()[i]);
+            baseDatas.push(baseData);
+            baseMaterials.push(galaxy.templateTile.getChildMeshes()[i].material);
+        }
+        // Reference TileBlock meshes and materials.
+        for (let i = 0; i < 3; i++) {
+            let baseData = BABYLON.VertexData.ExtractFromMesh(galaxy.templateTileBlock.getChildMeshes()[i]);
+            baseDatas.push(baseData);
+            baseMaterials.push(galaxy.templateTileBlock.getChildMeshes()[i].material);
+        }
+        let baseDataPole = BABYLON.VertexData.ExtractFromMesh(galaxy.templatePole);
+        baseDatas.push(baseDataPole);
+        baseMaterials.push(galaxy.templatePole.material);
+        let baseDataPoleEdge = BABYLON.VertexData.ExtractFromMesh(galaxy.templatePoleEdge);
+        baseDatas.push(baseDataPoleEdge);
+        baseMaterials.push(galaxy.templatePoleEdge.material);
+        let baseDataPoleCorner = BABYLON.VertexData.ExtractFromMesh(galaxy.templatePoleCorner);
+        baseDatas.push(baseDataPoleCorner);
+        baseMaterials.push(galaxy.templatePoleCorner.material);
+        let baseDataEdgeBlock = BABYLON.VertexData.ExtractFromMesh(galaxy.templateEdgeBlock);
+        baseDatas.push(baseDataEdgeBlock);
+        baseMaterials.push(galaxy.templateEdgeBlock.material);
+        let p = BABYLON.Vector3.Zero();
+        let n = BABYLON.Vector3.One();
+        for (let i = 0; i < galaxy.tiles.length; i++) {
+            let tile = galaxy.tiles[i];
+            // J0 : Index of the first mesh & material that needs to be added.
+            // JCount : Count of meshes that need to be added.
+            let j0 = 0;
+            let jCount = 2;
+            if (tile.isBlock) {
+                j0 = 2;
+                jCount = 3;
+            }
+            for (let j = j0; j < j0 + jCount; j++) {
+                let baseData = baseDatas[j];
+                let l = positions[j].length / 3;
+                for (let k = 0; k < baseData.positions.length / 3; k++) {
+                    p.copyFromFloats(baseData.positions[3 * k], baseData.positions[3 * k + 1], -baseData.positions[3 * k + 2]);
+                    p.rotateByQuaternionToRef(tile.rotationQuaternion, p);
+                    p.addInPlace(tile.position);
+                    positions[j].push(p.x, p.y, p.z);
+                }
+                for (let k = 0; k < baseData.indices.length / 3; k++) {
+                    indices[j].push(baseData.indices[3 * k] + l, baseData.indices[3 * k + 1] + l, baseData.indices[3 * k + 2] + l);
+                }
+                for (let k = 0; k < baseData.normals.length / 3; k++) {
+                    n.copyFromFloats(baseData.normals[3 * k], baseData.normals[3 * k + 1], -baseData.normals[3 * k + 2]);
+                    n.rotateByQuaternionToRef(tile.rotationQuaternion, n);
+                    normals[j].push(n.x, n.y, n.z);
+                }
+                for (let k = 0; k < baseData.uvs.length / 2; k++) {
+                    uvs[j].push(baseData.uvs[2 * k], baseData.uvs[2 * k + 1]);
+                }
+            }
+        }
+        for (let i = 0; i < galaxy.poles.length; i++) {
+            let pole = galaxy.poles[i];
+            let baseIndex = pole.poleType + 5;
+            let baseData = baseDatas[baseIndex];
+            let l = positions[baseIndex].length / 3;
+            for (let k = 0; k < baseData.positions.length / 3; k++) {
+                p.copyFromFloats(baseData.positions[3 * k], baseData.positions[3 * k + 1], -baseData.positions[3 * k + 2]);
+                p.rotateByQuaternionToRef(pole.rotationQuaternion, p);
+                p.addInPlace(pole.position);
+                positions[baseIndex].push(p.x, p.y, p.z);
+            }
+            for (let k = 0; k < baseData.indices.length / 3; k++) {
+                indices[baseIndex].push(baseData.indices[3 * k] + l, baseData.indices[3 * k + 1] + l, baseData.indices[3 * k + 2] + l);
+            }
+            for (let k = 0; k < baseData.normals.length / 3; k++) {
+                n.copyFromFloats(baseData.normals[3 * k], baseData.normals[3 * k + 1], -baseData.normals[3 * k + 2]);
+                n.rotateByQuaternionToRef(pole.rotationQuaternion, n);
+                normals[baseIndex].push(n.x, n.y, n.z);
+            }
+            for (let k = 0; k < baseData.uvs.length / 2; k++) {
+                uvs[baseIndex].push(baseData.uvs[2 * k], baseData.uvs[2 * k + 1]);
+            }
+        }
+        for (let i = 0; i < galaxy.edgeBlocks.length; i++) {
+            let edgeBlock = galaxy.edgeBlocks[i];
+            let baseIndex = 8;
+            let baseData = baseDatas[baseIndex];
+            let l = positions[baseIndex].length / 3;
+            for (let k = 0; k < baseData.positions.length / 3; k++) {
+                p.copyFromFloats(baseData.positions[3 * k], baseData.positions[3 * k + 1], -baseData.positions[3 * k + 2]);
+                p.rotateByQuaternionToRef(edgeBlock.rotationQuaternion, p);
+                p.addInPlace(edgeBlock.position);
+                positions[baseIndex].push(p.x, p.y, p.z);
+            }
+            for (let k = 0; k < baseData.indices.length / 3; k++) {
+                indices[baseIndex].push(baseData.indices[3 * k] + l, baseData.indices[3 * k + 1] + l, baseData.indices[3 * k + 2] + l);
+            }
+            for (let k = 0; k < baseData.normals.length / 3; k++) {
+                n.copyFromFloats(baseData.normals[3 * k], baseData.normals[3 * k + 1], -baseData.normals[3 * k + 2]);
+                n.rotateByQuaternionToRef(edgeBlock.rotationQuaternion, n);
+                normals[baseIndex].push(n.x, n.y, n.z);
+            }
+            for (let k = 0; k < baseData.uvs.length / 2; k++) {
+                uvs[baseIndex].push(baseData.uvs[2 * k], baseData.uvs[2 * k + 1]);
+            }
+        }
+        let container = new BABYLON.TransformNode("galaxy-base");
+        for (let i = 0; i < meshPartCount; i++) {
+            if (positions[i].length > 0) {
+                let partMesh = new BABYLON.Mesh("part-" + i);
+                datas[i].positions = positions[i];
+                datas[i].indices = indices[i];
+                datas[i].normals = normals[i];
+                datas[i].uvs = uvs[i];
+                datas[i].applyToMesh(partMesh);
+                partMesh.parent = container;
+                partMesh.material = baseMaterials[i];
+            }
+        }
+        return container;
+    }
+    static GenerateTileGrids(galaxy) {
+        let meshPartCount = 3;
+        let datas = [];
+        let positions = [];
+        let indices = [];
+        let normals = [];
+        let uvs = [];
+        for (let i = 0; i < meshPartCount; i++) {
+            datas.push(new BABYLON.VertexData());
+            positions.push([]);
+            indices.push([]);
+            normals.push([]);
+            uvs.push([]);
+        }
+        let baseDatas = [];
+        let baseMaterials = [];
+        let tileGrid = BABYLON.VertexData.ExtractFromMesh(galaxy.templateTileGrid);
+        baseDatas.push(tileGrid);
+        baseMaterials.push(galaxy.templateTileGrid.material);
+        let tileGridValid = BABYLON.VertexData.ExtractFromMesh(galaxy.templateTileGridValid);
+        baseDatas.push(tileGridValid);
+        baseMaterials.push(galaxy.templateTileGridValid.material);
+        let tileGridInvalid = BABYLON.VertexData.ExtractFromMesh(galaxy.templateTileGridInvalid);
+        baseDatas.push(tileGridInvalid);
+        baseMaterials.push(galaxy.templateTileGridInvalid.material);
+        let p = BABYLON.Vector3.Zero();
+        let n = BABYLON.Vector3.One();
+        for (let i = 0; i < galaxy.tiles.length; i++) {
+            let tile = galaxy.tiles[i];
+            let baseIndex = 0;
+            if (tile.isValid === ZoneStatus.Valid) {
+                baseIndex = 1;
+            }
+            if (tile.isValid === ZoneStatus.Invalid) {
+                baseIndex = 2;
+            }
+            let baseData = baseDatas[baseIndex];
+            let l = positions[baseIndex].length / 3;
+            for (let k = 0; k < baseData.positions.length / 3; k++) {
+                p.copyFromFloats(baseData.positions[3 * k], baseData.positions[3 * k + 1], -baseData.positions[3 * k + 2]);
+                p.rotateByQuaternionToRef(tile.rotationQuaternion, p);
+                p.addInPlace(tile.position);
+                positions[baseIndex].push(p.x, p.y, p.z);
+            }
+            for (let k = 0; k < baseData.indices.length / 3; k++) {
+                indices[baseIndex].push(baseData.indices[3 * k] + l, baseData.indices[3 * k + 1] + l, baseData.indices[3 * k + 2] + l);
+            }
+            for (let k = 0; k < baseData.normals.length / 3; k++) {
+                n.copyFromFloats(baseData.normals[3 * k], baseData.normals[3 * k + 1], -baseData.normals[3 * k + 2]);
+                n.rotateByQuaternionToRef(tile.rotationQuaternion, n);
+                normals[baseIndex].push(n.x, n.y, n.z);
+            }
+            for (let k = 0; k < baseData.uvs.length / 2; k++) {
+                uvs[baseIndex].push(baseData.uvs[2 * k], baseData.uvs[2 * k + 1]);
+            }
+        }
+        let container = new BABYLON.TransformNode("galaxy-base");
+        for (let i = 0; i < meshPartCount; i++) {
+            if (positions[i].length > 0) {
+                let partMesh = new BABYLON.Mesh("part-" + i);
+                datas[i].positions = positions[i];
+                datas[i].indices = indices[i];
+                datas[i].normals = normals[i];
+                datas[i].uvs = uvs[i];
+                datas[i].applyToMesh(partMesh);
+                partMesh.parent = container;
+                partMesh.material = baseMaterials[i];
+            }
+        }
+        return container;
+    }
+}
+class IJK {
+    constructor(i, j, k) {
+        this.i = i;
+        this.j = j;
+        this.k = k;
+    }
+    static IJK(iijk) {
+        return new IJK(iijk.i, iijk.j, iijk.k);
+    }
+    isEqual(other) {
+        return this.i === other.i && this.j === other.j && this.k === other.k;
+    }
+    isTile() {
+        let odds = 0;
+        if (this.i % 2 === 1) {
+            odds++;
+        }
+        if (this.j % 2 === 1) {
+            odds++;
+        }
+        if (this.k % 2 === 1) {
+            odds++;
+        }
+        return odds === 2;
+    }
+    forEachAround(callback) {
+        callback(new IJK(this.i - 1, this.j, this.k));
+        callback(new IJK(this.i, this.j - 1, this.k));
+        callback(new IJK(this.i, this.j, this.k - 1));
+        callback(new IJK(this.i + 1, this.j, this.k));
+        callback(new IJK(this.i, this.j + 1, this.k));
+        callback(new IJK(this.i, this.j, this.k + 1));
     }
 }
 /// <reference path="../../lib/babylon.d.ts"/>
@@ -1099,6 +1245,62 @@ window.addEventListener("load", async () => {
     await main.initialize();
     main.animate();
 });
+class MeshUtils {
+    static MergeTemplateIntoOneMeshTemplate(template) {
+        let oneMeshTemplate = new BABYLON.Mesh("template");
+        let vertexData = new BABYLON.VertexData();
+        let positions = [];
+        let indices = [];
+        let normals = [];
+        let uvs = [];
+        let templateChildren = template.getChildMeshes();
+        let materials = [];
+        let indexStarts = [];
+        let indexCounts = [];
+        for (let i = 0; i < templateChildren.length; i++) {
+            let child = templateChildren[i];
+            if (child instanceof BABYLON.Mesh) {
+                child.bakeCurrentTransformIntoVertices();
+                let l = positions.length / 3;
+                indexStarts.push(indices.length);
+                let data = BABYLON.VertexData.ExtractFromMesh(child);
+                positions.push(...data.positions);
+                normals.push(...data.normals);
+                uvs.push(...data.uvs);
+                for (let i = 0; i < uvs.length / 2; i++) {
+                    //uvs[2 * i + 1] = 1 - uvs[2 * i + 1];
+                }
+                for (let j = 0; j < data.indices.length / 3; j++) {
+                    let i1 = data.indices[3 * j] + l;
+                    let i2 = data.indices[3 * j + 1] + l;
+                    let i3 = data.indices[3 * j + 2] + l;
+                    indices.push(i1, i3, i2);
+                }
+                materials.push(child.material);
+                indexCounts.push(data.indices.length);
+            }
+        }
+        vertexData.positions = positions;
+        vertexData.indices = indices;
+        vertexData.normals = normals;
+        vertexData.uvs = uvs;
+        vertexData.applyToMesh(oneMeshTemplate);
+        if (materials.length > 0) {
+            if (materials.length === 1 || materials.every(m => { return m === materials[0]; })) {
+                oneMeshTemplate.material = materials[0];
+            }
+            else {
+                for (let i = 0; i < materials.length; i++) {
+                    BABYLON.SubMesh.CreateFromIndices(i, indexStarts[i], indexCounts[i], oneMeshTemplate);
+                }
+                let multiMaterial = new BABYLON.MultiMaterial("multi-material", Main.Scene);
+                multiMaterial.subMaterials = materials;
+                oneMeshTemplate.material = multiMaterial;
+            }
+        }
+        return oneMeshTemplate;
+    }
+}
 class MusicManager {
     constructor() {
         this.currentMusic = -1;
@@ -1192,18 +1394,6 @@ class Plot extends GalaxyItem {
         }
     }
     instantiate() {
-        // test
-        return;
-        if (this.poleType === 0) {
-            this.galaxy.templatePole.createInstance("clone").parent = this;
-        }
-        if (this.poleType === 1) {
-            this.galaxy.templatePoleEdge.createInstance("clone").parent = this;
-        }
-        if (this.poleType === 2) {
-            this.galaxy.templatePoleCorner.createInstance("clone").parent = this;
-        }
-        this.deepFreezeWorldMatrix();
     }
 }
 /// <reference path="GalaxyItem.ts"/>
@@ -1285,37 +1475,12 @@ class Tile extends GalaxyItem {
             this.galaxy.templateTileBlock.createInstance("clone").parent = this;
         }
         else {
-            this.refreshTileMesh();
             if (this.hasOrb) {
                 this.orbMesh = BABYLON.MeshBuilder.CreateSphere("orb", { segments: 8, diameter: 0.5 }, Main.Scene);
                 this.orbMesh.parent = this;
                 this.orbMesh.position.y = 0.5;
                 this.orbMesh.material = Main.orbMaterial;
             }
-        }
-        this.deepFreezeWorldMatrix();
-    }
-    refreshTileMesh() {
-        // test
-        return;
-        if (this.tileMesh) {
-            this.tileMesh.dispose();
-        }
-        if (this.isValid === ZoneStatus.None) {
-            //this.tileMesh = this.galaxy.templateTile.createInstance("clone");
-            this.tileMesh = this.galaxy.templateTileGrid.createInstance("clone");
-        }
-        else if (this.isValid === ZoneStatus.Valid) {
-            //this.tileMesh = this.galaxy.templateTileValid.createInstance("clone");
-            this.tileMesh = this.galaxy.templateTileGridValid.createInstance("clone");
-        }
-        else if (this.isValid === ZoneStatus.Invalid) {
-            //this.tileMesh = this.galaxy.templateTileInvalid.createInstance("clone");
-            this.tileMesh = this.galaxy.templateTileGridInvalid.createInstance("clone");
-        }
-        if (this.tileMesh) {
-            this.tileMesh.rotation.z = Math.PI;
-            this.tileMesh.parent = this;
         }
         this.deepFreezeWorldMatrix();
     }
@@ -1334,7 +1499,7 @@ class Tile extends GalaxyItem {
             this.edges.forEach(edgeIJK => {
                 let edgeItem = this.galaxy.getItem(edgeIJK);
                 if (edgeItem instanceof EdgeBlock) {
-                    edgeItem.isLogicalBlock = true;
+                    edgeItem.isGeneratedByTile = true;
                     edgeItem.instantiate();
                 }
                 else {
@@ -1342,21 +1507,17 @@ class Tile extends GalaxyItem {
                         edgeItem.dispose();
                         this.galaxy.setItem(undefined, edgeIJK);
                     }
-                    let edgeBlock = new EdgeBlock(edgeIJK.i, edgeIJK.j, edgeIJK.k, this.galaxy);
-                    edgeBlock.isLogicalBlock = true;
-                    edgeBlock.instantiate();
-                    this.galaxy.setItem(edgeBlock, edgeIJK);
+                    this.galaxy.addEdgeBlock(edgeIJK).isGeneratedByTile = true;
                 }
             });
         }
         else {
             this.edges.forEach(edgeIJK => {
                 let edgeItem = this.galaxy.getItem(edgeIJK);
-                if (edgeItem instanceof EdgeBlock && edgeItem.isLogicalBlock) {
+                if (edgeItem instanceof EdgeBlock && edgeItem.isGeneratedByTile) {
                     let other = this.getNeighbour(edgeItem.ijk);
                     if (!(other instanceof Tile && other.isBlock)) {
-                        edgeItem.dispose();
-                        this.galaxy.setItem(undefined, edgeIJK);
+                        this.galaxy.removeEdgeBlock(edgeIJK);
                     }
                 }
             });
@@ -1365,7 +1526,6 @@ class Tile extends GalaxyItem {
     setIsValid(v) {
         if (v != this.isValid) {
             this._isValid = v;
-            this.refreshTileMesh();
         }
     }
     getFootPrint(ijk) {
@@ -1399,187 +1559,5 @@ class Tile extends GalaxyItem {
             return this.neighbours[index];
         }
         return undefined;
-    }
-}
-class TileBuilder {
-    static GenerateGalaxyBase(galaxy) {
-        let meshPartCount = 2 + 3 + 3;
-        let datas = [];
-        let positions = [];
-        let indices = [];
-        let normals = [];
-        let uvs = [];
-        for (let i = 0; i < meshPartCount; i++) {
-            datas.push(new BABYLON.VertexData());
-            positions.push([]);
-            indices.push([]);
-            normals.push([]);
-            uvs.push([]);
-        }
-        let baseDatas = [];
-        let baseMaterials = [];
-        // Reference Tile meshes and materials.
-        for (let i = 0; i < 2; i++) {
-            let baseData = BABYLON.VertexData.ExtractFromMesh(galaxy.templateTile.getChildMeshes()[i]);
-            baseDatas.push(baseData);
-            baseMaterials.push(galaxy.templateTile.getChildMeshes()[i].material);
-        }
-        // Reference TileBlock meshes and materials.
-        for (let i = 0; i < 3; i++) {
-            let baseData = BABYLON.VertexData.ExtractFromMesh(galaxy.templateTileBlock.getChildMeshes()[i]);
-            baseDatas.push(baseData);
-            baseMaterials.push(galaxy.templateTileBlock.getChildMeshes()[i].material);
-        }
-        let baseDataPole = BABYLON.VertexData.ExtractFromMesh(galaxy.templatePole);
-        baseDatas.push(baseDataPole);
-        baseMaterials.push(galaxy.templatePole.material);
-        let baseDataPoleEdge = BABYLON.VertexData.ExtractFromMesh(galaxy.templatePoleEdge);
-        baseDatas.push(baseDataPoleEdge);
-        baseMaterials.push(galaxy.templatePoleEdge.material);
-        let baseDataPoleCorner = BABYLON.VertexData.ExtractFromMesh(galaxy.templatePoleCorner);
-        baseDatas.push(baseDataPoleCorner);
-        baseMaterials.push(galaxy.templatePoleCorner.material);
-        let p = BABYLON.Vector3.Zero();
-        let n = BABYLON.Vector3.One();
-        for (let i = 0; i < galaxy.tiles.length; i++) {
-            let tile = galaxy.tiles[i];
-            // J0 : Index of the first mesh & material that needs to be added.
-            // JCount : Count of meshes that need to be added.
-            let j0 = 0;
-            let jCount = 2;
-            if (tile.isBlock) {
-                j0 = 2;
-                jCount = 3;
-            }
-            for (let j = j0; j < j0 + jCount; j++) {
-                let baseData = baseDatas[j];
-                let l = positions[j].length / 3;
-                for (let k = 0; k < baseData.positions.length / 3; k++) {
-                    p.copyFromFloats(baseData.positions[3 * k], baseData.positions[3 * k + 1], -baseData.positions[3 * k + 2]);
-                    p.rotateByQuaternionToRef(tile.rotationQuaternion, p);
-                    p.addInPlace(tile.position);
-                    positions[j].push(p.x, p.y, p.z);
-                }
-                for (let k = 0; k < baseData.indices.length / 3; k++) {
-                    indices[j].push(baseData.indices[3 * k] + l, baseData.indices[3 * k + 1] + l, baseData.indices[3 * k + 2] + l);
-                }
-                for (let k = 0; k < baseData.normals.length / 3; k++) {
-                    n.copyFromFloats(baseData.normals[3 * k], baseData.normals[3 * k + 1], -baseData.normals[3 * k + 2]);
-                    n.rotateByQuaternionToRef(tile.rotationQuaternion, n);
-                    normals[j].push(n.x, n.y, n.z);
-                }
-                for (let k = 0; k < baseData.uvs.length / 2; k++) {
-                    uvs[j].push(baseData.uvs[2 * k], baseData.uvs[2 * k + 1]);
-                }
-            }
-        }
-        for (let i = 0; i < galaxy.poles.length; i++) {
-            let pole = galaxy.poles[i];
-            let baseIndex = pole.poleType + 5;
-            let baseData = baseDatas[baseIndex];
-            let l = positions[baseIndex].length / 3;
-            for (let k = 0; k < baseData.positions.length / 3; k++) {
-                p.copyFromFloats(baseData.positions[3 * k], baseData.positions[3 * k + 1], -baseData.positions[3 * k + 2]);
-                p.rotateByQuaternionToRef(pole.rotationQuaternion, p);
-                p.addInPlace(pole.position);
-                positions[baseIndex].push(p.x, p.y, p.z);
-            }
-            for (let k = 0; k < baseData.indices.length / 3; k++) {
-                indices[baseIndex].push(baseData.indices[3 * k] + l, baseData.indices[3 * k + 1] + l, baseData.indices[3 * k + 2] + l);
-            }
-            for (let k = 0; k < baseData.normals.length / 3; k++) {
-                n.copyFromFloats(baseData.normals[3 * k], baseData.normals[3 * k + 1], -baseData.normals[3 * k + 2]);
-                n.rotateByQuaternionToRef(pole.rotationQuaternion, n);
-                normals[baseIndex].push(n.x, n.y, n.z);
-            }
-            for (let k = 0; k < baseData.uvs.length / 2; k++) {
-                uvs[baseIndex].push(baseData.uvs[2 * k], baseData.uvs[2 * k + 1]);
-            }
-        }
-        let container = new BABYLON.TransformNode("galaxy-base");
-        for (let i = 0; i < meshPartCount; i++) {
-            if (positions[i].length > 0) {
-                let partMesh = new BABYLON.Mesh("part-" + i);
-                datas[i].positions = positions[i];
-                datas[i].indices = indices[i];
-                datas[i].normals = normals[i];
-                datas[i].uvs = uvs[i];
-                datas[i].applyToMesh(partMesh);
-                partMesh.parent = container;
-                partMesh.material = baseMaterials[i];
-            }
-        }
-        return container;
-    }
-    static GenerateTileGrids(galaxy) {
-        let meshPartCount = 3;
-        let datas = [];
-        let positions = [];
-        let indices = [];
-        let normals = [];
-        let uvs = [];
-        for (let i = 0; i < meshPartCount; i++) {
-            datas.push(new BABYLON.VertexData());
-            positions.push([]);
-            indices.push([]);
-            normals.push([]);
-            uvs.push([]);
-        }
-        let baseDatas = [];
-        let baseMaterials = [];
-        let tileGrid = BABYLON.VertexData.ExtractFromMesh(galaxy.templateTileGrid);
-        baseDatas.push(tileGrid);
-        baseMaterials.push(galaxy.templateTileGrid.material);
-        let tileGridValid = BABYLON.VertexData.ExtractFromMesh(galaxy.templateTileGridValid);
-        baseDatas.push(tileGridValid);
-        baseMaterials.push(galaxy.templateTileGridValid.material);
-        let tileGridInvalid = BABYLON.VertexData.ExtractFromMesh(galaxy.templateTileGridInvalid);
-        baseDatas.push(tileGridInvalid);
-        baseMaterials.push(galaxy.templateTileGridInvalid.material);
-        let p = BABYLON.Vector3.Zero();
-        let n = BABYLON.Vector3.One();
-        for (let i = 0; i < galaxy.tiles.length; i++) {
-            let tile = galaxy.tiles[i];
-            let baseIndex = 0;
-            if (tile.isValid === ZoneStatus.Valid) {
-                baseIndex = 1;
-            }
-            if (tile.isValid === ZoneStatus.Invalid) {
-                baseIndex = 2;
-            }
-            let baseData = baseDatas[baseIndex];
-            let l = positions[baseIndex].length / 3;
-            for (let k = 0; k < baseData.positions.length / 3; k++) {
-                p.copyFromFloats(baseData.positions[3 * k], baseData.positions[3 * k + 1], -baseData.positions[3 * k + 2]);
-                p.rotateByQuaternionToRef(tile.rotationQuaternion, p);
-                p.addInPlace(tile.position);
-                positions[baseIndex].push(p.x, p.y, p.z);
-            }
-            for (let k = 0; k < baseData.indices.length / 3; k++) {
-                indices[baseIndex].push(baseData.indices[3 * k] + l, baseData.indices[3 * k + 1] + l, baseData.indices[3 * k + 2] + l);
-            }
-            for (let k = 0; k < baseData.normals.length / 3; k++) {
-                n.copyFromFloats(baseData.normals[3 * k], baseData.normals[3 * k + 1], -baseData.normals[3 * k + 2]);
-                n.rotateByQuaternionToRef(tile.rotationQuaternion, n);
-                normals[baseIndex].push(n.x, n.y, n.z);
-            }
-            for (let k = 0; k < baseData.uvs.length / 2; k++) {
-                uvs[baseIndex].push(baseData.uvs[2 * k], baseData.uvs[2 * k + 1]);
-            }
-        }
-        let container = new BABYLON.TransformNode("galaxy-base");
-        for (let i = 0; i < meshPartCount; i++) {
-            if (positions[i].length > 0) {
-                let partMesh = new BABYLON.Mesh("part-" + i);
-                datas[i].positions = positions[i];
-                datas[i].indices = indices[i];
-                datas[i].normals = normals[i];
-                datas[i].uvs = uvs[i];
-                datas[i].applyToMesh(partMesh);
-                partMesh.parent = container;
-                partMesh.material = baseMaterials[i];
-            }
-        }
-        return container;
     }
 }
