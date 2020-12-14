@@ -489,7 +489,7 @@ class Galaxy extends BABYLON.TransformNode {
                                 let tileB = orbTiles[1].neighbours[(t1Index + 1) % 4];
                                 let tileBIndex = tilesToConsider.indexOf(tileB);
                                 tilesToConsider.splice(tileBIndex, 1);
-                                output = output && this.areSymetrical(tileA, e0, tileB, e2, tilesToConsider);
+                                output = output && this.areSymetrical(tileA, e0, tileB, e3, tilesToConsider);
                             }
                             if (output && !border1 && tilesToConsider.length > 0) {
                                 let tileC = orbTiles[0].neighbours[(t0Index + 2) % 4];
@@ -498,7 +498,7 @@ class Galaxy extends BABYLON.TransformNode {
                                 let tileD = orbTiles[1].neighbours[(t1Index + 2) % 4];
                                 let tileDIndex = tilesToConsider.indexOf(tileD);
                                 tilesToConsider.splice(tileDIndex, 1);
-                                output = this.areSymetrical(tileC, e1, tileD, e3, tilesToConsider);
+                                output = this.areSymetrical(tileC, e1, tileD, e4, tilesToConsider);
                             }
                             if (output && !border2 && tilesToConsider.length > 0) {
                                 let tileC = orbTiles[0].neighbours[(t0Index + 3) % 4];
@@ -507,7 +507,7 @@ class Galaxy extends BABYLON.TransformNode {
                                 let tileD = orbTiles[1].neighbours[(t1Index + 3) % 4];
                                 let tileDIndex = tilesToConsider.indexOf(tileD);
                                 tilesToConsider.splice(tileDIndex, 1);
-                                output = this.areSymetrical(tileC, e1, tileD, e3, tilesToConsider);
+                                output = this.areSymetrical(tileC, e1, tileD, e5, tilesToConsider);
                             }
                             if (output) {
                                 return ZoneStatus.Valid;
