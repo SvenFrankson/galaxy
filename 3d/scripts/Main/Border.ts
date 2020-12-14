@@ -39,6 +39,22 @@ abstract class Border extends GalaxyItem {
     }
 }
 
+class EdgeOrb extends Border {
+    
+    public orbMesh: BABYLON.Mesh;
+
+    public instantiate(): void {
+        if (this.orbMesh) {
+            this.orbMesh.dispose();
+            this.orbMesh = undefined;
+        }
+        this.orbMesh = BABYLON.MeshBuilder.CreateSphere("orb", { segments: 8, diameter: 0.5 }, Main.Scene);
+        this.orbMesh.parent = this;
+        this.orbMesh.position.y = 0.5;
+        this.orbMesh.material = Main.orbMaterial;
+    }
+}
+
 class Lightning extends Border {
 
     public instantiate(): void {

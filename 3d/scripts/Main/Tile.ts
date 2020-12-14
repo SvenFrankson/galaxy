@@ -187,4 +187,22 @@ class Tile extends GalaxyItem {
         }
         return undefined;
     }
+
+    public getEdgeOrb(): IJK {
+        for (let i = 0; i < 4; i++) {
+            let ijk = this.edges[i];
+            if (this.galaxy.getItem(ijk) instanceof EdgeOrb) {
+                return ijk;
+            }
+        }
+    }
+
+    public getEdgeOrbNeighbour(): Tile {
+        for (let i = 0; i < 4; i++) {
+            let ijk = this.edges[i];
+            if (this.galaxy.getItem(ijk) instanceof EdgeOrb) {
+                return this.getNeighbour(ijk);
+            }
+        }
+    }
 }
