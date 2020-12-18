@@ -667,6 +667,10 @@ class Galaxy extends BABYLON.TransformNode {
         let i = Math.round(worldPosition.x + this.width * 0.5);
         let j = Math.round(worldPosition.y + this.height * 0.5);
         let k = Math.round(worldPosition.z + this.depth * 0.5);
+
+        i = Math.min(Math.max(i, 0), this.width);
+        j = Math.min(Math.max(j, 0), this.height);
+        k = Math.min(Math.max(k, 0), this.depth);
         
         return new IJK(i, j, k);
     }
@@ -801,6 +805,7 @@ class Galaxy extends BABYLON.TransformNode {
                     else if (item instanceof EdgeOrb) {
                         this.removeEdgeOrb(ijk);
                         doAddEdgeOrb = false;
+                        this.updateZones();
                     }
 
                     if (doAddEdgeOrb) {
