@@ -93,6 +93,30 @@ body {
 .main-ui .panel#credits {
   display: none;
 }
+.main-ui .panel#credits a {
+  color: white;
+}
+.main-ui .panel#credits a:hover {
+  text-shadow: 0 0 0.2rem white, 0 0 0.4rem #51baff, 0 0 0.6rem #53baff, 0 0 0.8rem #54bbff, 0 0 1rem #50b9ff;
+}
+.main-ui .panel#credits p {
+  color: #cccccc;
+  margin-bottom: 0;
+}
+.main-ui .panel#credits h3,
+.main-ui .panel#credits h4 {
+  font-weight: normal;
+  font-size: 1.8rem;
+  margin-top: 0.2rem;
+  margin-bottom: 1.5rem;
+}
+.main-ui .panel#credits h3.mg-bottom,
+.main-ui .panel#credits h4.mg-bottom {
+  margin-bottom: 2.5rem;
+}
+.main-ui .panel#credits h4 {
+  font-size: 1.2rem;
+}
 .main-ui .panel#credits.show {
   display: block;
 }
