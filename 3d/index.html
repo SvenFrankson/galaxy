@@ -118,7 +118,6 @@
           <p>Fonts</p>
           <h4>Akashi by <a href="http://www.tenbytwenty.com/" target="_blank">tenbytwenty</a><br>
             <a href="https://fontawesome.com/" target="_blank">Font Awesome</a></h4>
-
         </div>
       </div>
     </div>
@@ -132,12 +131,13 @@
         <div><span>Non-Static & Instance - </span><span id="meshes-info-nonstatic-instance">124</span></div>
         <div><span>Static & Instance - </span><span id="meshes-info-static-instance">212</span></div>
       </div>
-      <button id="btn-menu">MENU</button>
-      <div id="solve-status">NOT SOLVED</div>
-      <div id="level-part">
-        <button id="btn-clear-lightning">CLEAR</button>
-        <button id="btn-solve">SOLVE</button>
+      <div class="btn-container">
+        <div id="btn-menu"><i class="fas fa-chevron-left"></i></div>
+        <div id="level-part">
+          <span id="btn-clear-lightning"><i class="fas fa-sync"></i></span><span id="btn-solve"><i class="far fa-lightbulb"></i></span>
+        </div>  
       </div>
+      <div id="solve-status">NOT SOLVED</div>
       <div id="editor-part">
         <div>
           <div id="width" class="editor-label">WIDTH</div>
