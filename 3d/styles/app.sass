@@ -200,18 +200,36 @@ body
     touch-action: none
 
 #ui
+    display: none
     position: fixed
-    top: 20px
-    left: 20px
+    top: 1rem
+    left: 1rem
     z-index: 1
     color: white
-    background-color: black
-    padding: 10px
+    padding: 1rem
+    .btn-container
+        display: flex
+        align-items: center
+        margin-bottom: 1rem
 
 #btn-menu
-    height: 30px
-    font-size: 20px
-    margin-bottom: 10px
+    cursor: pointer
+    font-size: 2rem
+    color: $lightning-color
+    margin-right: 2rem
+    &:hover
+        color: white
+        text-shadow: 0 0 .2rem white, 0 0 .4rem lighten($lightning-color, .25), 0 0 .6rem lighten($lightning-color, .5), 0 0 .8rem lighten($lightning-color, .75), 0 0 1rem $lightning-color
+#btn-clear-lightning,
+#btn-solve
+    cursor: pointer
+    font-size: 1.5rem
+    color: white
+    &:hover
+        text-shadow: 0 0 .2rem white, 0 0 .4rem lighten($lightning-color, .25), 0 0 .6rem lighten($lightning-color, .5), 0 0 .8rem lighten($lightning-color, .75), 0 0 1rem $lightning-color
+
+#btn-clear-lightning
+    margin-right: 2rem
 
 #btn-download
     height: 30px
@@ -219,11 +237,8 @@ body
     margin-top: 10px
 
 #solve-status
-    display: inline-block
-    margin-left: 20px
-    font-size: 20px
+    font-size: 1.2rem
     font-weight: bold
-    width: 150px
     color: red
 
 .editor-label

@@ -235,19 +235,44 @@ body {
 }
 
 #ui {
+  display: none;
   position: fixed;
-  top: 20px;
-  left: 20px;
+  top: 1rem;
+  left: 1rem;
   z-index: 1;
   color: white;
-  background-color: black;
-  padding: 10px;
+  padding: 1rem;
+}
+#ui .btn-container {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
 }
 
 #btn-menu {
-  height: 30px;
-  font-size: 20px;
-  margin-bottom: 10px;
+  cursor: pointer;
+  font-size: 2rem;
+  color: #50b9ff;
+  margin-right: 2rem;
+}
+#btn-menu:hover {
+  color: white;
+  text-shadow: 0 0 0.2rem white, 0 0 0.4rem #51baff, 0 0 0.6rem #53baff, 0 0 0.8rem #54bbff, 0 0 1rem #50b9ff;
+}
+
+#btn-clear-lightning,
+#btn-solve {
+  cursor: pointer;
+  font-size: 1.5rem;
+  color: white;
+}
+#btn-clear-lightning:hover,
+#btn-solve:hover {
+  text-shadow: 0 0 0.2rem white, 0 0 0.4rem #51baff, 0 0 0.6rem #53baff, 0 0 0.8rem #54bbff, 0 0 1rem #50b9ff;
+}
+
+#btn-clear-lightning {
+  margin-right: 2rem;
 }
 
 #btn-download {
@@ -257,11 +282,8 @@ body {
 }
 
 #solve-status {
-  display: inline-block;
-  margin-left: 20px;
-  font-size: 20px;
+  font-size: 1.2rem;
   font-weight: bold;
-  width: 150px;
   color: red;
 }
 
