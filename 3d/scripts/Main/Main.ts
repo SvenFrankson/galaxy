@@ -213,6 +213,9 @@ class Main {
 			document.getElementById("main-panel").classList.remove("show");
 			document.getElementById("credits").classList.add("show");
 		}
+		document.getElementById("glow-toggle").onclick = () => {
+			document.getElementById("glow-toggle").classList.toggle("on");
+		}
 		document.getElementById("sound-toggle").onclick = () => {
 			document.getElementById("sound-volume").classList.toggle("disabled");
 			document.getElementById("sound-toggle").classList.toggle("on");

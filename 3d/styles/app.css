@@ -87,6 +87,11 @@ body {
 .main-ui .panel#settings {
   display: none;
 }
+.main-ui .panel#settings h3 {
+  font-size: 1.6rem;
+  font-weight: normal;
+  margin-bottom: 0.8rem;
+}
 .main-ui .panel#settings .toggle {
   padding: 0.5rem;
   color: #747474;
