@@ -340,6 +340,7 @@ class Galaxy extends BABYLON.TransformNode {
                         this.solution.push(IJK.IJK(data.lightnings[i]));
                     }
                 }
+                this.updateZones();
                 this.rebuildTileContainer();
                 resolve();
             };
@@ -685,7 +686,7 @@ class Galaxy extends BABYLON.TransformNode {
                 return ZoneStatus.Invalid;
             }
         }
-        return ZoneStatus.None;
+        return ZoneStatus.Invalid;
     }
     addToZone(zone, tile, tiles) {
         if (zone.indexOf(tile) === -1) {
@@ -1123,31 +1124,33 @@ class GalaxyBuilder {
         let n = BABYLON.Vector3.One();
         for (let i = 0; i < galaxy.tiles.length; i++) {
             let tile = galaxy.tiles[i];
-            let baseIndex = 0;
-            if (tile.isValid === ZoneStatus.Valid) {
-                baseIndex = 1;
-            }
-            if (tile.isValid === ZoneStatus.Invalid) {
-                baseIndex = 2;
-            }
-            let baseData = baseDatas[baseIndex];
-            let l = positions[baseIndex].length / 3;
-            for (let k = 0; k < baseData.positions.length / 3; k++) {
-                p.copyFromFloats(baseData.positions[3 * k], baseData.positions[3 * k + 1], -baseData.positions[3 * k + 2]);
-                p.rotateByQuaternionToRef(tile.rotationQuaternion, p);
-                p.addInPlace(tile.position);
-                positions[baseIndex].push(p.x, p.y, p.z);
-            }
-            for (let k = 0; k < baseData.indices.length / 3; k++) {
-                indices[baseIndex].push(baseData.indices[3 * k] + l, baseData.indices[3 * k + 1] + l, baseData.indices[3 * k + 2] + l);
-            }
-            for (let k = 0; k < baseData.normals.length / 3; k++) {
-                n.copyFromFloats(baseData.normals[3 * k], baseData.normals[3 * k + 1], -baseData.normals[3 * k + 2]);
-                n.rotateByQuaternionToRef(tile.rotationQuaternion, n);
-                normals[baseIndex].push(n.x, n.y, n.z);
-            }
-            for (let k = 0; k < baseData.uvs.length / 2; k++) {
-                uvs[baseIndex].push(baseData.uvs[2 * k], baseData.uvs[2 * k + 1]);
+            if (!tile.isBlock) {
+                let baseIndex = 0;
+                if (tile.isValid === ZoneStatus.Valid) {
+                    baseIndex = 1;
+                }
+                if (tile.isValid === ZoneStatus.Invalid) {
+                    baseIndex = 2;
+                }
+                let baseData = baseDatas[baseIndex];
+                let l = positions[baseIndex].length / 3;
+                for (let k = 0; k < baseData.positions.length / 3; k++) {
+                    p.copyFromFloats(baseData.positions[3 * k], baseData.positions[3 * k + 1], -baseData.positions[3 * k + 2]);
+                    p.rotateByQuaternionToRef(tile.rotationQuaternion, p);
+                    p.addInPlace(tile.position);
+                    positions[baseIndex].push(p.x, p.y, p.z);
+                }
+                for (let k = 0; k < baseData.indices.length / 3; k++) {
+                    indices[baseIndex].push(baseData.indices[3 * k] + l, baseData.indices[3 * k + 1] + l, baseData.indices[3 * k + 2] + l);
+                }
+                for (let k = 0; k < baseData.normals.length / 3; k++) {
+                    n.copyFromFloats(baseData.normals[3 * k], baseData.normals[3 * k + 1], -baseData.normals[3 * k + 2]);
+                    n.rotateByQuaternionToRef(tile.rotationQuaternion, n);
+                    normals[baseIndex].push(n.x, n.y, n.z);
+                }
+                for (let k = 0; k < baseData.uvs.length / 2; k++) {
+                    uvs[baseIndex].push(baseData.uvs[2 * k], baseData.uvs[2 * k + 1]);
+                }
             }
         }
         let container = new BABYLON.TransformNode("galaxy-base");
@@ -1204,10 +1207,6 @@ class IJK {
 /// <reference path="../../lib/babylon.gui.d.ts"/>
 var COS30 = Math.cos(Math.PI / 6);
 class Main {
-    constructor(canvasElement) {
-        Main.Canvas = document.getElementById(canvasElement);
-        Main.Engine = new BABYLON.Engine(Main.Canvas, true, { preserveDrawingBuffer: true, stencil: true });
-    }
     static get CameraPosition() {
         if (!Main._CameraPosition) {
             Main._CameraPosition = BABYLON.Vector2.Zero();
@@ -1251,6 +1250,10 @@ class Main {
             Main._orbMaterial.emissiveColor.copyFromFloats(0.8, 0.8, 1);
         }
         return Main._orbMaterial;
+    }
+    constructor(canvasElement) {
+        Main.Canvas = document.getElementById(canvasElement);
+        Main.Engine = new BABYLON.Engine(Main.Canvas, true, { preserveDrawingBuffer: true, stencil: true });
     }
     initializeCamera() {
         Main.Camera = new BABYLON.ArcRotateCamera("camera", 0, 0, 10, BABYLON.Vector3.Zero(), Main.Scene);

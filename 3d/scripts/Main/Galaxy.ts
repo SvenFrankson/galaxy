@@ -145,6 +145,7 @@ class Galaxy extends BABYLON.TransformNode {
                         this.solution.push(IJK.IJK(data.lightnings[i]));
                     }
                 }
+                this.updateZones();
                 this.rebuildTileContainer();
                 resolve();
             }
@@ -521,7 +522,7 @@ class Galaxy extends BABYLON.TransformNode {
                 return ZoneStatus.Invalid;
             }
         }
-        return ZoneStatus.None;
+        return ZoneStatus.Invalid;
     }
 
     private addToZone(zone: Tile[], tile: Tile, tiles: Tile[]): void {
