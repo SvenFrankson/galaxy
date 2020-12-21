@@ -60,7 +60,7 @@ class Galaxy extends BABYLON.TransformNode {
     }
 
     public async initialize(): Promise<void> {
-        let templateTileRaw = await Main.loadMeshes("tile-lp");
+        let templateTileRaw = await Main.loadMeshes("tile");
         this.templateTile = templateTileRaw as BABYLON.Mesh;
 
         let templateTileBlockRaw = await Main.loadMeshes("tile-block");
