@@ -83,6 +83,110 @@ body
                 display: flex
         &#settings
             display: none
+            h3
+                font-size: 1.6rem
+                font-weight: normal
+                margin-bottom: .8rem
+            .toggle
+                padding: .5rem
+                color: $disabled-state
+                .on-status
+                    display: none
+                i
+                    color: transparent
+                    padding: .4rem .3rem .3rem
+                    margin-right: .5rem
+                    border: 1px solid $disabled-state
+                    font-size: .8rem
+                &.on
+                    color: white
+                    .off-status
+                        display: none
+                    .on-status
+                        display: inline
+                    i
+                        color: white
+                        border-color: $lightning-color
+                        box-shadow: 0 0 .2rem white, 0 0 .4rem lighten($lightning-color, .25), 0 0 .6rem lighten($lightning-color, .5), 0 0 .8rem lighten($lightning-color, .75), 0 0 1rem $lightning-color
+                        text-shadow: 0 0 .2rem white, 0 0 .4rem lighten($lightning-color, .25), 0 0 .6rem lighten($lightning-color, .5), 0 0 .8rem lighten($lightning-color, .75), 0 0 1rem $lightning-color
+                &:hover
+                    cursor: pointer
+                    i
+                        box-shadow: 0 0 .2rem white, 0 0 .4rem lighten($lightning-color, .25), 0 0 .6rem lighten($lightning-color, .5), 0 0 .8rem lighten($lightning-color, .75), 0 0 1rem $lightning-color
+            .volume
+                padding: 0 1rem
+                display: flex
+                align-items: center
+                i
+                    color: white
+                    font-size: 2rem
+                    &.fa-volume-down
+                        font-size: 1.5rem
+                input[type=range]
+                    -webkit-appearance: none
+                    margin: 1rem 1rem
+                    width: 100%
+                    background-color: transparent
+                    &::-webkit-slider-runnable-track
+                        width: 100%
+                        height: 1rem
+                        cursor: pointer
+                        background: rgba($lightning-white, .5)
+                        border-radius: .5rem
+                    &::-webkit-slider-thumb
+                        box-shadow: 0 0 .2rem white, 0 0 .4rem lighten($lightning-color, .25), 0 0 .6rem lighten($lightning-color, .5), 0 0 .8rem lighten($lightning-color, .75), 0 0 1rem $lightning-color
+                        border: 0
+                        height: 2rem
+                        width: 2rem
+                        border-radius: 2rem
+                        background: $lightning-white
+                        cursor: pointer
+                        -webkit-appearance: none
+                        margin-top: -0.5rem
+                    &::-moz-range-track
+                        width: 100%
+                        height: 1rem
+                        cursor: pointer
+                        background: rgba($lightning-white, .5)
+                        border-radius: .5rem
+                    &::-moz-range-thumb
+                        border: 0
+                        box-shadow: 0 0 .2rem white, 0 0 .4rem lighten($lightning-color, .25), 0 0 .6rem lighten($lightning-color, .5), 0 0 .8rem lighten($lightning-color, .75), 0 0 1rem $lightning-color
+                        height: 2rem
+                        width: 2rem
+                        border-radius: 2rem
+                        background: $lightning-white
+                        cursor: pointer
+                    &:focus
+                        outline: none
+                        &::-webkit-slider-thumb
+                            background: white
+                        &::-webkit-slider-runnable-track
+                            background: rgba($lightning-white, .7)
+                        &::-moz-range-thumb
+                            background: white
+                        &::-moz-range-track
+                            background: rgba($lightning-white, .7)
+                &.disabled
+                    i
+                        color: $disabled-state
+                    input[type=range]
+                        pointer-events: none
+                        &::-webkit-slider-runnable-track
+                            cursor: default
+                            background: rgba($disabled-state, .5)
+                            border-radius: .5rem
+                        &::-webkit-slider-thumb
+                            box-shadow: 0 0 .2rem white, 0 0 .4rem lighten($disabled-state, .25), 0 0 .6rem lighten($disabled-state, .5), 0 0 .8rem lighten($disabled-state, .75), 0 0 1rem $disabled-state
+                            background: $disabled-state
+                            cursor: default
+                        &::-moz-range-track
+                            cursor: default
+                            background: rgba($disabled-state, .5)
+                        &::-moz-range-thumb
+                            box-shadow: 0 0 .2rem white, 0 0 .4rem lighten($disabled-state, .25), 0 0 .6rem lighten($disabled-state, .5), 0 0 .8rem lighten($disabled-state, .75), 0 0 1rem $disabled-state
+                            background: $disabled-state
+                            cursor: default
             &.show
                 display: block
         &#credits

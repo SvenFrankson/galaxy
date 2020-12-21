@@ -261,7 +261,7 @@ class Galaxy extends BABYLON.TransformNode {
         return false;
     }
     async initialize() {
-        let templateTileRaw = await Main.loadMeshes("tile-lp");
+        let templateTileRaw = await Main.loadMeshes("tile");
         this.templateTile = templateTileRaw;
         let templateTileBlockRaw = await Main.loadMeshes("tile-block");
         this.templateTileBlock = templateTileBlockRaw;
@@ -1365,6 +1365,17 @@ class Main {
         document.getElementById("credits-btn").onclick = () => {
             document.getElementById("main-panel").classList.remove("show");
             document.getElementById("credits").classList.add("show");
+        };
+        document.getElementById("glow-toggle").onclick = () => {
+            document.getElementById("glow-toggle").classList.toggle("on");
+        };
+        document.getElementById("sound-toggle").onclick = () => {
+            document.getElementById("sound-volume").classList.toggle("disabled");
+            document.getElementById("sound-toggle").classList.toggle("on");
+        };
+        document.getElementById("music-toggle").onclick = () => {
+            document.getElementById("music-volume").classList.toggle("disabled");
+            document.getElementById("music-toggle").classList.toggle("on");
         };
         const buttons = document.querySelectorAll('.back-button');
         [...buttons].map(btn => btn.addEventListener("click", this.backToMainMenu));
