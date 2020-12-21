@@ -87,6 +87,133 @@ body {
 .main-ui .panel#settings {
   display: none;
 }
+.main-ui .panel#settings .toggle {
+  padding: 0.5rem;
+  color: #747474;
+}
+.main-ui .panel#settings .toggle .on-status {
+  display: none;
+}
+.main-ui .panel#settings .toggle i {
+  color: transparent;
+  padding: 0.4rem 0.3rem 0.3rem;
+  margin-right: 0.5rem;
+  border: 1px solid #747474;
+  font-size: 0.8rem;
+}
+.main-ui .panel#settings .toggle.on {
+  color: white;
+}
+.main-ui .panel#settings .toggle.on .off-status {
+  display: none;
+}
+.main-ui .panel#settings .toggle.on .on-status {
+  display: inline;
+}
+.main-ui .panel#settings .toggle.on i {
+  color: white;
+  border-color: #50b9ff;
+  box-shadow: 0 0 0.2rem white, 0 0 0.4rem #51baff, 0 0 0.6rem #53baff, 0 0 0.8rem #54bbff, 0 0 1rem #50b9ff;
+  text-shadow: 0 0 0.2rem white, 0 0 0.4rem #51baff, 0 0 0.6rem #53baff, 0 0 0.8rem #54bbff, 0 0 1rem #50b9ff;
+}
+.main-ui .panel#settings .toggle:hover {
+  cursor: pointer;
+}
+.main-ui .panel#settings .toggle:hover i {
+  box-shadow: 0 0 0.2rem white, 0 0 0.4rem #51baff, 0 0 0.6rem #53baff, 0 0 0.8rem #54bbff, 0 0 1rem #50b9ff;
+}
+.main-ui .panel#settings .volume {
+  padding: 0 1rem;
+  display: flex;
+  align-items: center;
+}
+.main-ui .panel#settings .volume i {
+  color: white;
+  font-size: 2rem;
+}
+.main-ui .panel#settings .volume i.fa-volume-down {
+  font-size: 1.5rem;
+}
+.main-ui .panel#settings .volume input[type=range] {
+  -webkit-appearance: none;
+  margin: 1rem 1rem;
+  width: 100%;
+  background-color: transparent;
+}
+.main-ui .panel#settings .volume input[type=range]::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 1rem;
+  cursor: pointer;
+  background: rgba(175, 223, 255, 0.5);
+  border-radius: 0.5rem;
+}
+.main-ui .panel#settings .volume input[type=range]::-webkit-slider-thumb {
+  box-shadow: 0 0 0.2rem white, 0 0 0.4rem #51baff, 0 0 0.6rem #53baff, 0 0 0.8rem #54bbff, 0 0 1rem #50b9ff;
+  border: 0;
+  height: 2rem;
+  width: 2rem;
+  border-radius: 2rem;
+  background: #afdfff;
+  cursor: pointer;
+  -webkit-appearance: none;
+  margin-top: -0.5rem;
+}
+.main-ui .panel#settings .volume input[type=range]::-moz-range-track {
+  width: 100%;
+  height: 1rem;
+  cursor: pointer;
+  background: rgba(175, 223, 255, 0.5);
+  border-radius: 0.5rem;
+}
+.main-ui .panel#settings .volume input[type=range]::-moz-range-thumb {
+  border: 0;
+  box-shadow: 0 0 0.2rem white, 0 0 0.4rem #51baff, 0 0 0.6rem #53baff, 0 0 0.8rem #54bbff, 0 0 1rem #50b9ff;
+  height: 2rem;
+  width: 2rem;
+  border-radius: 2rem;
+  background: #afdfff;
+  cursor: pointer;
+}
+.main-ui .panel#settings .volume input[type=range]:focus {
+  outline: none;
+}
+.main-ui .panel#settings .volume input[type=range]:focus::-webkit-slider-thumb {
+  background: white;
+}
+.main-ui .panel#settings .volume input[type=range]:focus::-webkit-slider-runnable-track {
+  background: rgba(175, 223, 255, 0.7);
+}
+.main-ui .panel#settings .volume input[type=range]:focus::-moz-range-thumb {
+  background: white;
+}
+.main-ui .panel#settings .volume input[type=range]:focus::-moz-range-track {
+  background: rgba(175, 223, 255, 0.7);
+}
+.main-ui .panel#settings .volume.disabled i {
+  color: #747474;
+}
+.main-ui .panel#settings .volume.disabled input[type=range] {
+  pointer-events: none;
+}
+.main-ui .panel#settings .volume.disabled input[type=range]::-webkit-slider-runnable-track {
+  cursor: default;
+  background: rgba(116, 116, 116, 0.5);
+  border-radius: 0.5rem;
+}
+.main-ui .panel#settings .volume.disabled input[type=range]::-webkit-slider-thumb {
+  box-shadow: 0 0 0.2rem white, 0 0 0.4rem #757575, 0 0 0.6rem #757575, 0 0 0.8rem #767676, 0 0 1rem #747474;
+  background: #747474;
+  cursor: default;
+}
+.main-ui .panel#settings .volume.disabled input[type=range]::-moz-range-track {
+  cursor: default;
+  background: rgba(116, 116, 116, 0.5);
+}
+.main-ui .panel#settings .volume.disabled input[type=range]::-moz-range-thumb {
+  box-shadow: 0 0 0.2rem white, 0 0 0.4rem #757575, 0 0 0.6rem #757575, 0 0 0.8rem #767676, 0 0 1rem #747474;
+  background: #747474;
+  cursor: default;
+}
 .main-ui .panel#settings.show {
   display: block;
 }
