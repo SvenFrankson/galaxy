@@ -158,6 +158,11 @@ body {
   text-decoration: none;
   cursor: pointer;
 }
+.main-ui .panel .menu li .menu-item.play {
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+  font-size: 3rem;
+}
 .main-ui .panel .menu li .menu-item:before {
   content: "";
   position: absolute;
@@ -174,14 +179,10 @@ body {
   -webkit-transform: scale(0.1, 1);
   transform: scale(0.1, 1);
 }
-.main-ui .panel .menu li .menu-item.disabled {
-  color: #747474;
-  cursor: default;
-}
-.main-ui .panel .menu li .menu-item:not(.disabled):hover {
+.main-ui .panel .menu li .menu-item:hover {
   text-shadow: 0 0 1rem #51baff, 0 0 2rem #53baff, 0 0 3rem #50b9ff;
 }
-.main-ui .panel .menu li .menu-item:not(.disabled):hover:before {
+.main-ui .panel .menu li .menu-item:hover:before {
   opacity: 1;
   -webkit-transform: scale(1, 1);
   transform: scale(1, 1);
@@ -195,6 +196,7 @@ body {
   align-items: stretch;
 }
 .main-ui .panel .levels .level {
+  position: relative;
   cursor: pointer;
   height: 7rem;
   border: 1px solid #50b9ff;
@@ -204,19 +206,32 @@ body {
   flex-direction: column;
   justify-content: center;
 }
+.main-ui .panel .levels .level .info {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 0.2rem;
+  background-color: #60d366;
+  color: white;
+}
 .main-ui .panel .levels .level h3 {
   margin: 0;
   font-size: 4rem;
-}
-.main-ui .panel .levels .level .stats {
-  font-size: 1.2rem;
-  color: #ff8500;
 }
 .main-ui .panel .levels .level:not(.locked):hover {
   box-shadow: 0 0 0.2rem white, 0 0 0.4rem #51baff, 0 0 0.6rem #53baff, 0 0 0.8rem #54bbff, 0 0 1rem #50b9ff;
 }
 .main-ui .panel .levels .level.locked {
-  cursor: not-allowed;
+  color: #ec4949;
+  border-color: #ec4949;
+  cursor: default;
+}
+.main-ui .panel .levels .level.locked h3 {
+  padding-top: 1.5rem;
+}
+.main-ui .panel .levels .level.locked .info {
+  background-color: #ec4949;
 }
 .main-ui .panel .levels .level.locked img {
   margin: 0.5rem auto;
@@ -224,7 +239,17 @@ body {
   max-height: 5.2rem;
 }
 .main-ui .panel .levels .level.locked:hover {
-  box-shadow: 0 0 0.2rem white, 0 0 0.4rem #e61313, 0 0 0.6rem #e71313, 0 0 0.8rem #e91313, 0 0 1rem #e51313;
+  box-shadow: 0 0 0.2rem white, 0 0 0.4rem #ec4a4a, 0 0 0.6rem #ec4b4b, 0 0 0.8rem #ec4c4c, 0 0 1rem #ec4949;
+}
+.main-ui .panel .levels .level.success {
+  color: #60d366;
+  border-color: #60d366;
+}
+.main-ui .panel .levels .level.success:hover {
+  box-shadow: 0 0 0.2rem white, 0 0 0.4rem #61d367, 0 0 0.6rem #62d468, 0 0 0.8rem #63d469, 0 0 1rem #60d366;
+}
+.main-ui .panel .levels .level.success h3 {
+  padding-top: 1.5rem;
 }
 
 #render-canvas {

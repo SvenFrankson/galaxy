@@ -2,7 +2,8 @@ $lightning-color: #50b9ff
 $lightning-white: #afdfff
 $disabled-state: #747474
 $star-color: #ff8500
-$error-color: #e51313
+$error-color: #ec4949
+$success-color: #60d366
     
 @font-face
     font-family: 'akashi'
@@ -135,6 +136,10 @@ body
                     position: relative
                     text-decoration: none
                     cursor: pointer
+                    &.play
+                        margin-top: 1.5rem
+                        margin-bottom: 1.5rem
+                        font-size: 3rem
                     &:before
                         content: ''
                         position: absolute
@@ -150,10 +155,7 @@ body
                         border-bottom: 1px solid $lightning-white
                         -webkit-transform: scale(0.1, 1)
                         transform: scale(0.1, 1)
-                    &.disabled
-                        color: $disabled-state
-                        cursor: default
-                    &:not(.disabled):hover
+                    &:hover
                         text-shadow: 0 0 1rem lighten($lightning-color, .25), 0 0 2rem lighten($lightning-color, .5), 0 0 3rem $lightning-color
                         &:before
                             opacity: 1
@@ -167,6 +169,7 @@ body
             justify-content: space-between
             align-items: stretch
             .level
+                position: relative
                 cursor: pointer
                 height: 7rem
                 border: 1px solid $lightning-color
@@ -175,23 +178,40 @@ body
                 display: flex
                 flex-direction: column
                 justify-content: center
+                .info
+                    position: absolute
+                    top: 0
+                    left: 0
+                    right: 0
+                    padding: .2rem
+                    background-color: $success-color
+                    color: white
                 h3
                     margin: 0
                     font-size: 4rem
-                .stats
-                    font-size: 1.2rem
-                    color: $star-color
                 &:not(.locked):hover
                     box-shadow: 0 0 .2rem white, 0 0 .4rem lighten($lightning-color, .25), 0 0 .6rem lighten($lightning-color, .5), 0 0 .8rem lighten($lightning-color, .75), 0 0 1rem $lightning-color
                 &.locked
-                    cursor: not-allowed
+                    color: $error-color
+                    border-color: $error-color
+                    cursor: default
+                    h3
+                        padding-top: 1.5rem
+                    .info
+                        background-color: $error-color
                     img
                         margin: .5rem auto
                         display: block
                         max-height: 5.2rem          
                     &:hover
                         box-shadow: 0 0 .2rem white, 0 0 .4rem lighten($error-color, .25), 0 0 .6rem lighten($error-color, .5), 0 0 .8rem lighten($error-color, .75), 0 0 1rem $error-color
-
+                &.success
+                    color: $success-color
+                    border-color: $success-color
+                    &:hover
+                        box-shadow: 0 0 .2rem white, 0 0 .4rem lighten($success-color, .25), 0 0 .6rem lighten($success-color, .5), 0 0 .8rem lighten($success-color, .75), 0 0 1rem $success-color
+                    h3
+                        padding-top: 1.5rem
 
 #render-canvas
     width: 100%
