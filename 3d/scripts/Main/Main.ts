@@ -213,6 +213,14 @@ class Main {
 			document.getElementById("main-panel").classList.remove("show");
 			document.getElementById("credits").classList.add("show");
 		}
+		document.getElementById("sound-toggle").onclick = () => {
+			document.getElementById("sound-volume").classList.toggle("disabled");
+			document.getElementById("sound-toggle").classList.toggle("on");
+		}
+		document.getElementById("music-toggle").onclick = () => {
+			document.getElementById("music-volume").classList.toggle("disabled");
+			document.getElementById("music-toggle").classList.toggle("on");
+		}
 
 		const buttons = document.querySelectorAll('.back-button');
 		[...buttons].map( btn => btn.addEventListener("click", this.backToMainMenu));
