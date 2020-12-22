@@ -1264,11 +1264,28 @@ class Main {
     async initialize() {
         await this.initializeScene();
     }
+    static EnableGlowLayer() {
+        Main.DisableGlowLayer();
+        Main.GlowLayer = new BABYLON.GlowLayer("glow", Main.Scene);
+        Main.GlowLayer.intensity = 1;
+    }
+    static DisableGlowLayer() {
+        if (Main.GlowLayer) {
+            Main.GlowLayer.dispose();
+            Main.GlowLayer = undefined;
+        }
+    }
+    static ToggleGlowLayer() {
+        if (Main.GlowLayer) {
+            Main.DisableGlowLayer();
+        }
+        else {
+            Main.EnableGlowLayer();
+        }
+    }
     static async loadMeshes(modelName) {
         return new Promise(resolve => {
             BABYLON.SceneLoader.ImportMesh("", "./assets/models/" + modelName + ".glb", "", Main.Scene, (meshes) => {
-                var gl = new BABYLON.GlowLayer("glow", Main.Scene);
-                gl.intensity = 0.4;
                 console.log("Load model : " + modelName);
                 meshes.forEach((mesh) => {
                     let material = mesh.material;
@@ -1304,6 +1321,7 @@ class Main {
     async initializeScene() {
         Main.Scene = new BABYLON.Scene(Main.Engine);
         this.initializeCamera();
+        Main.EnableGlowLayer();
         Main.Light = new BABYLON.HemisphericLight("AmbientLight", new BABYLON.Vector3(1, 3, 2), Main.Scene);
         Main.Skybox = BABYLON.MeshBuilder.CreateBox("skyBox", { size: 2000.0 }, Main.Scene);
         Main.Skybox.rotation.y = Math.PI / 2;

@@ -13,6 +13,7 @@ class Main {
 	public static MusicManager: MusicManager;
 	public static Skybox: BABYLON.Mesh;
 	public static EnvironmentTexture: BABYLON.CubeTexture;
+	public static GlowLayer: BABYLON.GlowLayer;
 
 	private static _CameraPosition: BABYLON.Vector2;
 	public static get CameraPosition(): BABYLON.Vector2 {
@@ -87,6 +88,28 @@ class Main {
 		await this.initializeScene();
 	}
 
+	public static EnableGlowLayer(): void {
+		Main.DisableGlowLayer();	
+		Main.GlowLayer = new BABYLON.GlowLayer("glow", Main.Scene);
+		Main.GlowLayer.intensity = 1;
+	}
+
+	public static DisableGlowLayer(): void {
+		if (Main.GlowLayer) {
+			Main.GlowLayer.dispose();
+			Main.GlowLayer = undefined;
+		}
+	}
+
+	public static ToggleGlowLayer(): void {
+		if (Main.GlowLayer) {
+			Main.DisableGlowLayer();
+		}
+		else {
+			Main.EnableGlowLayer();
+		}
+	}
+
 	public static async loadMeshes(modelName: string): Promise<BABYLON.AbstractMesh> {
 		return new Promise<BABYLON.AbstractMesh> (
 			resolve => {
@@ -95,9 +118,7 @@ class Main {
 					"./assets/models/" + modelName + ".glb",
 					"",
 					Main.Scene,
-					(meshes) => {
-						var gl = new BABYLON.GlowLayer("glow", Main.Scene);
-						gl.intensity = 0.4;		
+					(meshes) => {	
 						console.log("Load model : " + modelName);
 						meshes.forEach(
 							(mesh) => {
@@ -140,6 +161,8 @@ class Main {
 		Main.Scene = new BABYLON.Scene(Main.Engine);
 
 		this.initializeCamera();
+
+		Main.EnableGlowLayer();
 
 		Main.Light = new BABYLON.HemisphericLight("AmbientLight", new BABYLON.Vector3(1, 3, 2), Main.Scene);
 		
