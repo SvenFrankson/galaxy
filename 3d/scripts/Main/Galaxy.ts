@@ -717,6 +717,7 @@ class Galaxy extends BABYLON.TransformNode {
                 showPreviewmesh = true;
                 if (!this.previewMesh) {
                     this.previewMesh = this.templateLightning.clone("preview-mesh", undefined);
+                    this.previewMesh.scaling.copyFromFloats(1, 1.2, 1.2);
                     this.previewMesh.rotationQuaternion = BABYLON.Quaternion.Identity();
                 }
                 if (edge instanceof Lightning) {

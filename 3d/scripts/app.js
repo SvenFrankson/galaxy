@@ -220,6 +220,7 @@ class Galaxy extends BABYLON.TransformNode {
                     showPreviewmesh = true;
                     if (!this.previewMesh) {
                         this.previewMesh = this.templateLightning.clone("preview-mesh", undefined);
+                        this.previewMesh.scaling.copyFromFloats(1, 1.2, 1.2);
                         this.previewMesh.rotationQuaternion = BABYLON.Quaternion.Identity();
                     }
                     if (edge instanceof Lightning) {
@@ -1394,6 +1395,7 @@ class Main {
         };
         document.getElementById("glow-toggle").onclick = () => {
             document.getElementById("glow-toggle").classList.toggle("on");
+            Main.ToggleGlowLayer();
         };
         document.getElementById("sound-toggle").onclick = () => {
             document.getElementById("sound-volume").classList.toggle("disabled");
@@ -1465,6 +1467,33 @@ window.addEventListener("load", async () => {
     main.animate();
 });
 class MeshUtils {
+    static ShrinkFattenMesh(baseMesh, dist) {
+        let vertexData = new BABYLON.VertexData();
+        let positions = [];
+        let indices = [];
+        let normals = [];
+        let uvs = [];
+        let originData = BABYLON.VertexData.ExtractFromMesh(baseMesh);
+        let l = originData.positions.length / 3;
+        for (let i = 0; i < l; i++) {
+            let p = [originData.positions[3 * i], originData.positions[3 * i + 1], originData.positions[3 * i + 2]];
+            let n = [originData.normals[3 * i], originData.normals[3 * i + 1], originData.normals[3 * i + 2]];
+            p[0] += n[0] * dist;
+            p[1] += n[1] * dist;
+            p[2] += n[2] * dist;
+            positions.push(...p);
+        }
+        indices.push(...originData.indices);
+        normals.push(...originData.normals);
+        uvs.push(...originData.uvs);
+        vertexData.positions = positions;
+        vertexData.indices = indices;
+        vertexData.normals = normals;
+        vertexData.uvs = uvs;
+        let mesh = new BABYLON.Mesh(baseMesh.name + "_transformed");
+        vertexData.applyToMesh(mesh);
+        return mesh;
+    }
     static MergeTemplateIntoOneMeshTemplate(template) {
         let oneMeshTemplate = new BABYLON.Mesh("template");
         let vertexData = new BABYLON.VertexData();

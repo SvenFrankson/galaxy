@@ -238,6 +238,7 @@ class Main {
 		}
 		document.getElementById("glow-toggle").onclick = () => {
 			document.getElementById("glow-toggle").classList.toggle("on");
+			Main.ToggleGlowLayer();
 		}
 		document.getElementById("sound-toggle").onclick = () => {
 			document.getElementById("sound-volume").classList.toggle("disabled");
