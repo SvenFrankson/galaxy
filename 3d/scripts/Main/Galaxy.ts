@@ -716,15 +716,21 @@ class Galaxy extends BABYLON.TransformNode {
                 let edge = this.getItem(ijk);
                 showPreviewmesh = true;
                 if (!this.previewMesh) {
-                    this.previewMesh = this.templateLightning.clone("preview-mesh", undefined);
-                    this.previewMesh.scaling.copyFromFloats(1, 1.2, 1.2);
+                    this.previewMesh = BABYLON.MeshBuilder.CreateBox(
+                        "preview-mesh",
+                        {
+                            width: 0.15,
+                            height: 0.15,
+                            depth: 1.8
+                        }
+                    );
                     this.previewMesh.rotationQuaternion = BABYLON.Quaternion.Identity();
                 }
                 if (edge instanceof Lightning) {
-                    this.previewMesh.material = Main.redMaterial;
+                    this.previewMesh.material = Main.previewRedMaterial;
                 }
                 else if (!edge) {
-                    this.previewMesh.material = Main.whiteMaterial;
+                    this.previewMesh.material = Main.previewBlueMaterial;
                 }
                 else {
                     showPreviewmesh = false;

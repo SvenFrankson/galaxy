@@ -72,6 +72,26 @@ class Main {
 		return Main._orbMaterial;
 	}
 
+	public static _previewRedMaterial: BABYLON.StandardMaterial;
+	public static get previewRedMaterial(): BABYLON.StandardMaterial {
+		if (!Main._previewRedMaterial) {
+			Main._previewRedMaterial = new BABYLON.StandardMaterial("preview-red-material", Main.Scene);
+			Main._previewRedMaterial.diffuseColor.copyFromFloats(0.8, 0.2, 0.4);
+			Main._previewRedMaterial.alpha = 0.7;
+		}
+		return Main._previewRedMaterial;
+	}
+
+	public static _previewBlueMaterial: BABYLON.StandardMaterial;
+	public static get previewBlueMaterial(): BABYLON.StandardMaterial {
+		if (!Main._previewBlueMaterial) {
+			Main._previewBlueMaterial = new BABYLON.StandardMaterial("preview-blue-material", Main.Scene);
+			Main._previewBlueMaterial.diffuseColor.copyFromFloats(0.4, 0.8, 0.9);
+			Main._previewBlueMaterial.alpha = 0.7;
+		}
+		return Main._previewBlueMaterial;
+	}
+
     constructor(canvasElement: string) {
         Main.Canvas = document.getElementById(canvasElement) as HTMLCanvasElement;
         Main.Engine = new BABYLON.Engine(Main.Canvas, true, { preserveDrawingBuffer: true, stencil: true });
@@ -239,6 +259,18 @@ class Main {
 		document.getElementById("glow-toggle").onclick = () => {
 			document.getElementById("glow-toggle").classList.toggle("on");
 			Main.ToggleGlowLayer();
+			window.localStorage.setItem("setting-glow-layer-enabled", Main.GlowLayer ? "true" : "false");
+		}
+		let settingGlowLayer = window.localStorage.getItem("setting-glow-layer-enabled");
+		if (settingGlowLayer === "true") {
+			console.log("Pouic");
+			document.getElementById("glow-toggle").classList.add("on");
+			Main.EnableGlowLayer();
+		}
+		else if (settingGlowLayer === "false") {
+			console.log("Ploup");
+			document.getElementById("glow-toggle").classList.remove("on");
+			Main.DisableGlowLayer();
 		}
 		document.getElementById("sound-toggle").onclick = () => {
 			document.getElementById("sound-volume").classList.toggle("disabled");

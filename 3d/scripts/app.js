@@ -219,15 +219,18 @@ class Galaxy extends BABYLON.TransformNode {
                     let edge = this.getItem(ijk);
                     showPreviewmesh = true;
                     if (!this.previewMesh) {
-                        this.previewMesh = this.templateLightning.clone("preview-mesh", undefined);
-                        this.previewMesh.scaling.copyFromFloats(1, 1.2, 1.2);
+                        this.previewMesh = BABYLON.MeshBuilder.CreateBox("preview-mesh", {
+                            width: 0.15,
+                            height: 0.15,
+                            depth: 1.8
+                        });
                         this.previewMesh.rotationQuaternion = BABYLON.Quaternion.Identity();
                     }
                     if (edge instanceof Lightning) {
-                        this.previewMesh.material = Main.redMaterial;
+                        this.previewMesh.material = Main.previewRedMaterial;
                     }
                     else if (!edge) {
-                        this.previewMesh.material = Main.whiteMaterial;
+                        this.previewMesh.material = Main.previewBlueMaterial;
                     }
                     else {
                         showPreviewmesh = false;
@@ -1260,6 +1263,22 @@ class Main {
         }
         return Main._orbMaterial;
     }
+    static get previewRedMaterial() {
+        if (!Main._previewRedMaterial) {
+            Main._previewRedMaterial = new BABYLON.StandardMaterial("preview-red-material", Main.Scene);
+            Main._previewRedMaterial.diffuseColor.copyFromFloats(0.8, 0.2, 0.4);
+            Main._previewRedMaterial.alpha = 0.7;
+        }
+        return Main._previewRedMaterial;
+    }
+    static get previewBlueMaterial() {
+        if (!Main._previewBlueMaterial) {
+            Main._previewBlueMaterial = new BABYLON.StandardMaterial("preview-blue-material", Main.Scene);
+            Main._previewBlueMaterial.diffuseColor.copyFromFloats(0.4, 0.8, 0.9);
+            Main._previewBlueMaterial.alpha = 0.7;
+        }
+        return Main._previewBlueMaterial;
+    }
     constructor(canvasElement) {
         Main.Canvas = document.getElementById(canvasElement);
         Main.Engine = new BABYLON.Engine(Main.Canvas, true, { preserveDrawingBuffer: true, stencil: true });
@@ -1396,7 +1415,19 @@ class Main {
         document.getElementById("glow-toggle").onclick = () => {
             document.getElementById("glow-toggle").classList.toggle("on");
             Main.ToggleGlowLayer();
+            window.localStorage.setItem("setting-glow-layer-enabled", Main.GlowLayer ? "true" : "false");
         };
+        let settingGlowLayer = window.localStorage.getItem("setting-glow-layer-enabled");
+        if (settingGlowLayer === "true") {
+            console.log("Pouic");
+            document.getElementById("glow-toggle").classList.add("on");
+            Main.EnableGlowLayer();
+        }
+        else if (settingGlowLayer === "false") {
+            console.log("Ploup");
+            document.getElementById("glow-toggle").classList.remove("on");
+            Main.DisableGlowLayer();
+        }
         document.getElementById("sound-toggle").onclick = () => {
             document.getElementById("sound-volume").classList.toggle("disabled");
             document.getElementById("sound-toggle").classList.toggle("on");
