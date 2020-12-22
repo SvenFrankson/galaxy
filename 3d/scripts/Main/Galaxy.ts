@@ -611,6 +611,9 @@ class Galaxy extends BABYLON.TransformNode {
         if (item instanceof EdgeBlock) {
             return;
         }
+        if (item instanceof EdgeOrb) {
+            return;
+        }
         if (item instanceof Lightning) {
             console.log("Remove Lightning");
             item.dispose();
@@ -711,32 +714,37 @@ class Galaxy extends BABYLON.TransformNode {
 
             if (odds === 1) {
                 let edge = this.getItem(ijk);
+                showPreviewmesh = true;
                 if (!this.previewMesh) {
                     this.previewMesh = this.templateLightning.clone("preview-mesh", undefined);
                     this.previewMesh.rotationQuaternion = BABYLON.Quaternion.Identity();
                 }
-                if (edge) {
+                if (edge instanceof Lightning) {
                     this.previewMesh.material = Main.redMaterial;
                 }
-                else {
+                else if (!edge) {
                     this.previewMesh.material = Main.whiteMaterial;
                 }
-                this.previewMesh.getChildMeshes().forEach(m => {
-                    m.material = this.previewMesh.material;
-                })
-                this.previewMesh.position.copyFromFloats(
-                    ijk.i - 0.5 * this.width,
-                    ijk.j - 0.5 * this.height,
-                    ijk.k - 0.5 * this.depth
-                );
-                GalaxyItem.UpdateRotationToRef(ijk, this, this.previewMesh.rotationQuaternion);
-                Border.UpdateRotationToRef(ijk, this, this.previewMesh.rotationQuaternion);
-                this.previewMesh.position.addInPlace(this.previewMesh.getDirection(BABYLON.Axis.Y).scale(0.25));
-                this.previewMesh.isVisible = true;
-                this.previewMesh.getChildMeshes().forEach(m => {
-                    m.isVisible = true;
-                })
-                showPreviewmesh = true;
+                else {
+                    showPreviewmesh = false;
+                }
+                if (showPreviewmesh) {
+                    this.previewMesh.getChildMeshes().forEach(m => {
+                        m.material = this.previewMesh.material;
+                    })
+                    this.previewMesh.position.copyFromFloats(
+                        ijk.i - 0.5 * this.width,
+                        ijk.j - 0.5 * this.height,
+                        ijk.k - 0.5 * this.depth
+                    );
+                    GalaxyItem.UpdateRotationToRef(ijk, this, this.previewMesh.rotationQuaternion);
+                    Border.UpdateRotationToRef(ijk, this, this.previewMesh.rotationQuaternion);
+                    this.previewMesh.position.addInPlace(this.previewMesh.getDirection(BABYLON.Axis.Y).scale(0.25));
+                    this.previewMesh.isVisible = true;
+                    this.previewMesh.getChildMeshes().forEach(m => {
+                        m.isVisible = true;
+                    })
+                }
             }
         }
         if (!showPreviewmesh) {
