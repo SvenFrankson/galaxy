@@ -90,6 +90,11 @@ body
             .toggle
                 padding: .5rem
                 color: $disabled-state
+                .on-status,
+                .off-status
+                    text-align: left
+                    min-width: 2rem
+                    display: inline-block
                 .on-status
                     display: none
                 i
@@ -103,7 +108,7 @@ body
                     .off-status
                         display: none
                     .on-status
-                        display: inline
+                        display: inline-block
                     i
                         color: white
                         border-color: $lightning-color

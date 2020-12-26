@@ -96,6 +96,12 @@ body {
   padding: 0.5rem;
   color: #747474;
 }
+.main-ui .panel#settings .toggle .on-status,
+.main-ui .panel#settings .toggle .off-status {
+  text-align: left;
+  min-width: 2rem;
+  display: inline-block;
+}
 .main-ui .panel#settings .toggle .on-status {
   display: none;
 }
@@ -113,7 +119,7 @@ body {
   display: none;
 }
 .main-ui .panel#settings .toggle.on .on-status {
-  display: inline;
+  display: inline-block;
 }
 .main-ui .panel#settings .toggle.on i {
   color: white;
