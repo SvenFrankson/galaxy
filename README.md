@@ -1,7 +1,13 @@
 # galaxy
 ## Todo :
+__David__
 * [ ] Victory animation and link to next level
-* [ ] Save progression
 * [ ] SFX in menu and in game
-* [ ] Update blocked tile style
+* [X] Update blocked tile style
+* [ ] Lightning hover effect
+* [ ] Create levels
+-----------------
+__Sven__
+* [ ] Save progression
+* [ ] Plug music switch in Settings
 * [ ] Create levels
