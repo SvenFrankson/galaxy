@@ -463,23 +463,23 @@ class Galaxy extends BABYLON.TransformNode {
                 tmpLink.click();
                 document.body.removeChild(tmpLink);
             };
-            document.body.onkeyup = () => {
-                this.galaxyEditionActionType = (this.galaxyEditionActionType + 1) % 3;
-                if (this.galaxyEditionActionType === GalaxyEditionActionType.Play) {
-                    document.getElementById("lightning-add").classList.add("active");
-                    document.getElementById("orb-add").classList.remove("active");
-                    document.getElementById("block-add").classList.remove("active");
-                }
-                else if (this.galaxyEditionActionType === GalaxyEditionActionType.Orb) {
-                    document.getElementById("lightning-add").classList.remove("active");
-                    document.getElementById("orb-add").classList.add("active");
-                    document.getElementById("block-add").classList.remove("active");
-                }
-                else if (this.galaxyEditionActionType === GalaxyEditionActionType.Block) {
-                    document.getElementById("lightning-add").classList.remove("active");
-                    document.getElementById("orb-add").classList.remove("active");
-                    document.getElementById("block-add").classList.add("active");
-                }
+            document.getElementById("lightning-add").onclick = () => {
+                this.galaxyEditionActionType = GalaxyEditionActionType.Play;
+                document.getElementById("lightning-add").classList.add("active");
+                document.getElementById("orb-add").classList.remove("active");
+                document.getElementById("block-add").classList.remove("active");
+            };
+            document.getElementById("orb-add").onclick = () => {
+                this.galaxyEditionActionType = GalaxyEditionActionType.Orb;
+                document.getElementById("lightning-add").classList.remove("active");
+                document.getElementById("orb-add").classList.add("active");
+                document.getElementById("block-add").classList.remove("active");
+            };
+            document.getElementById("block-add").onclick = () => {
+                this.galaxyEditionActionType = GalaxyEditionActionType.Block;
+                document.getElementById("lightning-add").classList.remove("active");
+                document.getElementById("orb-add").classList.remove("active");
+                document.getElementById("block-add").classList.add("active");
             };
         }
         else {
@@ -521,14 +521,16 @@ class Galaxy extends BABYLON.TransformNode {
         if (solved) {
             document.getElementById("solve-status").textContent = "SOLVED";
             document.getElementById("solve-status").style.color = "green";
-            document.getElementById("ui").style.display = "none";
-            document.getElementById("main-ui").style.display = "block";
-            document.getElementById("levels-choice").classList.remove("show");
-            document.getElementById("settings").classList.remove("show");
-            document.getElementById("credits").classList.remove("show");
-            document.getElementById("main-panel").classList.remove("show");
-            document.getElementById("victory").classList.add("show");
-            LevelStatus.instance.setLevelStatus(this.currentLevelIndex, true);
+            if (!Main.Galaxy.editionMode) {
+                document.getElementById("ui").style.display = "none";
+                document.getElementById("main-ui").style.display = "block";
+                document.getElementById("levels-choice").classList.remove("show");
+                document.getElementById("settings").classList.remove("show");
+                document.getElementById("credits").classList.remove("show");
+                document.getElementById("main-panel").classList.remove("show");
+                document.getElementById("victory").classList.add("show");
+                LevelStatus.instance.setLevelStatus(this.currentLevelIndex, true);
+            }
         }
         else {
             document.getElementById("solve-status").textContent = "NOT SOLVED";

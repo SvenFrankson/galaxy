@@ -272,7 +272,26 @@ class Galaxy extends BABYLON.TransformNode {
                 tmpLink.click(); 
                 document.body.removeChild( tmpLink );
             }
-            document.body.onkeyup = () => {
+            document.getElementById("lightning-add").onclick = () => {
+                this.galaxyEditionActionType = GalaxyEditionActionType.Play;
+                document.getElementById("lightning-add").classList.add("active");
+                document.getElementById("orb-add").classList.remove("active");
+                document.getElementById("block-add").classList.remove("active");
+            };
+            document.getElementById("orb-add").onclick = () => {
+                this.galaxyEditionActionType = GalaxyEditionActionType.Orb;
+                document.getElementById("lightning-add").classList.remove("active");
+                document.getElementById("orb-add").classList.add("active");
+                document.getElementById("block-add").classList.remove("active");
+            };
+            document.getElementById("block-add").onclick = () => {
+                this.galaxyEditionActionType = GalaxyEditionActionType.Block;
+                document.getElementById("lightning-add").classList.remove("active");
+                document.getElementById("orb-add").classList.remove("active");
+                document.getElementById("block-add").classList.add("active");
+            };
+
+            /*document.body.onkeyup = () => {
                 this.galaxyEditionActionType = (this.galaxyEditionActionType + 1) % 3;
                 if (this.galaxyEditionActionType === GalaxyEditionActionType.Play) {
                     document.getElementById("lightning-add").classList.add("active");
@@ -289,7 +308,7 @@ class Galaxy extends BABYLON.TransformNode {
                     document.getElementById("orb-add").classList.remove("active");
                     document.getElementById("block-add").classList.add("active");
                 }
-            };
+            };*/
         }
         else {
             document.getElementById("editor-part").style.display = "none";
