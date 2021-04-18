@@ -181,6 +181,7 @@ var GalaxyEditionActionType;
 class Galaxy extends BABYLON.TransformNode {
     constructor() {
         super("galaxy");
+        this.currentLevelIndex = -1;
         this.width = 10;
         this.height = 6;
         this.depth = 8;
@@ -296,11 +297,12 @@ class Galaxy extends BABYLON.TransformNode {
         let templateEdgeBlockRaw = await Main.loadMeshes("edge-block");
         this.templateEdgeBlock = MeshUtils.MergeTemplateIntoOneMeshTemplate(templateEdgeBlockRaw);
     }
-    async loadLevel(fileName) {
+    async loadLevel(levelIndex) {
         return new Promise(resolve => {
             var xhr = new XMLHttpRequest();
-            xhr.open('GET', "assets/levels/" + fileName);
+            xhr.open('GET', "assets/levels/level-" + levelIndex + ".json");
             xhr.onload = () => {
+                this.currentLevelIndex = levelIndex;
                 let data = JSON.parse(xhr.responseText);
                 this.width = data.width;
                 this.height = data.height;
@@ -519,15 +521,14 @@ class Galaxy extends BABYLON.TransformNode {
         if (solved) {
             document.getElementById("solve-status").textContent = "SOLVED";
             document.getElementById("solve-status").style.color = "green";
-            if (!Main.Galaxy.editionMode) {
-                document.getElementById("ui").style.display = "none";
-                document.getElementById("main-ui").style.display = "block";
-                document.getElementById("levels-choice").classList.remove("show");
-                document.getElementById("settings").classList.remove("show");
-                document.getElementById("credits").classList.remove("show");
-                document.getElementById("main-panel").classList.remove("show");
-                document.getElementById("victory").classList.add("show");    
-            }
+            document.getElementById("ui").style.display = "none";
+            document.getElementById("main-ui").style.display = "block";
+            document.getElementById("levels-choice").classList.remove("show");
+            document.getElementById("settings").classList.remove("show");
+            document.getElementById("credits").classList.remove("show");
+            document.getElementById("main-panel").classList.remove("show");
+            document.getElementById("victory").classList.add("show");
+            LevelStatus.instance.setLevelStatus(this.currentLevelIndex, true);
         }
         else {
             document.getElementById("solve-status").textContent = "NOT SOLVED";
@@ -1228,10 +1229,45 @@ class IJK {
         callback(new IJK(this.i, this.j, this.k + 1));
     }
 }
+class LevelStatus {
+    static get instance() {
+        if (!LevelStatus._instance) {
+            LevelStatus._instance = new LevelStatus();
+        }
+        return LevelStatus._instance;
+    }
+    isLevelSolved(level) {
+        let s = localStorage.getItem("level-status-" + level.toFixed(0));
+        let v = parseInt(s);
+        if (isFinite(v) && v > 0) {
+            return true;
+        }
+        return false;
+    }
+    setLevelStatus(level, status) {
+        if (status) {
+            localStorage.setItem("level-status-" + level.toFixed(0), "1");
+        }
+        else {
+            localStorage.setItem("level-status-" + level.toFixed(0), "0");
+        }
+    }
+    setAllLevelsStatus(status) {
+        for (let i = 1; i <= LEVEL_COUNT; i++) {
+            this.setLevelStatus(i, status);
+        }
+    }
+}
 /// <reference path="../../lib/babylon.d.ts"/>
 /// <reference path="../../lib/babylon.gui.d.ts"/>
 var COS30 = Math.cos(Math.PI / 6);
+// Note : First level is LEVEL 1
+var LEVEL_COUNT = 5;
 class Main {
+    constructor(canvasElement) {
+        Main.Canvas = document.getElementById(canvasElement);
+        Main.Engine = new BABYLON.Engine(Main.Canvas, true, { preserveDrawingBuffer: true, stencil: true });
+    }
     static get CameraPosition() {
         if (!Main._CameraPosition) {
             Main._CameraPosition = BABYLON.Vector2.Zero();
@@ -1291,10 +1327,6 @@ class Main {
             Main._previewBlueMaterial.alpha = 0.7;
         }
         return Main._previewBlueMaterial;
-    }
-    constructor(canvasElement) {
-        Main.Canvas = document.getElementById(canvasElement);
-        Main.Engine = new BABYLON.Engine(Main.Canvas, true, { preserveDrawingBuffer: true, stencil: true });
     }
     initializeCamera() {
         Main.Camera = new BABYLON.ArcRotateCamera("camera", 0, 0, 10, BABYLON.Vector3.Zero(), Main.Scene);
@@ -1382,10 +1414,12 @@ class Main {
         Main.Galaxy = new Galaxy();
         await Main.Galaxy.initialize();
         Main.Galaxy.instantiate();
-        for (let i = 1; i <= 5; i++) {
+        // Note : Uncomment this line to clear "Success" status saved on each level.
+        // LevelStatus.instance.setAllLevelsStatus(false);
+        for (let i = 1; i <= LEVEL_COUNT; i++) {
             document.getElementById("level-" + i).onclick = () => {
                 Main.Galaxy.editionMode = false;
-                Main.Galaxy.loadLevel("level-" + i + ".json");
+                Main.Galaxy.loadLevel(i);
                 Main.MusicManager.play((i % 2) + 1, 3000);
                 this.showUI();
                 this.hideMainUI();
@@ -1415,7 +1449,7 @@ class Main {
         };
         document.getElementById("new-game").onclick = () => {
             document.getElementById("main-panel").classList.remove("show");
-            document.getElementById("levels-choice").classList.add("show");
+            this.showLevelChoiceUI();
         };
         document.getElementById("settings-btn").onclick = () => {
             document.getElementById("main-panel").classList.remove("show");
@@ -1472,6 +1506,32 @@ class Main {
     }
     hideMainUI() {
         document.getElementById("main-ui").style.display = "none";
+    }
+    showLevelChoiceUI() {
+        document.getElementById("levels-choice").classList.add("show");
+        for (let i = 1; i <= LEVEL_COUNT; i++) {
+            let isSolved = LevelStatus.instance.isLevelSolved(i);
+            let e = document.querySelector("#level-" + i);
+            if (isSolved) {
+                e.classList.add("success");
+                let d = document.createElement("div");
+                d.classList.add("info");
+                let iElement = document.createElement("i");
+                iElement.classList.add("fas", "fa-check");
+                let s = document.createElement("span");
+                s.innerHTML = "&nbsp;Done&nbsp;!";
+                d.appendChild(iElement);
+                d.appendChild(s);
+                e.appendChild(d);
+            }
+            else {
+                e.classList.remove("success");
+                let d = e.querySelector("div");
+                if (d) {
+                    d.remove();
+                }
+            }
+        }
     }
     backToMainMenu() {
         document.getElementById("levels-choice").classList.remove("show");

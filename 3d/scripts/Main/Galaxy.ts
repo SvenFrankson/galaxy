@@ -12,6 +12,8 @@ enum GalaxyEditionActionType {
 
 class Galaxy extends BABYLON.TransformNode {
 
+    public currentLevelIndex: number = - 1;
+    
     public templateTile: BABYLON.Mesh;
     public templateTileGrid: BABYLON.Mesh;
 	public templateTileGridValid: BABYLON.Mesh;
@@ -92,11 +94,12 @@ class Galaxy extends BABYLON.TransformNode {
         this.templateEdgeBlock = MeshUtils.MergeTemplateIntoOneMeshTemplate(templateEdgeBlockRaw);
     }
 
-    public async loadLevel(fileName: string): Promise<void> {
+    public async loadLevel(levelIndex: number): Promise<void> {
         return new Promise<void>(resolve => {
             var xhr = new XMLHttpRequest();
-            xhr.open('GET', "assets/levels/" + fileName);
+            xhr.open('GET', "assets/levels/level-" + levelIndex + ".json");
             xhr.onload = () => {
+                this.currentLevelIndex = levelIndex;
                 let data = JSON.parse(xhr.responseText);
                 this.width = data.width;
                 this.height = data.height;
@@ -332,6 +335,7 @@ class Galaxy extends BABYLON.TransformNode {
         if (solved) {
             document.getElementById("solve-status").textContent = "SOLVED";
             document.getElementById("solve-status").style.color = "green";
+            
             if (!Main.Galaxy.editionMode) {
                 document.getElementById("ui").style.display = "none";
                 document.getElementById("main-ui").style.display = "block";
@@ -340,6 +344,7 @@ class Galaxy extends BABYLON.TransformNode {
                 document.getElementById("credits").classList.remove("show");
                 document.getElementById("main-panel").classList.remove("show");
                 document.getElementById("victory").classList.add("show");
+                LevelStatus.instance.setLevelStatus(this.currentLevelIndex, true);
             }
         }
         else {
