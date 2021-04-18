@@ -8,7 +8,7 @@ __David__
 * [ ] Create levels
 -----------------
 __Sven__
-* [ ] Save progression
+* [X] Save progression
 * [ ] Plug music switch in Settings
 * [ ] Extend lightning to plot in corners
 * [ ] Create levels
