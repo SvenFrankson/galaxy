@@ -515,13 +515,15 @@ class Galaxy extends BABYLON.TransformNode {
         if (solved) {
             document.getElementById("solve-status").textContent = "SOLVED";
             document.getElementById("solve-status").style.color = "green";
-            document.getElementById("ui").style.display = "none";
-            document.getElementById("main-ui").style.display = "block";
-            document.getElementById("levels-choice").classList.remove("show");
-            document.getElementById("settings").classList.remove("show");
-            document.getElementById("credits").classList.remove("show");
-            document.getElementById("main-panel").classList.remove("show");
-            document.getElementById("victory").classList.add("show");
+            if (!Main.Galaxy.editionMode) {
+                document.getElementById("ui").style.display = "none";
+                document.getElementById("main-ui").style.display = "block";
+                document.getElementById("levels-choice").classList.remove("show");
+                document.getElementById("settings").classList.remove("show");
+                document.getElementById("credits").classList.remove("show");
+                document.getElementById("main-panel").classList.remove("show");
+                document.getElementById("victory").classList.add("show");    
+            }
         }
         else {
             document.getElementById("solve-status").textContent = "NOT SOLVED";
