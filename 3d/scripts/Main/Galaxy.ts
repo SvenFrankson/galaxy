@@ -363,6 +363,7 @@ class Galaxy extends BABYLON.TransformNode {
                 document.getElementById("credits").classList.remove("show");
                 document.getElementById("main-panel").classList.remove("show");
                 document.getElementById("victory").classList.add("show");
+                document.getElementById("level-win").textContent = this.currentLevelIndex.toString();
                 LevelStatus.instance.setLevelStatus(this.currentLevelIndex, true);
             }
         }
