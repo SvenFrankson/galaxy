@@ -215,6 +215,61 @@ body
                 font-size: 1.2rem
             &.show
                 display: block
+        &#victory
+            padding: 0
+            display: none
+            .info
+                padding: .5rem
+                background-color: $success-color
+            .noice
+                margin: 1rem 0
+                position: relative
+                h1
+                    position: relative
+                    font-size: 10rem
+                    margin: 0
+                    animation: shadow-coming .65s both
+                    @keyframes shadow-coming
+                        0%
+                            text-shadow: 0 0 0 black
+                            transform: translateY(0)
+                        100%
+                            text-shadow: 0 0 1rem black
+                            transform: translateY(-8px)
+
+                .victory-effect
+                    position: absolute
+                    top: 50%
+                    left: 50%
+                    transform: translate(-50%, -50%)
+                    i
+                        animation: entrance 0.5s cubic-bezier(0.250, 0.460, 0.450, 0.940) both
+                        font-size: 10rem
+                        color: $star-color
+                        @keyframes entrance 
+                            0% 
+                                transform: scale(0)
+                                opacity: 1
+
+                            100% 
+                                transform: scale(1)
+                                opacity: 1
+
+            .victory-menu
+                display: flex
+                justify-content: space-between
+                > p
+                    margin: 0
+                    font-size: 1.7rem
+                    padding: 1rem 2rem
+                    &.next-level
+                        color: $lightning-color
+                    &:hover
+                        cursor: pointer
+                        text-shadow: 0 0 1rem lighten($lightning-color, .25), 0 0 2rem lighten($lightning-color, .5), 0 0 3rem $lightning-color
+
+            &.show
+                display: block
         .menu-top-bar
             display: flex
             align-items: center

@@ -303,6 +303,7 @@ class Main {
 		document.getElementById("settings").classList.remove("show");
 		document.getElementById("credits").classList.remove("show");
 		document.getElementById("main-panel").classList.add("show");
+		document.getElementById("victory").classList.remove("show");
 		Main.MusicManager.play(0, 3000);
 	}
 	
@@ -314,6 +315,7 @@ class Main {
 		document.getElementById("levels-choice").classList.remove("show");
 		document.getElementById("settings").classList.remove("show");
 		document.getElementById("credits").classList.remove("show");
+		document.getElementById("victory").classList.remove("show");
 		document.getElementById("main-panel").classList.add("show");
 	}
 
