@@ -10,4 +10,5 @@ __David__
 __Sven__
 * [ ] Save progression
 * [ ] Plug music switch in Settings
+* [ ] Extend lightning to plot in corners
 * [ ] Create levels
