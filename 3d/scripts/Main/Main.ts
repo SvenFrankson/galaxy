@@ -2,6 +2,8 @@
 /// <reference path="../../lib/babylon.gui.d.ts"/>
 
 var COS30 = Math.cos(Math.PI / 6);
+// Note : First level is LEVEL 1
+var LEVEL_COUNT = 5;
 
 class Main {
 
@@ -213,10 +215,13 @@ class Main {
 		await Main.Galaxy.initialize();
 		Main.Galaxy.instantiate();
 
-		for (let i = 1; i <= 5; i++) {
+		// Note : Uncomment this line to clear "Success" status saved on each level.
+		// LevelStatus.instance.setAllLevelsStatus(false);
+
+		for (let i = 1; i <= LEVEL_COUNT; i++) {
 			document.getElementById("level-" + i).onclick = () => {
 				Main.Galaxy.editionMode = false;
-				Main.Galaxy.loadLevel("level-" + i + ".json");
+				Main.Galaxy.loadLevel(i);
 				Main.MusicManager.play((i % 2) + 1, 3000);
 				this.showUI();
 				this.hideMainUI();
@@ -246,7 +251,7 @@ class Main {
 		}
 		document.getElementById("new-game").onclick = () => {
 			document.getElementById("main-panel").classList.remove("show");
-			document.getElementById("levels-choice").classList.add("show");
+			this.showLevelChoiceUI();
 		}
 		document.getElementById("settings-btn").onclick = () => {
 			document.getElementById("main-panel").classList.remove("show");
@@ -309,6 +314,33 @@ class Main {
 	
 	public hideMainUI(): void {
 		document.getElementById("main-ui").style.display = "none";
+	}
+
+	public showLevelChoiceUI(): void {
+		document.getElementById("levels-choice").classList.add("show");
+		for (let i = 1; i <= LEVEL_COUNT; i++) {
+			let isSolved = LevelStatus.instance.isLevelSolved(i);
+			let e = document.querySelector("#level-" + i);
+			if (isSolved) {
+				e.classList.add("success");
+				let d = document.createElement("div");
+				d.classList.add("info");
+				let iElement = document.createElement("i");
+				iElement.classList.add("fas", "fa-check");
+				let s = document.createElement("span");
+				s.innerHTML = "&nbsp;Done&nbsp;!";
+				d.appendChild(iElement);
+				d.appendChild(s);
+				e.appendChild(d);
+			}
+			else {
+				e.classList.remove("success");
+				let d = e.querySelector("div");
+				if (d) {
+					d.remove();
+				}
+			}
+		}
 	}
 
 	public backToMainMenu() {
