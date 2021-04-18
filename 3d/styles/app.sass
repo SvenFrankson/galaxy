@@ -425,18 +425,33 @@ body
     font-weight: bold
     color: red
 
-.editor-label
-    display: inline-block
-    width: 100px
-    font-size: 16px
-
-.editor-value
-    display: inline-block
-    width: 30px
-    font-size: 16px
-
-.editor-btn
-    width: 30px
+#editor-part
+    margin-top: 1rem
+    .dim-cube
+        margin-bottom: .5rem
+    .editor-label
+        display: inline-block
+        width: 4rem
+        font-size: 1rem
+    .editor-value
+        display: inline-block
+        width: 2rem
+        font-size: 1rem
+        text-align: center
+    .editor-btn
+        width: 2rem
+    .add-btns
+        margin-top: .5rem
+        display: flex
+        .add-btn
+            text-align: center
+            border: 1px solid white
+            padding: .5rem
+            margin: .5rem
+            &.active
+                box-shadow: 0 0 .2rem white, 0 0 .4rem lighten($lightning-color, .25), 0 0 .6rem lighten($lightning-color, .5), 0 0 .8rem lighten($lightning-color, .75), 0 0 1rem $lightning-color
+            p
+                margin: 0
 
 #fps-info
     position: fixed

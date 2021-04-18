@@ -158,28 +158,41 @@
           <span id="btn-clear-lightning"><i class="fas fa-sync"></i></span><span id="btn-solve"><i class="far fa-lightbulb"></i></span>
         </div>  
       </div>
-      <div id="solve-status">NOT SOLVED</div>
+      <div id="solve-status" class="noselect">NOT SOLVED</div>
       <div id="editor-part">
-        <div>
+        <div class="dim-cube noselect">
           <div id="width" class="editor-label">WIDTH</div>
-          <div id="width-value" class="editor-value">2</div>
           <button id="btn-width-dec" class="editor-btn">-</button>
+          <div id="width-value" class="editor-value">2</div>
           <button id="btn-width-inc" class="editor-btn">+</button>
         </div>
-        <div>
+        <div class="dim-cube noselect">
           <div id="height" class="editor-label">HEIGHT</div>
-          <div id="height-value" class="editor-value">2</div>
           <button id="btn-height-dec" class="editor-btn">-</button>
+          <div id="height-value" class="editor-value">2</div>
           <button id="btn-height-inc" class="editor-btn">+</button>
         </div>
-        <div>
+        <div class="dim-cube noselect">
           <div id="depth" class="editor-label">DEPTH</div>
-          <div id="depth-value" class="editor-value">2</div>
           <button id="btn-depth-dec" class="editor-btn">-</button>
+          <div id="depth-value" class="editor-value">2</div>
           <button id="btn-depth-inc" class="editor-btn">+</button>
         </div>
-        <div id="editor-action-type">Click : ADD LIGHTNING</div>
-        <div>(press M to switch)</div>
+        <div id="editor-action-type" class="noselect">Click to add: (press M to switch)</div>
+        <div class="add-btns noselect">
+          <div id="lightning-add" class="add-btn active">
+            <i class="fas fa-bolt"></i>
+            <p>lightning</p>
+          </div>
+          <div id="orb-add" class="add-btn">
+            <i class="fas fa-circle"></i>
+            <p>orb</p>
+          </div>
+          <div id="block-add" class="add-btn">
+            <i class="fas fa-square"></i>
+            <p>block</p>
+          </div>
+        </div>
         <button id="btn-download">DOWNLOAD</button>
       </div>
     </div>

@@ -463,17 +463,21 @@ class Galaxy extends BABYLON.TransformNode {
             };
             document.body.onkeyup = () => {
                 this.galaxyEditionActionType = (this.galaxyEditionActionType + 1) % 3;
-                let uiInfo = "";
                 if (this.galaxyEditionActionType === GalaxyEditionActionType.Play) {
-                    uiInfo = "Click : ADD LIGHTNING";
+                    document.getElementById("lightning-add").classList.add("active");
+                    document.getElementById("orb-add").classList.remove("active");
+                    document.getElementById("block-add").classList.remove("active");
                 }
                 else if (this.galaxyEditionActionType === GalaxyEditionActionType.Orb) {
-                    uiInfo = "Click : ADD ORB";
+                    document.getElementById("lightning-add").classList.remove("active");
+                    document.getElementById("orb-add").classList.add("active");
+                    document.getElementById("block-add").classList.remove("active");
                 }
                 else if (this.galaxyEditionActionType === GalaxyEditionActionType.Block) {
-                    uiInfo = "Click : ADD BLOCK";
+                    document.getElementById("lightning-add").classList.remove("active");
+                    document.getElementById("orb-add").classList.remove("active");
+                    document.getElementById("block-add").classList.add("active");
                 }
-                document.getElementById("editor-action-type").innerText = uiInfo;
             };
         }
         else {
