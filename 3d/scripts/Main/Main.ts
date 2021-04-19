@@ -13,6 +13,7 @@ class Main {
 	public static Light: BABYLON.Light;
 	public static Galaxy: Galaxy;
 	public static MusicManager: MusicManager;
+	public static SettingsManager: SettingsManager;
 	public static Skybox: BABYLON.Mesh;
 	public static EnvironmentTexture: BABYLON.CubeTexture;
 	public static GlowLayer: BABYLON.GlowLayer;
@@ -210,6 +211,8 @@ class Main {
 		)
 
 		Main.MusicManager = new MusicManager();
+		Main.SettingsManager = new SettingsManager();
+		Main.SettingsManager.initialize();
 
 		Main.Galaxy = new Galaxy();
 		await Main.Galaxy.initialize();

@@ -481,6 +481,24 @@ class Galaxy extends BABYLON.TransformNode {
                 document.getElementById("orb-add").classList.remove("active");
                 document.getElementById("block-add").classList.add("active");
             };
+            /*document.body.onkeyup = () => {
+                this.galaxyEditionActionType = (this.galaxyEditionActionType + 1) % 3;
+                if (this.galaxyEditionActionType === GalaxyEditionActionType.Play) {
+                    document.getElementById("lightning-add").classList.add("active");
+                    document.getElementById("orb-add").classList.remove("active");
+                    document.getElementById("block-add").classList.remove("active");
+                }
+                else if (this.galaxyEditionActionType === GalaxyEditionActionType.Orb) {
+                    document.getElementById("lightning-add").classList.remove("active");
+                    document.getElementById("orb-add").classList.add("active");
+                    document.getElementById("block-add").classList.remove("active");
+                }
+                else if (this.galaxyEditionActionType === GalaxyEditionActionType.Block) {
+                    document.getElementById("lightning-add").classList.remove("active");
+                    document.getElementById("orb-add").classList.remove("active");
+                    document.getElementById("block-add").classList.add("active");
+                }
+            };*/
         }
         else {
             document.getElementById("editor-part").style.display = "none";
@@ -529,7 +547,7 @@ class Galaxy extends BABYLON.TransformNode {
                 document.getElementById("credits").classList.remove("show");
                 document.getElementById("main-panel").classList.remove("show");
                 document.getElementById("victory").classList.add("show");
-                document.getElementById("level-win").textContent = this.currentLevelIndex;
+                document.getElementById("level-win").textContent = this.currentLevelIndex.toString();
                 LevelStatus.instance.setLevelStatus(this.currentLevelIndex, true);
             }
         }
@@ -1414,6 +1432,8 @@ class Main {
             Main.Skybox.rotation.y += 0.0001;
         });
         Main.MusicManager = new MusicManager();
+        Main.SettingsManager = new SettingsManager();
+        Main.SettingsManager.initialize();
         Main.Galaxy = new Galaxy();
         await Main.Galaxy.initialize();
         Main.Galaxy.instantiate();
@@ -1660,10 +1680,37 @@ class MeshUtils {
 }
 class MusicManager {
     constructor() {
+        this._musicOn = true;
+        this._currentVolume = 100;
         this.currentMusic = -1;
         this.musics = [];
         for (let i = 1; i <= 3; i++) {
             this.musics.push(new Audio("assets/musics/galaxies-" + i + ".mp3"));
+        }
+    }
+    get musicOn() {
+        return this._musicOn;
+    }
+    set musicOn(v) {
+        this._musicOn = v;
+        if (!this.musicOn) {
+            if (this.getCurrentMusic()) {
+                this.getCurrentMusic().volume = 0;
+            }
+        }
+        else {
+            if (this.getCurrentMusic()) {
+                this.getCurrentMusic().volume = this.currentVolume;
+            }
+        }
+    }
+    get currentVolume() {
+        return this._currentVolume;
+    }
+    set currentVolume(v) {
+        this._currentVolume = v;
+        if (this.getCurrentMusic()) {
+            this.getCurrentMusic().volume = this._musicOn ? v : 0;
         }
     }
     getCurrentMusic() {
@@ -1689,10 +1736,10 @@ class MusicManager {
                 let dt = Main.Engine.getDeltaTime();
                 t += dt;
                 if (t < transitionDuration) {
-                    currentMusic.volume = t / transitionDuration;
+                    currentMusic.volume = t / transitionDuration * (this._musicOn ? this.currentVolume : 0);
                 }
                 else {
-                    currentMusic.volume = 1;
+                    currentMusic.volume = (this._musicOn ? this.currentVolume : 0);
                     Main.Scene.onBeforeRenderObservable.removeCallback(update);
                     resolve();
                 }
@@ -1712,7 +1759,7 @@ class MusicManager {
                 let dt = Main.Engine.getDeltaTime();
                 t += dt;
                 if (t < transitionDuration) {
-                    currentMusic.volume = 1 - t / transitionDuration;
+                    currentMusic.volume = (1 - t / transitionDuration) * (this._musicOn ? this.currentVolume : 0);
                 }
                 else {
                     currentMusic.volume = 0;
@@ -1751,6 +1798,67 @@ class Plot extends GalaxyItem {
         }
     }
     instantiate() {
+    }
+}
+class SettingsManager {
+    constructor() {
+        this.onMusicUpdate = () => {
+            requestAnimationFrame(() => {
+                let v = this._musicInput.classList.contains("on");
+                Main.MusicManager.musicOn = v;
+                this.saveCurrentSettings();
+            });
+        };
+        this.onMusicVolumeUpdate = () => {
+            let v = parseFloat(this._musicVolumeInput.value) / 100;
+            Main.MusicManager.currentVolume = v;
+            this.saveCurrentSettings();
+        };
+    }
+    initialize() {
+        this.registerUI();
+        let settings = localStorage.getItem("galaxy-settings");
+        if (settings) {
+            let v = JSON.parse(settings);
+            this.setSettings(v);
+        }
+    }
+    registerUI() {
+        let musicInput = document.querySelector("#music-toggle");
+        if (musicInput instanceof HTMLSpanElement) {
+            this._musicInput = musicInput;
+        }
+        this._musicInput.addEventListener("pointerup", this.onMusicUpdate);
+        let musicVolumeInput = document.querySelector("#music-volume input");
+        if (musicVolumeInput instanceof HTMLInputElement) {
+            this._musicVolumeInput = musicVolumeInput;
+        }
+        this._musicVolumeInput.addEventListener("input", this.onMusicVolumeUpdate);
+    }
+    getSettings() {
+        return {
+            music: Main.MusicManager.musicOn,
+            musicVolume: Main.MusicManager.currentVolume
+        };
+    }
+    setSettings(v) {
+        if (v.music) {
+            this._musicInput.classList.remove("off");
+            this._musicInput.classList.add("on");
+        }
+        else {
+            this._musicInput.classList.add("off");
+            this._musicInput.classList.remove("on");
+        }
+        this.onMusicUpdate();
+        if (isFinite(v.musicVolume)) {
+            this._musicVolumeInput.value = (v.musicVolume * 100).toFixed(2);
+            this.onMusicVolumeUpdate();
+        }
+    }
+    saveCurrentSettings() {
+        let settings = this.getSettings();
+        localStorage.setItem("galaxy-settings", JSON.stringify(settings));
     }
 }
 /// <reference path="GalaxyItem.ts"/>

@@ -1,5 +1,33 @@
 class MusicManager {
 
+    private _musicOn: boolean = true;
+    public get musicOn(): boolean {
+        return this._musicOn;
+    }
+    public set musicOn(v: boolean) {
+        this._musicOn = v;
+        if (!this.musicOn) {
+            if (this.getCurrentMusic()) {
+                this.getCurrentMusic().volume = 0;
+            }
+        }
+        else {
+            if (this.getCurrentMusic()) {
+                this.getCurrentMusic().volume = this.currentVolume;
+            }
+        }
+    }
+
+    private _currentVolume: number = 100;
+    public get currentVolume(): number {
+        return this._currentVolume;
+    }
+    public set currentVolume(v) {
+        this._currentVolume = v;
+        if (this.getCurrentMusic()) {
+            this.getCurrentMusic().volume = this._musicOn ? v : 0;
+        }
+    }
     public currentMusic: number = -1;
     public musics: HTMLAudioElement[] = [];
 
@@ -34,10 +62,10 @@ class MusicManager {
                 let dt = Main.Engine.getDeltaTime();
                 t += dt;
                 if (t < transitionDuration) {
-                    currentMusic.volume = t / transitionDuration;
+                    currentMusic.volume = t / transitionDuration * (this._musicOn ? this.currentVolume : 0);
                 }
                 else {
-                    currentMusic.volume = 1;
+                    currentMusic.volume = (this._musicOn ? this.currentVolume : 0);
                     Main.Scene.onBeforeRenderObservable.removeCallback(update);
                     resolve();
                 }
@@ -58,7 +86,7 @@ class MusicManager {
                 let dt = Main.Engine.getDeltaTime();
                 t += dt;
                 if (t < transitionDuration) {
-                    currentMusic.volume = 1 - t / transitionDuration;
+                    currentMusic.volume = (1 - t / transitionDuration) * (this._musicOn ? this.currentVolume : 0);
                 }
                 else {
                     currentMusic.volume = 0;
