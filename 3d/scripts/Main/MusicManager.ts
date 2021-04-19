@@ -18,7 +18,7 @@ class MusicManager {
         }
     }
 
-    private _currentVolume: number = 100;
+    private _currentVolume: number = 1;
     public get currentVolume(): number {
         return this._currentVolume;
     }
