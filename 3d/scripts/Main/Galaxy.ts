@@ -546,7 +546,7 @@ class Galaxy extends BABYLON.TransformNode {
                                 let tileD = orbTiles[1].neighbours[(t1Index + 3) % 4];
                                 let tileDIndex = tilesToConsider.indexOf(tileD);
                                 tilesToConsider.splice(tileDIndex, 1);
-                                output = this.areSymetrical(tileC, e1, tileD, e5, tilesToConsider);
+                                output = this.areSymetrical(tileC, e2, tileD, e5, tilesToConsider);
                             }
                             if (output) {
                                 return ZoneStatus.Valid;
