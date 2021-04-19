@@ -1,7 +1,7 @@
 $lightning-color: #50b9ff
 $lightning-white: #afdfff
 $disabled-state: #747474
-$star-color: #ff8500
+$star-color: #FDCC0D
 $error-color: #ec4949
 $success-color: #60d366
     
@@ -230,7 +230,7 @@ body
                     margin: 0
                     animation: shadow-coming .65s both
                     @keyframes shadow-coming
-                        0%
+                        20%
                             text-shadow: 0 0 0 black
                             transform: translateY(0)
                         100%
@@ -246,6 +246,7 @@ body
                         animation: entrance 0.5s cubic-bezier(0.250, 0.460, 0.450, 0.940) both
                         font-size: 10rem
                         color: $star-color
+                        text-shadow: 0 0 .8rem black, 0 0 2rem $star-color
                         @keyframes entrance 
                             0% 
                                 transform: scale(0)

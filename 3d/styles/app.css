@@ -344,7 +344,7 @@ body {
 }
 
 @-webkit-keyframes shadow-coming {
-  0% {
+  20% {
     text-shadow: 0 0 0 black;
     -webkit-transform: translateY(0);
             transform: translateY(0);
@@ -357,7 +357,7 @@ body {
 }
 
 @keyframes shadow-coming {
-  0% {
+  20% {
     text-shadow: 0 0 0 black;
     -webkit-transform: translateY(0);
             transform: translateY(0);
@@ -381,7 +381,8 @@ body {
   -webkit-animation: entrance 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
           animation: entrance 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
   font-size: 10rem;
-  color: #ff8500;
+  color: #FDCC0D;
+  text-shadow: 0 0 0.8rem black, 0 0 2rem #FDCC0D;
 }
 
 @-webkit-keyframes entrance {
