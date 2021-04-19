@@ -42,10 +42,12 @@ class SettingsManager {
         if (v.music) {
             this._musicInput.classList.remove("off");
             this._musicInput.classList.add("on");
+            this._musicVolumeInput.parentElement.classList.remove("disabled");
         }
         else {
             this._musicInput.classList.add("off");
             this._musicInput.classList.remove("on");
+            this._musicVolumeInput.parentElement.classList.add("disabled");
         }
         this.onMusicUpdate();
 
