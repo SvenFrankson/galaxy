@@ -14,6 +14,34 @@ abstract class Border extends GalaxyItem {
         this.name = "border-" + i + "-" + j + "-" + k;
         let up = this.getDirection(BABYLON.Axis.Y);
         this.position.addInPlace(up.scale(0.25));
+        let stretch: boolean = false;
+        if (this.i === 1) {
+            this.position.x -= 0.1;
+            stretch = true;
+        }
+        if (this.i === galaxy.width - 1) {
+            this.position.x += 0.1;
+            stretch = true;
+        }
+        if (this.j === 1) {
+            this.position.y -= 0.1;
+            stretch = true;
+        }
+        if (this.j === galaxy.height - 1) {
+            this.position.y += 0.1;
+            stretch = true;
+        }
+        if (this.k === 1) {
+            this.position.z -= 0.1;
+            stretch = true;
+        }
+        if (this.k === galaxy.depth - 1) {
+            this.position.z += 0.1;
+            stretch = true;
+        }
+        if (stretch) {
+            this.scaling.z = 1.1;
+        }
     }
 
     public abstract instantiate(): void;

@@ -135,9 +135,9 @@ class GalaxyBuilder {
             let l = positions[baseIndex].length / 3;
             for (let k = 0; k < baseData.positions.length / 3; k++) {
                 p.copyFromFloats(
-                    baseData.positions[3 * k],
-                    baseData.positions[3 * k + 1],
-                    - baseData.positions[3 * k + 2]
+                    baseData.positions[3 * k] * edgeBlock.scaling.x,
+                    baseData.positions[3 * k + 1] * edgeBlock.scaling.y,
+                    - baseData.positions[3 * k + 2] * edgeBlock.scaling.z
                 );
                 p.rotateByQuaternionToRef(edgeBlock.rotationQuaternion, p);
                 p.addInPlace(edgeBlock.position);

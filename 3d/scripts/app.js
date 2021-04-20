@@ -77,23 +77,30 @@ class GalaxyItem extends BABYLON.TransformNode {
     }
     static UpdateRotationToRef(ijk, galaxy, quaternionRef) {
         let up = BABYLON.Vector3.Zero();
+        let faceCount = 0;
         if (ijk.i === 0) {
             up.x = -1;
+            faceCount++;
         }
         else if (ijk.i === galaxy.width) {
             up.x = 1;
+            faceCount++;
         }
         if (ijk.j === 0) {
             up.y = -1;
+            faceCount++;
         }
         else if (ijk.j === galaxy.height) {
             up.y = 1;
+            faceCount++;
         }
         if (ijk.k === 0) {
             up.z = -1;
+            faceCount++;
         }
         else if (ijk.k === galaxy.depth) {
             up.z = 1;
+            faceCount++;
         }
         up.normalize();
         if (up.y === 1) {
@@ -107,6 +114,9 @@ class GalaxyItem extends BABYLON.TransformNode {
             let right = BABYLON.Vector3.Cross(up, forward).normalize();
             BABYLON.Quaternion.RotationQuaternionFromAxisToRef(right, up, forward, quaternionRef);
         }
+        if (faceCount === 3 && ijk.j === 0) {
+            quaternionRef.multiplyToRef(BABYLON.Quaternion.RotationAxis(BABYLON.Axis.Y, Math.PI), quaternionRef);
+        }
     }
 }
 /// <reference path="GalaxyItem.ts"/>
@@ -117,6 +127,34 @@ class Border extends GalaxyItem {
         this.name = "border-" + i + "-" + j + "-" + k;
         let up = this.getDirection(BABYLON.Axis.Y);
         this.position.addInPlace(up.scale(0.25));
+        let stretch = false;
+        if (this.i === 1) {
+            this.position.x -= 0.1;
+            stretch = true;
+        }
+        if (this.i === galaxy.width - 1) {
+            this.position.x += 0.1;
+            stretch = true;
+        }
+        if (this.j === 1) {
+            this.position.y -= 0.1;
+            stretch = true;
+        }
+        if (this.j === galaxy.height - 1) {
+            this.position.y += 0.1;
+            stretch = true;
+        }
+        if (this.k === 1) {
+            this.position.z -= 0.1;
+            stretch = true;
+        }
+        if (this.k === galaxy.depth - 1) {
+            this.position.z += 0.1;
+            stretch = true;
+        }
+        if (stretch) {
+            this.scaling.z = 1.1;
+        }
     }
     updateRotation() {
         super.updateRotation();
@@ -1110,7 +1148,7 @@ class GalaxyBuilder {
             let baseData = baseDatas[baseIndex];
             let l = positions[baseIndex].length / 3;
             for (let k = 0; k < baseData.positions.length / 3; k++) {
-                p.copyFromFloats(baseData.positions[3 * k], baseData.positions[3 * k + 1], -baseData.positions[3 * k + 2]);
+                p.copyFromFloats(baseData.positions[3 * k] * edgeBlock.scaling.x, baseData.positions[3 * k + 1] * edgeBlock.scaling.y, -baseData.positions[3 * k + 2] * edgeBlock.scaling.z);
                 p.rotateByQuaternionToRef(edgeBlock.rotationQuaternion, p);
                 p.addInPlace(edgeBlock.position);
                 positions[baseIndex].push(p.x, p.y, p.z);
