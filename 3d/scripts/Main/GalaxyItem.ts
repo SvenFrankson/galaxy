@@ -71,23 +71,30 @@ abstract class GalaxyItem extends BABYLON.TransformNode {
 
     public static UpdateRotationToRef(ijk: IJK, galaxy: Galaxy, quaternionRef: BABYLON.Quaternion): void {
         let up = BABYLON.Vector3.Zero();
+        let faceCount: number = 0;
         if (ijk.i === 0) {
             up.x = - 1;
+            faceCount++;
         }
         else if (ijk.i === galaxy.width) {
             up.x = 1;
+            faceCount++;
         }
         if (ijk.j === 0) {
             up.y = - 1;
+            faceCount++;
         }
         else if (ijk.j === galaxy.height) {
             up.y = 1;
+            faceCount++;
         }
         if (ijk.k === 0) {
             up.z = - 1;
+            faceCount++;
         }
         else if (ijk.k === galaxy.depth) {
             up.z = 1;
+            faceCount++;
         }
         up.normalize();
         if (up.y === 1) {
@@ -100,6 +107,9 @@ abstract class GalaxyItem extends BABYLON.TransformNode {
             let forward = BABYLON.Vector3.Cross(up, BABYLON.Axis.Y).normalize();
             let right = BABYLON.Vector3.Cross(up, forward).normalize();
             BABYLON.Quaternion.RotationQuaternionFromAxisToRef(right, up, forward, quaternionRef);
+        }
+        if (faceCount === 3 && ijk.j === 0) {
+            quaternionRef.multiplyToRef(BABYLON.Quaternion.RotationAxis(BABYLON.Axis.Y, Math.PI), quaternionRef);
         }
     }
 }
