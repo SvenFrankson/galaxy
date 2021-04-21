@@ -92,6 +92,25 @@ class Lightning extends Border {
         }
         this.galaxy.templateLightning.createInstance("clone").parent = this;
         this.freezeWorldMatrix();
+        Main.Scene.onBeforeRenderObservable.add(this._update);
+    }
+
+    public dispose(doNotRecurse?: boolean, disposeMaterialAndTextures?: boolean): void {
+        super.dispose(doNotRecurse, disposeMaterialAndTextures);
+        Main.Scene.onBeforeRenderObservable.removeCallback(this._update);
+    }
+
+    private _update = () => {
+        let dt = Main.Engine.getDeltaTime() / 1000;
+        for (let i = 0; i < this.getChildren().length; i++) {
+            if (Math.random() < dt * 60) {
+                let child = this.getChildren()[0];
+                if (child instanceof BABYLON.AbstractMesh) {
+                    child.rotation.z = Math.random() * Math.PI * 2;
+                }
+            }
+        }
+        this.freezeWorldMatrix();
     }
 }
 
