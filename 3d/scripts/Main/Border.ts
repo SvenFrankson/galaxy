@@ -86,6 +86,7 @@ class EdgeOrb extends Border {
 class Lightning extends Border {
 
     private smorb: BABYLON.Mesh;
+    private _speed: number = 2;
 
     public instantiate(): void {
         while (this.getChildren().length > 0) {
@@ -97,10 +98,12 @@ class Lightning extends Border {
         if (this.smorb) {
             this.smorb.dispose();
         }
-        this.smorb = BABYLON.MeshBuilder.CreateIcoSphere("smorb", { radius: 0.05, subdivisions: 1 }, Main.Scene);
+        this.smorb = BABYLON.MeshBuilder.CreateIcoSphere("smorb", { radius: 0.04, subdivisions: 1 }, Main.Scene);
         this.smorb.position.z = - 2 + 4 * Math.random();
         this.smorb.parent = this;
         this.smorb.material = this.galaxy.templateLightning.material;
+
+        this._speed = 1.5 + Math.random();
         
         this.freezeWorldMatrix();
         Main.Scene.onBeforeRenderObservable.add(this._update);
@@ -123,7 +126,7 @@ class Lightning extends Border {
             }
         }
         */
-        this.smorb.position.z += 2 * dt;
+        this.smorb.position.z += this._speed * dt;
         this.smorb.position.x = 0.02 * Math.sin(8 * 2 * Math.PI * this.smorb.position.z);
         this.smorb.position.y = 0.02 * Math.cos(9 * 2 * Math.PI * this.smorb.position.z);
         if (Math.abs(this.smorb.position.z) < 0.95) {
@@ -132,8 +135,8 @@ class Lightning extends Border {
         else {
             this.smorb.isVisible = false;
         }
-        if (this.smorb.position.z > 2) {
-            this.smorb.position.z = - 2;
+        if (this.smorb.position.z > 4) {
+            this.smorb.position.z = - 4;
         }
         this.freezeWorldMatrix();
     }
