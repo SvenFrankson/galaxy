@@ -281,7 +281,7 @@ class Main {
 			document.getElementById("level-" + i).onclick = () => {
 				Main.Galaxy.editionMode = false;
 				Main.Galaxy.loadLevel(i);
-				Main.MusicManager.play((i % 2) + 1, 3000);
+				Main.MusicManager.play((i % 3) + 1, 3000);
 				this.showUI();
 				this.hideMainUI();
 				this.animateCamera();

@@ -1579,7 +1579,7 @@ class Main {
             document.getElementById("level-" + i).onclick = () => {
                 Main.Galaxy.editionMode = false;
                 Main.Galaxy.loadLevel(i);
-                Main.MusicManager.play((i % 2) + 1, 3000);
+                Main.MusicManager.play((i % 3) + 1, 3000);
                 this.showUI();
                 this.hideMainUI();
                 this.animateCamera();
@@ -1826,6 +1826,7 @@ class MusicManager {
         this._currentVolume = 1;
         this.currentMusic = -1;
         this.musics = [];
+        this.musics.push(new Audio("assets/musics/loop.mp3"));
         for (let i = 1; i <= 3; i++) {
             this.musics.push(new Audio("assets/musics/galaxies-" + i + ".mp3"));
         }

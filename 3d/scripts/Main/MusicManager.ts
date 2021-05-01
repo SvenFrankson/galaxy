@@ -32,6 +32,7 @@ class MusicManager {
     public musics: HTMLAudioElement[] = [];
 
     constructor () {
+        this.musics.push(new Audio("assets/musics/loop.mp3"));
         for (let i = 1; i <= 3; i++) {
             this.musics.push(new Audio("assets/musics/galaxies-" + i + ".mp3"));
         }
