@@ -347,6 +347,10 @@ class Main {
 			document.getElementById("music-volume").classList.toggle("disabled");
 			document.getElementById("music-toggle").classList.toggle("on");
 		}
+		document.getElementById("level-upload").addEventListener("change", async (e) => {
+			let data = await (e.target as HTMLInputElement).files[0].text();
+			Main.Galaxy.doLoadLevel(JSON.parse(data));
+		});
 
 		const buttons = document.querySelectorAll('.back-button');
 		[...buttons].map( btn => btn.addEventListener("click", this.backToMainMenu));

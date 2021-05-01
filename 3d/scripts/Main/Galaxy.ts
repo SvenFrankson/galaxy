@@ -101,59 +101,63 @@ class Galaxy extends BABYLON.TransformNode {
             xhr.onload = () => {
                 this.currentLevelIndex = levelIndex;
                 let data = JSON.parse(xhr.responseText);
-                this.width = data.width;
-                this.height = data.height;
-                this.depth = data.depth;
-                this.instantiate();
-                for (let i = 0; i < data.orbTiles.length; i++) {
-                    let orbTile = data.orbTiles[i];
-                    let tile = this.getItem(orbTile.i, orbTile.j, orbTile.k);
-                    if (tile && tile instanceof Tile) {
-                        tile.setHasOrb(true);
-                        tile.refresh();
-                        console.log("Orb added.");
-                    }
-                }
-                if (data.tileBlocks) {
-                    for (let i = 0; i < data.tileBlocks.length; i++) {
-                        let tileBlock = data.tileBlocks[i];
-                        let tile = this.getItem(tileBlock.i, tileBlock.j, tileBlock.k);
-                        if (tile && tile instanceof Tile) {
-                            tile.isBlock = true;
-                            tile.refresh();
-                        }
-                    }
-                }
-                if (data.edgeBlocks) {
-                    for (let i = 0; i < data.edgeBlocks.length; i++) {
-                        let edgeBlockData = data.edgeBlocks[i];
-                        let edge = this.getItem(edgeBlockData.i, edgeBlockData.j, edgeBlockData.k);
-                        if (!edge) {
-                            this.addEdgeBlock(IJK.IJK(edgeBlockData));
-                        }
-                    }
-                }
-                if (data.edgeOrbs) {
-                    for (let i = 0; i < data.edgeOrbs.length; i++) {
-                        let edgeOrbData = data.edgeOrbs[i];
-                        let edge = this.getItem(edgeOrbData.i, edgeOrbData.j, edgeOrbData.k);
-                        if (!edge) {
-                            this.addEdgeOrb(IJK.IJK(edgeOrbData));
-                        }
-                    }
-                }
-                this.solution = [];
-                if (data.lightnings) {
-                    for (let i = 0; i < data.lightnings.length; i++) {
-                        this.solution.push(IJK.IJK(data.lightnings[i]));
-                    }
-                }
-                this.updateZones();
-                this.rebuildTileContainer();
+                this.doLoadLevel(data);
                 resolve();
             }
             xhr.send();
         });
+    }
+
+    public doLoadLevel(data: any): void {
+        this.width = data.width;
+        this.height = data.height;
+        this.depth = data.depth;
+        this.instantiate();
+        for (let i = 0; i < data.orbTiles.length; i++) {
+            let orbTile = data.orbTiles[i];
+            let tile = this.getItem(orbTile.i, orbTile.j, orbTile.k);
+            if (tile && tile instanceof Tile) {
+                tile.setHasOrb(true);
+                tile.refresh();
+                console.log("Orb added.");
+            }
+        }
+        if (data.tileBlocks) {
+            for (let i = 0; i < data.tileBlocks.length; i++) {
+                let tileBlock = data.tileBlocks[i];
+                let tile = this.getItem(tileBlock.i, tileBlock.j, tileBlock.k);
+                if (tile && tile instanceof Tile) {
+                    tile.isBlock = true;
+                    tile.refresh();
+                }
+            }
+        }
+        if (data.edgeBlocks) {
+            for (let i = 0; i < data.edgeBlocks.length; i++) {
+                let edgeBlockData = data.edgeBlocks[i];
+                let edge = this.getItem(edgeBlockData.i, edgeBlockData.j, edgeBlockData.k);
+                if (!edge) {
+                    this.addEdgeBlock(IJK.IJK(edgeBlockData));
+                }
+            }
+        }
+        if (data.edgeOrbs) {
+            for (let i = 0; i < data.edgeOrbs.length; i++) {
+                let edgeOrbData = data.edgeOrbs[i];
+                let edge = this.getItem(edgeOrbData.i, edgeOrbData.j, edgeOrbData.k);
+                if (!edge) {
+                    this.addEdgeOrb(IJK.IJK(edgeOrbData));
+                }
+            }
+        }
+        this.solution = [];
+        if (data.lightnings) {
+            for (let i = 0; i < data.lightnings.length; i++) {
+                this.solution.push(IJK.IJK(data.lightnings[i]));
+            }
+        }
+        this.updateZones();
+        this.rebuildTileContainer();
     }
 
     public clear(): void {
