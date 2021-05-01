@@ -953,6 +953,19 @@ class Galaxy extends BABYLON.TransformNode {
     onPointerUp() {
         let pick = Main.Scene.pick(Main.Scene.pointerX, Main.Scene.pointerY);
         if (pick && pick.hit) {
+            if (pick.pickedMesh && pick.pickedMesh.name === "left-camera-input") {
+                Main.CameraTargetAlpha -= Math.PI / 2;
+            }
+            else if (pick.pickedMesh && pick.pickedMesh.name === "right-camera-input") {
+                Main.CameraTargetAlpha += Math.PI / 2;
+            }
+            else if (pick.pickedMesh && pick.pickedMesh.name === "down-camera-input") {
+                Main.CameraTargetBeta = Math.PI - Math.PI / 3;
+            }
+            else if (pick.pickedMesh && pick.pickedMesh.name === "up-camera-input") {
+                Main.CameraTargetBeta = Math.PI / 3;
+                ;
+            }
             let ijk = this.worldPositionToIJK(pick.pickedPoint);
             let odds = 0;
             if (ijk.i % 2 === 1) {
@@ -1367,6 +1380,11 @@ var COS30 = Math.cos(Math.PI / 6);
 var LEVEL_COUNT = 5;
 class Main {
     constructor(canvasElement) {
+        this.updateCamera = () => {
+            Main.Camera.alpha = VMath.StepAngle(Main.Camera.alpha, Main.CameraTargetAlpha, 0.02);
+            Main.Camera.beta = VMath.StepAngle(Main.Camera.beta, Main.CameraTargetBeta, 0.02);
+        };
+        Main.Instance = this;
         Main.Canvas = document.getElementById(canvasElement);
         Main.Engine = new BABYLON.Engine(Main.Canvas, true, { preserveDrawingBuffer: true, stencil: true });
     }
@@ -1493,6 +1511,43 @@ class Main {
         };
         step();
     }
+    setFreeCamera(freeCamera) {
+        if (Main.UseFreeCamera != freeCamera) {
+            Main.UseFreeCamera = freeCamera;
+            if (Main.UseFreeCamera) {
+                Main.Scene.onBeforeRenderObservable.removeCallback(this.updateCamera);
+                Main.Camera.attachControl(Main.Canvas);
+                if (this.leftCameraInput) {
+                    this.leftCameraInput.dispose();
+                }
+                if (this.rightCameraInput) {
+                    this.rightCameraInput.dispose();
+                }
+                if (this.downCameraInput) {
+                    this.downCameraInput.dispose();
+                }
+                if (this.upCameraInput) {
+                    this.upCameraInput.dispose();
+                }
+            }
+            else {
+                Main.Scene.onBeforeRenderObservable.add(this.updateCamera);
+                Main.Camera.detachControl(Main.Canvas);
+                this.leftCameraInput = BABYLON.MeshBuilder.CreateBox("left-camera-input", { width: 1, height: 0.5, depth: 0.1 });
+                this.leftCameraInput.parent = Main.Camera;
+                this.leftCameraInput.position.copyFromFloats(-3, -3, 10);
+                this.rightCameraInput = BABYLON.MeshBuilder.CreateBox("right-camera-input", { width: 1, height: 0.5, depth: 0.1 });
+                this.rightCameraInput.parent = Main.Camera;
+                this.rightCameraInput.position.copyFromFloats(3, -3, 10);
+                this.downCameraInput = BABYLON.MeshBuilder.CreateBox("down-camera-input", { width: 0.5, height: 1, depth: 0.1 });
+                this.downCameraInput.parent = Main.Camera;
+                this.downCameraInput.position.copyFromFloats(4, -2, 10);
+                this.upCameraInput = BABYLON.MeshBuilder.CreateBox("up-camera-input", { width: 0.5, height: 1, depth: 0.1 });
+                this.upCameraInput.parent = Main.Camera;
+                this.upCameraInput.position.copyFromFloats(4, 2, 10);
+            }
+        }
+    }
     async initializeScene() {
         Main.Scene = new BABYLON.Scene(Main.Engine);
         this.initializeCamera();
@@ -1579,6 +1634,9 @@ class Main {
             document.getElementById("glow-toggle").classList.remove("on");
             Main.DisableGlowLayer();
         }
+        document.getElementById("free-camera-toggle").onclick = () => {
+            document.getElementById("free-camera-toggle").classList.toggle("on");
+        };
         document.getElementById("sound-toggle").onclick = () => {
             document.getElementById("sound-volume").classList.toggle("disabled");
             document.getElementById("sound-toggle").classList.toggle("on");
@@ -1671,6 +1729,9 @@ class Main {
         });
     }
 }
+Main.UseFreeCamera = true;
+Main.CameraTargetAlpha = Math.PI / 4;
+Main.CameraTargetBeta = Math.PI / 3;
 window.addEventListener("load", async () => {
     let main = new Main("render-canvas");
     await main.initialize();
@@ -1883,6 +1944,13 @@ class Plot extends GalaxyItem {
 }
 class SettingsManager {
     constructor() {
+        this.onFreeCameraUpdate = () => {
+            requestAnimationFrame(() => {
+                let v = this._freeCameraInput.classList.contains("on");
+                Main.Instance.setFreeCamera(v);
+                this.saveCurrentSettings();
+            });
+        };
         this.onMusicUpdate = () => {
             requestAnimationFrame(() => {
                 let v = this._musicInput.classList.contains("on");
@@ -1901,10 +1969,18 @@ class SettingsManager {
         let settings = localStorage.getItem("galaxy-settings");
         if (settings) {
             let v = JSON.parse(settings);
+            if (v.freeCamera === undefined) {
+                v.freeCamera = true;
+            }
             this.setSettings(v);
         }
     }
     registerUI() {
+        let freeCameraInput = document.querySelector("#free-camera-toggle");
+        if (freeCameraInput instanceof HTMLSpanElement) {
+            this._freeCameraInput = freeCameraInput;
+        }
+        this._freeCameraInput.addEventListener("pointerup", this.onFreeCameraUpdate);
         let musicInput = document.querySelector("#music-toggle");
         if (musicInput instanceof HTMLSpanElement) {
             this._musicInput = musicInput;
@@ -1918,11 +1994,21 @@ class SettingsManager {
     }
     getSettings() {
         return {
+            freeCamera: Main.UseFreeCamera,
             music: Main.MusicManager.musicOn,
             musicVolume: Main.MusicManager.currentVolume
         };
     }
     setSettings(v) {
+        if (v.freeCamera) {
+            this._freeCameraInput.classList.remove("off");
+            this._freeCameraInput.classList.add("on");
+        }
+        else {
+            this._freeCameraInput.classList.remove("on");
+            this._freeCameraInput.classList.add("off");
+        }
+        this.onFreeCameraUpdate();
         if (v.music) {
             this._musicInput.classList.remove("off");
             this._musicInput.classList.add("on");
@@ -2122,6 +2208,136 @@ class Tile extends GalaxyItem {
             if (this.galaxy.getItem(ijk) instanceof EdgeOrb) {
                 return this.getNeighbour(ijk);
             }
+        }
+    }
+}
+class VMath {
+    // Method adapted from gre's work (https://github.com/gre/bezier-easing). Thanks !
+    static easeOutElastic(t, b = 0, c = 1, d = 1) {
+        var s = 1.70158;
+        var p = 0;
+        var a = c;
+        if (t == 0) {
+            return b;
+        }
+        if ((t /= d) == 1) {
+            return b + c;
+        }
+        if (!p) {
+            p = d * .3;
+        }
+        if (a < Math.abs(c)) {
+            a = c;
+            s = p / 4;
+        }
+        else {
+            s = p / (2 * Math.PI) * Math.asin(c / a);
+        }
+        return a * Math.pow(2, -10 * t) * Math.sin((t * d - s) * (2 * Math.PI) / p) + c + b;
+    }
+    static ProjectPerpendicularAt(v, at) {
+        let p = BABYLON.Vector3.Zero();
+        let k = (v.x * at.x + v.y * at.y + v.z * at.z);
+        k = k / (at.x * at.x + at.y * at.y + at.z * at.z);
+        p.copyFrom(v);
+        p.subtractInPlace(at.multiplyByFloats(k, k, k));
+        return p;
+    }
+    static Angle(from, to) {
+        let pFrom = BABYLON.Vector3.Normalize(from);
+        let pTo = BABYLON.Vector3.Normalize(to);
+        let angle = Math.acos(BABYLON.Vector3.Dot(pFrom, pTo));
+        return angle;
+    }
+    static AngleFromToAround(from, to, around) {
+        let pFrom = VMath.ProjectPerpendicularAt(from, around).normalize();
+        let pTo = VMath.ProjectPerpendicularAt(to, around).normalize();
+        let angle = Math.acos(BABYLON.Vector3.Dot(pFrom, pTo));
+        if (BABYLON.Vector3.Dot(BABYLON.Vector3.Cross(pFrom, pTo), around) < 0) {
+            angle = -angle;
+        }
+        return angle;
+    }
+    static StepAngle(from, to, step) {
+        while (from < 0) {
+            from += 2 * Math.PI;
+        }
+        while (to < 0) {
+            to += 2 * Math.PI;
+        }
+        while (from >= 2 * Math.PI) {
+            from -= 2 * Math.PI;
+        }
+        while (to >= 2 * Math.PI) {
+            to -= 2 * Math.PI;
+        }
+        if (Math.abs(from - to) <= step) {
+            return to;
+        }
+        if (to < from) {
+            step *= -1;
+        }
+        if (Math.abs(from - to) > Math.PI) {
+            step *= -1;
+        }
+        return from + step;
+    }
+    static LerpAngle(from, to, t) {
+        while (from < 0) {
+            from += 2 * Math.PI;
+        }
+        while (to < 0) {
+            to += 2 * Math.PI;
+        }
+        while (from >= 2 * Math.PI) {
+            from -= 2 * Math.PI;
+        }
+        while (to >= 2 * Math.PI) {
+            to -= 2 * Math.PI;
+        }
+        if (Math.abs(from - to) > Math.PI) {
+            if (from > Math.PI) {
+                from -= 2 * Math.PI;
+            }
+            else {
+                to -= 2 * Math.PI;
+            }
+        }
+        return from * (1 - t) + to * t;
+    }
+    static AngularDistance(from, to) {
+        while (from < 0) {
+            from += 2 * Math.PI;
+        }
+        while (to < 0) {
+            to += 2 * Math.PI;
+        }
+        while (from >= 2 * Math.PI) {
+            from -= 2 * Math.PI;
+        }
+        while (to >= 2 * Math.PI) {
+            to -= 2 * Math.PI;
+        }
+        let d = Math.abs(from - to);
+        if (d > Math.PI) {
+            d *= -1;
+        }
+        if (to < from) {
+            d *= -1;
+        }
+        return d;
+    }
+    static CatmullRomPath(path) {
+        let interpolatedPoints = [];
+        for (let i = 0; i < path.length; i++) {
+            let p0 = path[(i - 1 + path.length) % path.length];
+            let p1 = path[i];
+            let p2 = path[(i + 1) % path.length];
+            let p3 = path[(i + 2) % path.length];
+            interpolatedPoints.push(BABYLON.Vector3.CatmullRom(p0, p1, p2, p3, 0.5));
+        }
+        for (let i = 0; i < interpolatedPoints.length; i++) {
+            path.splice(2 * i + 1, 0, interpolatedPoints[i]);
         }
     }
 }

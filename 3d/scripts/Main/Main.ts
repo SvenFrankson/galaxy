@@ -7,6 +7,7 @@ var LEVEL_COUNT = 5;
 
 class Main {
 
+	public static Instance: Main;
     public static Canvas: HTMLCanvasElement;
     public static Engine: BABYLON.Engine;
     public static Scene: BABYLON.Scene;
@@ -17,6 +18,7 @@ class Main {
 	public static Skybox: BABYLON.Mesh;
 	public static EnvironmentTexture: BABYLON.CubeTexture;
 	public static GlowLayer: BABYLON.GlowLayer;
+	public static UseFreeCamera: boolean = true;
 
 	private static _CameraPosition: BABYLON.Vector2;
 	public static get CameraPosition(): BABYLON.Vector2 {
@@ -96,6 +98,7 @@ class Main {
 	}
 
     constructor(canvasElement: string) {
+		Main.Instance = this;
         Main.Canvas = document.getElementById(canvasElement) as HTMLCanvasElement;
         Main.Engine = new BABYLON.Engine(Main.Canvas, true, { preserveDrawingBuffer: true, stencil: true });
 	}
@@ -179,6 +182,59 @@ class Main {
         }
         step();
     }
+
+	public static CameraTargetAlpha: number = Math.PI / 4;
+	public static CameraTargetBeta: number = Math.PI / 3;
+
+	public leftCameraInput: BABYLON.Mesh;
+	public rightCameraInput: BABYLON.Mesh;
+	public downCameraInput: BABYLON.Mesh;
+	public upCameraInput: BABYLON.Mesh;
+
+	public updateCamera = () => {
+		Main.Camera.alpha = VMath.StepAngle(Main.Camera.alpha, Main.CameraTargetAlpha, 0.02);
+		Main.Camera.beta = VMath.StepAngle(Main.Camera.beta, Main.CameraTargetBeta, 0.02);
+	}
+
+	public setFreeCamera(freeCamera: boolean): void {
+		if (Main.UseFreeCamera != freeCamera) {
+			Main.UseFreeCamera = freeCamera;
+			if (Main.UseFreeCamera) {
+				Main.Scene.onBeforeRenderObservable.removeCallback(this.updateCamera);
+				Main.Camera.attachControl(Main.Canvas);
+				if (this.leftCameraInput) {
+					this.leftCameraInput.dispose();
+				}
+				if (this.rightCameraInput) {
+					this.rightCameraInput.dispose();
+				}
+				if (this.downCameraInput) {
+					this.downCameraInput.dispose();
+				}
+				if (this.upCameraInput) {
+					this.upCameraInput.dispose();
+				}
+			}
+			else {
+				Main.Scene.onBeforeRenderObservable.add(this.updateCamera);
+				Main.Camera.detachControl(Main.Canvas);
+				this.leftCameraInput = BABYLON.MeshBuilder.CreateBox("left-camera-input", { width: 1, height: 0.5, depth: 0.1 });
+				this.leftCameraInput.parent = Main.Camera;
+				this.leftCameraInput.position.copyFromFloats(-3, -3, 10);
+				this.rightCameraInput = BABYLON.MeshBuilder.CreateBox("right-camera-input", { width: 1, height: 0.5, depth: 0.1 });
+				this.rightCameraInput.parent = Main.Camera;
+				this.rightCameraInput.position.copyFromFloats(3, -3, 10);
+				this.downCameraInput = BABYLON.MeshBuilder.CreateBox("down-camera-input", { width: 0.5, height: 1, depth: 0.1 });
+				this.downCameraInput.parent = Main.Camera;
+				this.downCameraInput.position.copyFromFloats(4, -2, 10);
+				this.upCameraInput = BABYLON.MeshBuilder.CreateBox("up-camera-input", { width: 0.5, height: 1, depth: 0.1 });
+				this.upCameraInput.parent = Main.Camera;
+				this.upCameraInput.position.copyFromFloats(4, 2, 10);
+				
+			}
+		}
+	}
+	
 
     public async initializeScene(): Promise<void> {
 		Main.Scene = new BABYLON.Scene(Main.Engine);
@@ -279,6 +335,9 @@ class Main {
 			console.log("Ploup");
 			document.getElementById("glow-toggle").classList.remove("on");
 			Main.DisableGlowLayer();
+		}
+		document.getElementById("free-camera-toggle").onclick = () => {
+			document.getElementById("free-camera-toggle").classList.toggle("on");
 		}
 		document.getElementById("sound-toggle").onclick = () => {
 			document.getElementById("sound-volume").classList.toggle("disabled");
