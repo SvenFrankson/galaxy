@@ -957,16 +957,16 @@ class Galaxy extends BABYLON.TransformNode {
         let pick = Main.Scene.pick(Main.Scene.pointerX, Main.Scene.pointerY);
         if (pick && pick.hit) {
             if (pick.pickedMesh && pick.pickedMesh.name === "left-camera-input") {
-                Main.CameraTargetAlpha -= Math.PI / 2;
+                Main.Camera.targetAlpha -= Math.PI / 2;
             }
             else if (pick.pickedMesh && pick.pickedMesh.name === "right-camera-input") {
-                Main.CameraTargetAlpha += Math.PI / 2;
+                Main.Camera.targetAlpha += Math.PI / 2;
             }
             else if (pick.pickedMesh && pick.pickedMesh.name === "down-camera-input") {
-                Main.CameraTargetBeta = Math.PI - Math.PI / 3;
+                Main.Camera.targetBeta = Math.PI - Math.PI / 3;
             }
             else if (pick.pickedMesh && pick.pickedMesh.name === "up-camera-input") {
-                Main.CameraTargetBeta = Math.PI / 3;
+                Main.Camera.targetBeta = Math.PI / 3;
                 ;
             }
             let ijk = this.worldPositionToIJK(pick.pickedPoint);
@@ -1313,6 +1313,80 @@ class GalaxyBuilder {
         return container;
     }
 }
+class GalaxyCamera extends BABYLON.ArcRotateCamera {
+    constructor(galaxy) {
+        super("camera", 0, 0, 10, BABYLON.Vector3.Zero(), Main.Scene);
+        this.galaxy = galaxy;
+        this.useFreeCamera = true;
+        this.targetAlpha = Math.PI / 4;
+        this.targetBeta = Math.PI / 3;
+        this.updateCamera = () => {
+            this.alpha = VMath.StepAngle(this.alpha, this.targetAlpha, 0.02);
+            this.beta = VMath.StepAngle(this.beta, this.targetBeta, 0.02);
+        };
+        this.setPosition(new BABYLON.Vector3(-2, 6, -10));
+        this.attachControl(Main.Canvas);
+        this.wheelPrecision *= 10;
+    }
+    get scene() {
+        return this.getScene();
+    }
+    setFreeCamera(freeCamera) {
+        if (this.useFreeCamera != freeCamera) {
+            this.useFreeCamera = freeCamera;
+            if (this.useFreeCamera) {
+                Main.Scene.onBeforeRenderObservable.removeCallback(this.updateCamera);
+                Main.Camera.attachControl(Main.Canvas);
+                if (this.leftCameraInput) {
+                    this.leftCameraInput.dispose();
+                }
+                if (this.rightCameraInput) {
+                    this.rightCameraInput.dispose();
+                }
+                if (this.downCameraInput) {
+                    this.downCameraInput.dispose();
+                }
+                if (this.upCameraInput) {
+                    this.upCameraInput.dispose();
+                }
+            }
+            else {
+                Main.Scene.onBeforeRenderObservable.add(this.updateCamera);
+                Main.Camera.detachControl(Main.Canvas);
+                this.leftCameraInput = BABYLON.MeshBuilder.CreateBox("left-camera-input", { width: 1, height: 0.5, depth: 0.1 });
+                this.leftCameraInput.parent = Main.Camera;
+                this.leftCameraInput.position.copyFromFloats(-3, -3, 10);
+                this.rightCameraInput = BABYLON.MeshBuilder.CreateBox("right-camera-input", { width: 1, height: 0.5, depth: 0.1 });
+                this.rightCameraInput.parent = Main.Camera;
+                this.rightCameraInput.position.copyFromFloats(3, -3, 10);
+                this.downCameraInput = BABYLON.MeshBuilder.CreateBox("down-camera-input", { width: 0.5, height: 1, depth: 0.1 });
+                this.downCameraInput.parent = Main.Camera;
+                this.downCameraInput.position.copyFromFloats(4, -2, 10);
+                this.upCameraInput = BABYLON.MeshBuilder.CreateBox("up-camera-input", { width: 0.5, height: 1, depth: 0.1 });
+                this.upCameraInput.parent = Main.Camera;
+                this.upCameraInput.position.copyFromFloats(4, 2, 10);
+            }
+        }
+    }
+    runLevelStartAnimation() {
+        Main.Camera.radius = 100;
+        this.scene.onBeforeRenderObservable.removeCallback(this.updateCamera);
+        let step = () => {
+            if (Main.Camera.radius > 25) {
+                Main.Camera.radius *= 0.99;
+                Main.Camera.alpha += 0.01;
+                requestAnimationFrame(step);
+            }
+            else {
+                Main.Camera.radius = 25;
+                if (!this.useFreeCamera) {
+                    this.scene.onBeforeRenderObservable.add(this.updateCamera);
+                }
+            }
+        };
+        step();
+    }
+}
 class IJK {
     constructor(i, j, k) {
         this.i = i;
@@ -1383,10 +1457,6 @@ var COS30 = Math.cos(Math.PI / 6);
 var LEVEL_COUNT = 5;
 class Main {
     constructor(canvasElement) {
-        this.updateCamera = () => {
-            Main.Camera.alpha = VMath.StepAngle(Main.Camera.alpha, Main.CameraTargetAlpha, 0.02);
-            Main.Camera.beta = VMath.StepAngle(Main.Camera.beta, Main.CameraTargetBeta, 0.02);
-        };
         Main.Instance = this;
         Main.Canvas = document.getElementById(canvasElement);
         Main.Engine = new BABYLON.Engine(Main.Canvas, true, { preserveDrawingBuffer: true, stencil: true });
@@ -1451,12 +1521,6 @@ class Main {
         }
         return Main._previewBlueMaterial;
     }
-    initializeCamera() {
-        Main.Camera = new BABYLON.ArcRotateCamera("camera", 0, 0, 10, BABYLON.Vector3.Zero(), Main.Scene);
-        Main.Camera.setPosition(new BABYLON.Vector3(-2, 6, -10));
-        Main.Camera.attachControl(Main.Canvas);
-        Main.Camera.wheelPrecision *= 10;
-    }
     async initialize() {
         await this.initializeScene();
     }
@@ -1500,60 +1564,10 @@ class Main {
             });
         });
     }
-    animateCamera() {
-        Main.Camera.radius = 100;
-        let step = () => {
-            if (Main.Camera.radius > 25) {
-                Main.Camera.radius *= 0.99;
-                Main.Camera.alpha += 0.01;
-                requestAnimationFrame(step);
-            }
-            else {
-                Main.Camera.radius = 25;
-            }
-        };
-        step();
-    }
-    setFreeCamera(freeCamera) {
-        if (Main.UseFreeCamera != freeCamera) {
-            Main.UseFreeCamera = freeCamera;
-            if (Main.UseFreeCamera) {
-                Main.Scene.onBeforeRenderObservable.removeCallback(this.updateCamera);
-                Main.Camera.attachControl(Main.Canvas);
-                if (this.leftCameraInput) {
-                    this.leftCameraInput.dispose();
-                }
-                if (this.rightCameraInput) {
-                    this.rightCameraInput.dispose();
-                }
-                if (this.downCameraInput) {
-                    this.downCameraInput.dispose();
-                }
-                if (this.upCameraInput) {
-                    this.upCameraInput.dispose();
-                }
-            }
-            else {
-                Main.Scene.onBeforeRenderObservable.add(this.updateCamera);
-                Main.Camera.detachControl(Main.Canvas);
-                this.leftCameraInput = BABYLON.MeshBuilder.CreateBox("left-camera-input", { width: 1, height: 0.5, depth: 0.1 });
-                this.leftCameraInput.parent = Main.Camera;
-                this.leftCameraInput.position.copyFromFloats(-3, -3, 10);
-                this.rightCameraInput = BABYLON.MeshBuilder.CreateBox("right-camera-input", { width: 1, height: 0.5, depth: 0.1 });
-                this.rightCameraInput.parent = Main.Camera;
-                this.rightCameraInput.position.copyFromFloats(3, -3, 10);
-                this.downCameraInput = BABYLON.MeshBuilder.CreateBox("down-camera-input", { width: 0.5, height: 1, depth: 0.1 });
-                this.downCameraInput.parent = Main.Camera;
-                this.downCameraInput.position.copyFromFloats(4, -2, 10);
-                this.upCameraInput = BABYLON.MeshBuilder.CreateBox("up-camera-input", { width: 0.5, height: 1, depth: 0.1 });
-                this.upCameraInput.parent = Main.Camera;
-                this.upCameraInput.position.copyFromFloats(4, 2, 10);
-            }
-        }
-    }
     async initializeScene() {
         Main.Scene = new BABYLON.Scene(Main.Engine);
-        this.initializeCamera();
+        Main.Galaxy = new Galaxy();
+        Main.Camera = new GalaxyCamera(Main.Galaxy);
         Main.EnableGlowLayer();
         Main.Light = new BABYLON.HemisphericLight("AmbientLight", new BABYLON.Vector3(1, 3, 2), Main.Scene);
         Main.Skybox = BABYLON.MeshBuilder.CreateBox("skyBox", { size: 2000.0 }, Main.Scene);
@@ -1573,7 +1587,6 @@ class Main {
         Main.MusicManager = new MusicManager();
         Main.SettingsManager = new SettingsManager();
         Main.SettingsManager.initialize();
-        Main.Galaxy = new Galaxy();
         await Main.Galaxy.initialize();
         Main.Galaxy.instantiate();
         // Note : Uncomment this line to clear "Success" status saved on each level.
@@ -1585,7 +1598,7 @@ class Main {
                 Main.MusicManager.play((i % 3) + 1, 3000);
                 this.showUI();
                 this.hideMainUI();
-                this.animateCamera();
+                Main.Camera.runLevelStartAnimation();
             };
         }
         document.getElementById("editor").onclick = () => {
@@ -1596,12 +1609,12 @@ class Main {
             Main.Galaxy.instantiate();
             this.showUI();
             this.hideMainUI();
-            this.animateCamera();
+            Main.Camera.runLevelStartAnimation();
         };
         document.getElementById("btn-menu").onclick = () => {
             this.hideUI();
             this.showMainUI();
-            this.animateCamera();
+            Main.Camera.runLevelStartAnimation();
         };
         document.getElementById("btn-clear-lightning").onclick = () => {
             Main.Galaxy.removeAllLightnings();
@@ -1656,7 +1669,7 @@ class Main {
         [...buttons].map(btn => btn.addEventListener("click", this.backToMainMenu));
         this.hideUI();
         this.showMainUI();
-        this.animateCamera();
+        Main.Camera.runLevelStartAnimation();
     }
     showUI() {
         document.getElementById("ui").style.display = "block";
@@ -1736,9 +1749,6 @@ class Main {
         });
     }
 }
-Main.UseFreeCamera = true;
-Main.CameraTargetAlpha = Math.PI / 4;
-Main.CameraTargetBeta = Math.PI / 3;
 window.addEventListener("load", async () => {
     let main = new Main("render-canvas");
     await main.initialize();
@@ -1955,7 +1965,7 @@ class SettingsManager {
         this.onFreeCameraUpdate = () => {
             requestAnimationFrame(() => {
                 let v = this._freeCameraInput.classList.contains("on");
-                Main.Instance.setFreeCamera(v);
+                Main.Camera.setFreeCamera(v);
                 this.saveCurrentSettings();
             });
         };
@@ -2002,7 +2012,7 @@ class SettingsManager {
     }
     getSettings() {
         return {
-            freeCamera: Main.UseFreeCamera,
+            freeCamera: Main.Camera.useFreeCamera,
             music: Main.MusicManager.musicOn,
             musicVolume: Main.MusicManager.currentVolume
         };

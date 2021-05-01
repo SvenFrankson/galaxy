@@ -44,7 +44,7 @@ class SettingsManager {
 
     public getSettings(): ISettings {
         return {
-            freeCamera: Main.UseFreeCamera,
+            freeCamera: Main.Camera.useFreeCamera,
             music: Main.MusicManager.musicOn,
             musicVolume: Main.MusicManager.currentVolume
         }
@@ -88,7 +88,7 @@ class SettingsManager {
         requestAnimationFrame(
             () => {
                 let v = this._freeCameraInput.classList.contains("on");
-                Main.Instance.setFreeCamera(v);
+                Main.Camera.setFreeCamera(v);
                 this.saveCurrentSettings();
             }
         )
