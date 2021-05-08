@@ -204,9 +204,9 @@ class Main {
 		// LevelStatus.instance.setAllLevelsStatus(false);
 
 		for (let i = 1; i <= LEVEL_COUNT; i++) {
-			document.getElementById("level-" + i).onclick = () => {
+			document.getElementById("level-" + i).onclick = async () => {
 				Main.Galaxy.editionMode = false;
-				Main.Galaxy.loadLevel(i);
+				await Main.Galaxy.loadLevel(i);
 				Main.MusicManager.play((i % 3) + 1, 3000);
 				this.showUI();
 				this.hideMainUI();

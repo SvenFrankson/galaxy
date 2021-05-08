@@ -1,7 +1,7 @@
 class VMath {
 
     // Method adapted from gre's work (https://github.com/gre/bezier-easing). Thanks !
-    public static easeOutElastic(t, b = 0, c = 1, d = 1): number {
+    public static easeOutElastic(t: number, b = 0, c = 1, d = 1): number {
         var s = 1.70158;
         var p = 0;
         var a = c;
@@ -22,6 +22,10 @@ class VMath {
             s = p / (2 * Math.PI) * Math.asin(c / a);
         }
         return a * Math.pow(2, -10 * t) * Math.sin((t * d - s) * (2 * Math.PI) / p) + c + b;
+    }
+
+    public static easeInOutSine(t: number): number {
+        return - (Math.cos(Math.PI * t) - 1) / 2;
     }
 
     public static ProjectPerpendicularAt(v: BABYLON.Vector3, at: BABYLON.Vector3): BABYLON.Vector3 {

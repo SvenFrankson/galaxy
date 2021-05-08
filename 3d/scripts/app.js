@@ -957,17 +957,16 @@ class Galaxy extends BABYLON.TransformNode {
         let pick = Main.Scene.pick(Main.Scene.pointerX, Main.Scene.pointerY);
         if (pick && pick.hit) {
             if (pick.pickedMesh && pick.pickedMesh.name === "left-camera-input") {
-                Main.Camera.targetAlpha -= Math.PI / 2;
+                Main.Camera.moveTo(-Math.PI / 2 + Main.Camera.getClosestAlpha(), Main.Camera.beta, Main.Camera.radius, 0.5);
             }
             else if (pick.pickedMesh && pick.pickedMesh.name === "right-camera-input") {
-                Main.Camera.targetAlpha += Math.PI / 2;
+                Main.Camera.moveTo(Math.PI / 2 + Main.Camera.getClosestAlpha(), Main.Camera.beta, Main.Camera.radius, 0.5);
             }
             else if (pick.pickedMesh && pick.pickedMesh.name === "down-camera-input") {
-                Main.Camera.targetBeta = Math.PI - Math.PI / 3;
+                Main.Camera.moveTo(Main.Camera.alpha, Math.PI - Math.PI / 3, Main.Camera.radius, 0.5);
             }
             else if (pick.pickedMesh && pick.pickedMesh.name === "up-camera-input") {
-                Main.Camera.targetBeta = Math.PI / 3;
-                ;
+                Main.Camera.moveTo(Main.Camera.alpha, Math.PI / 3, Main.Camera.radius, 0.5);
             }
             let ijk = this.worldPositionToIJK(pick.pickedPoint);
             let odds = 0;
@@ -1320,10 +1319,22 @@ class GalaxyCamera extends BABYLON.ArcRotateCamera {
         this.useFreeCamera = true;
         this.targetAlpha = Math.PI / 4;
         this.targetBeta = Math.PI / 3;
+        this._alphaSpeed = 0;
+        this._betaSpeed = 0;
         this.updateCamera = () => {
-            this.alpha = VMath.StepAngle(this.alpha, this.targetAlpha, 0.02);
-            this.beta = VMath.StepAngle(this.beta, this.targetBeta, 0.02);
+            /*
+            let dt = Main.Engine.getDeltaTime() / 1000;
+    
+            this._alphaSpeed += Math.abs(VMath.AngularDistance(this.alpha, this.targetAlpha)) / (2 * Math.PI) * 0.2 * dt;
+            this._betaSpeed += VMath.AngularDistance(this.beta, this.targetBeta) / (2 * Math.PI) * 0.2 * dt;
+            this._alphaSpeed *= 0.99;
+            this._betaSpeed *= 0.99;
+    
+            this.alpha = VMath.StepAngle(this.alpha, this.targetAlpha, this._alphaSpeed);
+            this.beta = VMath.StepAngle(this.beta, this.targetBeta, this._betaSpeed);
+            */
         };
+        this._locked = false;
         this.setPosition(new BABYLON.Vector3(-2, 6, -10));
         this.attachControl(Main.Canvas);
         this.wheelPrecision *= 10;
@@ -1368,23 +1379,40 @@ class GalaxyCamera extends BABYLON.ArcRotateCamera {
             }
         }
     }
-    runLevelStartAnimation() {
-        Main.Camera.radius = 100;
-        this.scene.onBeforeRenderObservable.removeCallback(this.updateCamera);
+    getClosestAlpha() {
+        return Math.round((this.alpha - (Math.PI / 4)) / (Math.PI / 2)) * Math.PI / 2 + Math.PI / 4;
+    }
+    moveTo(alpha, beta, radius, duration = 1) {
+        if (this._locked) {
+            return;
+        }
+        let alpha0 = Main.Camera.alpha;
+        let beta0 = Main.Camera.beta;
+        let radius0 = Main.Camera.radius;
+        let t = 0;
         let step = () => {
-            if (Main.Camera.radius > 25) {
-                Main.Camera.radius *= 0.99;
-                Main.Camera.alpha += 0.01;
-                requestAnimationFrame(step);
+            t += Main.Engine.getDeltaTime() / 1000;
+            let d = t / duration;
+            if (d >= 1) {
+                Main.Camera.alpha = alpha;
+                Main.Camera.beta = beta;
+                Main.Camera.radius = radius;
+                this._locked = false;
             }
             else {
-                Main.Camera.radius = 25;
-                if (!this.useFreeCamera) {
-                    this.scene.onBeforeRenderObservable.add(this.updateCamera);
-                }
+                d = VMath.easeInOutSine(d);
+                Main.Camera.alpha = (1 - d) * alpha0 + d * alpha;
+                Main.Camera.beta = (1 - d) * beta0 + d * beta;
+                Main.Camera.radius = (1 - d) * radius0 + d * radius;
+                requestAnimationFrame(step);
             }
         };
+        this._locked = true;
         step();
+    }
+    runLevelStartAnimation() {
+        Main.Camera.radius = 50;
+        this.moveTo(Math.PI / 2 * 2 + this.getClosestAlpha(), Math.PI / 3, Math.max(this.galaxy.width, this.galaxy.height, this.galaxy.depth) * 3, 1);
     }
 }
 class IJK {
@@ -1592,9 +1620,9 @@ class Main {
         // Note : Uncomment this line to clear "Success" status saved on each level.
         // LevelStatus.instance.setAllLevelsStatus(false);
         for (let i = 1; i <= LEVEL_COUNT; i++) {
-            document.getElementById("level-" + i).onclick = () => {
+            document.getElementById("level-" + i).onclick = async () => {
                 Main.Galaxy.editionMode = false;
-                Main.Galaxy.loadLevel(i);
+                await Main.Galaxy.loadLevel(i);
                 Main.MusicManager.play((i % 3) + 1, 3000);
                 this.showUI();
                 this.hideMainUI();
@@ -2252,6 +2280,9 @@ class VMath {
             s = p / (2 * Math.PI) * Math.asin(c / a);
         }
         return a * Math.pow(2, -10 * t) * Math.sin((t * d - s) * (2 * Math.PI) / p) + c + b;
+    }
+    static easeInOutSine(t) {
+        return -(Math.cos(Math.PI * t) - 1) / 2;
     }
     static ProjectPerpendicularAt(v, at) {
         let p = BABYLON.Vector3.Zero();

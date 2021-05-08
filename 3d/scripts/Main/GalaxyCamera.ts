@@ -61,27 +61,60 @@ class GalaxyCamera extends BABYLON.ArcRotateCamera {
 		}
 	}
 
+    private _alphaSpeed: number = 0;
+    private _betaSpeed: number = 0;
+
+	public getClosestAlpha(): number {
+		return Math.round((this.alpha - (Math.PI / 4)) / (Math.PI / 2)) * Math.PI / 2 + Math.PI / 4;
+	}
+
 	public updateCamera = () => {
-		this.alpha = VMath.StepAngle(this.alpha, this.targetAlpha, 0.02);
-		this.beta = VMath.StepAngle(this.beta, this.targetBeta, 0.02);
+		/*
+        let dt = Main.Engine.getDeltaTime() / 1000;
+
+        this._alphaSpeed += Math.abs(VMath.AngularDistance(this.alpha, this.targetAlpha)) / (2 * Math.PI) * 0.2 * dt;
+        this._betaSpeed += VMath.AngularDistance(this.beta, this.targetBeta) / (2 * Math.PI) * 0.2 * dt;
+        this._alphaSpeed *= 0.99;
+        this._betaSpeed *= 0.99;
+
+		this.alpha = VMath.StepAngle(this.alpha, this.targetAlpha, this._alphaSpeed);
+		this.beta = VMath.StepAngle(this.beta, this.targetBeta, this._betaSpeed);
+		*/
+	}
+
+	private _locked: boolean = false;
+	public moveTo(alpha: number, beta: number, radius: number, duration: number = 1): void {
+		if (this._locked) {
+			return;
+		}
+		let alpha0 = Main.Camera.alpha;
+		let beta0 = Main.Camera.beta;
+		let radius0 = Main.Camera.radius;
+
+		let t = 0;
+		let step = () => {
+			t += Main.Engine.getDeltaTime() / 1000;
+			let d = t / duration;
+			if (d >= 1) {
+				Main.Camera.alpha = alpha;
+				Main.Camera.beta = beta;
+				Main.Camera.radius = radius;
+				this._locked = false;
+			}
+			else {
+				d = VMath.easeInOutSine(d);
+				Main.Camera.alpha = (1 - d) * alpha0 + d * alpha;
+				Main.Camera.beta = (1 - d) * beta0 + d * beta;
+				Main.Camera.radius = (1 - d) * radius0 + d * radius;
+				requestAnimationFrame(step);
+			}
+		}
+		this._locked = true;
+		step();
 	}
 
     public runLevelStartAnimation(): void {
-        Main.Camera.radius = 100;
-        this.scene.onBeforeRenderObservable.removeCallback(this.updateCamera);
-        let step = () => {
-            if (Main.Camera.radius > 25) {
-				Main.Camera.radius *= 0.99;
-				Main.Camera.alpha += 0.01;
-                requestAnimationFrame(step);
-			}
-			else {
-				Main.Camera.radius = 25;
-                if (!this.useFreeCamera) {
-                    this.scene.onBeforeRenderObservable.add(this.updateCamera);
-                }
-			}
-        }
-        step();
+        Main.Camera.radius = 50;
+		this.moveTo(Math.PI / 2 * 2 + this.getClosestAlpha(), Math.PI / 3, Math.max(this.galaxy.width, this.galaxy.height, this.galaxy.depth) * 3, 1);
     }
 }

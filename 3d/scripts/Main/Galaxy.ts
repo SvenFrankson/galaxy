@@ -813,16 +813,16 @@ class Galaxy extends BABYLON.TransformNode {
         );
         if (pick && pick.hit) {
             if (pick.pickedMesh && pick.pickedMesh.name === "left-camera-input") {
-                Main.Camera.targetAlpha -= Math.PI / 2;
+                Main.Camera.moveTo(- Math.PI / 2 + Main.Camera.getClosestAlpha(), Main.Camera.beta, Main.Camera.radius, 0.5);
             }
             else if (pick.pickedMesh && pick.pickedMesh.name === "right-camera-input") {
-                Main.Camera.targetAlpha += Math.PI / 2;
+                Main.Camera.moveTo(Math.PI / 2 + Main.Camera.getClosestAlpha(), Main.Camera.beta, Main.Camera.radius, 0.5);
             }
             else if (pick.pickedMesh && pick.pickedMesh.name === "down-camera-input") {
-                Main.Camera.targetBeta = Math.PI - Math.PI / 3;
+                Main.Camera.moveTo(Main.Camera.alpha, Math.PI - Math.PI / 3, Main.Camera.radius, 0.5);
             }
             else if (pick.pickedMesh && pick.pickedMesh.name === "up-camera-input") {
-                Main.Camera.targetBeta = Math.PI / 3;;
+                Main.Camera.moveTo(Main.Camera.alpha, Math.PI / 3, Main.Camera.radius, 0.5);
             }
             let ijk = this.worldPositionToIJK(pick.pickedPoint);
             
