@@ -847,6 +847,7 @@ class Galaxy extends BABYLON.TransformNode {
                     if (item instanceof EdgeBlock) {
                         if (!item.isGeneratedByTile) {
                             this.removeEdgeBlock(ijk);
+                            this.rebuildTileContainer();
                         }
                     }
                     else {
@@ -864,6 +865,7 @@ class Galaxy extends BABYLON.TransformNode {
                     if (item instanceof EdgeBlock) {
                         if (!item.isGeneratedByTile) {
                             this.removeEdgeBlock(ijk);
+                            this.rebuildTileContainer();
                         }
                         else {
                             doAddEdgeOrb = false;
