@@ -274,7 +274,7 @@ class Main {
 			document.getElementById("music-toggle").classList.toggle("on");
 		}
 		document.getElementById("level-upload").addEventListener("change", async (e) => {
-			let data = await (e.target as HTMLInputElement).files[0].text();
+			let data = await ((e.target as HTMLInputElement).files[0] as any).text();
 			Main.Galaxy.doLoadLevel(JSON.parse(data));
 		});
 

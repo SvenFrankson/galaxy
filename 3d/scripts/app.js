@@ -1486,11 +1486,6 @@ var COS30 = Math.cos(Math.PI / 6);
 // Note : First level is LEVEL 1
 var LEVEL_COUNT = 5;
 class Main {
-    constructor(canvasElement) {
-        Main.Instance = this;
-        Main.Canvas = document.getElementById(canvasElement);
-        Main.Engine = new BABYLON.Engine(Main.Canvas, true, { preserveDrawingBuffer: true, stencil: true });
-    }
     static get CameraPosition() {
         if (!Main._CameraPosition) {
             Main._CameraPosition = BABYLON.Vector2.Zero();
@@ -1550,6 +1545,11 @@ class Main {
             Main._previewBlueMaterial.alpha = 0.7;
         }
         return Main._previewBlueMaterial;
+    }
+    constructor(canvasElement) {
+        Main.Instance = this;
+        Main.Canvas = document.getElementById(canvasElement);
+        Main.Engine = new BABYLON.Engine(Main.Canvas, true, { preserveDrawingBuffer: true, stencil: true });
     }
     async initialize() {
         await this.initializeScene();
